@@ -96,7 +96,13 @@ export default function About() {
               </p>
             </motion.div>
 
-            <div className="bg-white p-8 rounded-lg shadow-md">
+            <motion.div 
+              className="bg-white p-8 rounded-lg shadow-md"
+              initial={{ opacity: 0, y: 30 }}
+              whileInView={{ opacity: 1, y: 0 }}
+              viewport={{ once: true }}
+              transition={{ duration: 0.6, delay: 0.2 }}
+            >
               <div className="w-12 h-12 bg-blue-100 rounded-lg flex items-center justify-center mb-6">
                 <svg className="w-6 h-6 text-blue-900" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                   <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4.318 6.318a4.5 4.5 0 000 6.364L12 20.364l7.682-7.682a4.5 4.5 0 00-6.364-6.364L12 7.636l-1.318-1.318a4.5 4.5 0 00-6.364 0z" />
@@ -109,9 +115,15 @@ export default function About() {
                 Every itinerary is custom-crafted based on your interests, budget, and travel style. 
                 No two Meridian Travel journeys are exactly alike.
               </p>
-            </div>
+            </motion.div>
 
-            <div className="bg-white p-8 rounded-lg shadow-md">
+            <motion.div 
+              className="bg-white p-8 rounded-lg shadow-md"
+              initial={{ opacity: 0, y: 30 }}
+              whileInView={{ opacity: 1, y: 0 }}
+              viewport={{ once: true }}
+              transition={{ duration: 0.6, delay: 0.3 }}
+            >
               <div className="w-12 h-12 bg-blue-100 rounded-lg flex items-center justify-center mb-6">
                 <svg className="w-6 h-6 text-blue-900" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                   <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12l2 2 4-4m5.618-4.016A11.955 11.955 0 0112 2.944a11.955 11.955 0 01-8.618 3.04A12.02 12.02 0 003 9c0 5.591 3.824 10.29 9 11.622 5.176-1.332 9-6.03 9-11.622 0-1.042-.133-2.052-.382-3.016z" />
@@ -124,9 +136,15 @@ export default function About() {
                 From the moment you book until you return home safely, our team provides 
                 round-the-clock support to ensure your peace of mind.
               </p>
-            </div>
+            </motion.div>
 
-            <div className="bg-white p-8 rounded-lg shadow-md">
+            <motion.div 
+              className="bg-white p-8 rounded-lg shadow-md"
+              initial={{ opacity: 0, y: 30 }}
+              whileInView={{ opacity: 1, y: 0 }}
+              viewport={{ once: true }}
+              transition={{ duration: 0.6, delay: 0.4 }}
+            >
               <div className="w-12 h-12 bg-blue-100 rounded-lg flex items-center justify-center mb-6">
                 <svg className="w-6 h-6 text-blue-900" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                   <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 8c-1.657 0-3 .895-3 2s1.343 2 3 2 3 .895 3 2-1.343 2-3 2m0-8c1.11 0 2.08.402 2.599 1M12 8V7m0 1v8m0 0v1m0-1c-1.11 0-2.08-.402-2.599-1" />
@@ -139,9 +157,15 @@ export default function About() {
                 We believe in transparent, fair pricing with no hidden fees. You'll know exactly 
                 what you're paying for and why it's worth every penny.
               </p>
-            </div>
+            </motion.div>
 
-            <div className="bg-white p-8 rounded-lg shadow-md">
+            <motion.div 
+              className="bg-white p-8 rounded-lg shadow-md"
+              initial={{ opacity: 0, y: 30 }}
+              whileInView={{ opacity: 1, y: 0 }}
+              viewport={{ once: true }}
+              transition={{ duration: 0.6, delay: 0.5 }}
+            >
               <div className="w-12 h-12 bg-blue-100 rounded-lg flex items-center justify-center mb-6">
                 <svg className="w-6 h-6 text-blue-900" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                   <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M3.055 11H5a2 2 0 012 2v1a2 2 0 002 2 2 2 0 012 2v2.945M8 3.935V5.5A2.5 2.5 0 0010.5 8h.5a2 2 0 012 2 2 2 0 104 0 2 2 0 012-2h1.064M15 20.488V18a2 2 0 012-2h3.064" />
@@ -154,9 +178,15 @@ export default function About() {
                 We partner with local communities and eco-conscious providers to ensure your 
                 travel positively impacts Peru's people and environment.
               </p>
-            </div>
+            </motion.div>
 
-            <div className="bg-white p-8 rounded-lg shadow-md">
+            <motion.div 
+              className="bg-white p-8 rounded-lg shadow-md"
+              initial={{ opacity: 0, y: 30 }}
+              whileInView={{ opacity: 1, y: 0 }}
+              viewport={{ once: true }}
+              transition={{ duration: 0.6, delay: 0.6 }}
+            >
               <div className="w-12 h-12 bg-blue-100 rounded-lg flex items-center justify-center mb-6">
                 <svg className="w-6 h-6 text-blue-900" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                   <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 10V3L4 14h7v7l9-11h-7z" />
@@ -169,7 +199,7 @@ export default function About() {
                 Whether you prefer luxury accommodations or authentic homestays, adventure activities 
                 or cultural immersion, we adapt to your travel preferences.
               </p>
-            </div>
+            </motion.div>
           </div>
         </div>
       </div>

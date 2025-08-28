@@ -3,7 +3,10 @@
     "allow": [
       "WebFetch(domain:www.saexpeditions.com)",
       "Bash(mkdir:*)",
-      "Bash(git add:*)"
+      "Bash(git add:*)",
+      "Bash(git commit:*)",
+      "Bash(npm run dev:*)",
+      "Bash(timeout:*)"
     ],
     "deny": [],
     "ask": []

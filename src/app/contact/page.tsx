@@ -1,4 +1,7 @@
+'use client';
+
 import Link from 'next/link';
+import { motion } from 'framer-motion';
 
 export default function Contact() {
   return (
@@ -22,7 +25,11 @@ export default function Contact() {
       <div className="py-16 px-4 sm:px-6 lg:px-8 max-w-7xl mx-auto">
         <div className="grid grid-cols-1 lg:grid-cols-2 gap-12">
           {/* Contact Details */}
-          <div>
+          <motion.div
+            initial={{ opacity: 0, x: -30 }}
+            animate={{ opacity: 1, x: 0 }}
+            transition={{ duration: 0.6, delay: 0.2 }}
+          >
             <h2 className="text-3xl font-bold text-gray-900 mb-8">
               Get in Touch
             </h2>
@@ -128,10 +135,14 @@ export default function Contact() {
                 Request Your Quote
               </Link>
             </div>
-          </div>
+          </motion.div>
 
           {/* FAQ Section */}
-          <div>
+          <motion.div
+            initial={{ opacity: 0, x: 30 }}
+            animate={{ opacity: 1, x: 0 }}
+            transition={{ duration: 0.6, delay: 0.4 }}
+          >
             <h2 className="text-3xl font-bold text-gray-900 mb-8">
               Frequently Asked Questions
             </h2>
@@ -204,7 +215,7 @@ export default function Contact() {
                 </p>
               </div>
             </div>
-          </div>
+          </motion.div>
         </div>
       </div>
 

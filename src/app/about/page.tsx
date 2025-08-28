@@ -1,4 +1,7 @@
+'use client';
+
 import Link from 'next/link';
+import { motion } from 'framer-motion';
 
 export default function About() {
   return (
@@ -72,7 +75,13 @@ export default function About() {
           </div>
 
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
-            <div className="bg-white p-8 rounded-lg shadow-md">
+            <motion.div 
+              className="bg-white p-8 rounded-lg shadow-md"
+              initial={{ opacity: 0, y: 30 }}
+              whileInView={{ opacity: 1, y: 0 }}
+              viewport={{ once: true }}
+              transition={{ duration: 0.6, delay: 0.1 }}
+            >
               <div className="w-12 h-12 bg-blue-100 rounded-lg flex items-center justify-center mb-6">
                 <svg className="w-6 h-6 text-blue-900" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                   <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 21V5a2 2 0 00-2-2H7a2 2 0 00-2 2v16m14 0h2m-2 0h-4m-5 0H9m0 0H5m0 0h2M7 7h6M7 11h6m-6 4h3" />
@@ -85,7 +94,7 @@ export default function About() {
                 Our Peru specialists have lived and worked in the country, building relationships 
                 with local communities and discovering authentic experiences off the beaten path.
               </p>
-            </div>
+            </motion.div>
 
             <div className="bg-white p-8 rounded-lg shadow-md">
               <div className="w-12 h-12 bg-blue-100 rounded-lg flex items-center justify-center mb-6">

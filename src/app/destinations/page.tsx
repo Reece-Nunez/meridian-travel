@@ -1,4 +1,7 @@
+'use client';
+
 import Link from 'next/link';
+import { motion } from 'framer-motion';
 
 export default function Destinations() {
   const destinations = [
@@ -78,8 +81,15 @@ export default function Destinations() {
       {/* Destinations Grid */}
       <div className="py-16 px-4 sm:px-6 lg:px-8 max-w-7xl mx-auto">
         <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
-          {destinations.map((destination) => (
-            <div key={destination.id} className="bg-white border border-gray-200 rounded-lg shadow-lg hover:shadow-xl transition-shadow duration-300">
+          {destinations.map((destination, index) => (
+            <motion.div 
+              key={destination.id} 
+              className="bg-white border border-gray-200 rounded-lg shadow-lg hover:shadow-xl transition-shadow duration-300"
+              initial={{ opacity: 0, y: 30 }}
+              whileInView={{ opacity: 1, y: 0 }}
+              viewport={{ once: true }}
+              transition={{ duration: 0.6, delay: index * 0.1 }}
+            >
               <div className="p-8">
                 <div className="flex justify-between items-start mb-4">
                   <h3 className="text-2xl font-bold text-gray-900">{destination.name}</h3>
@@ -134,7 +144,7 @@ export default function Destinations() {
                   </Link>
                 </div>
               </div>
-            </div>
+            </motion.div>
           ))}
         </div>
       </div>

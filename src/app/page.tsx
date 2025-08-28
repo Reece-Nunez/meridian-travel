@@ -1,4 +1,7 @@
+'use client';
+
 import Link from 'next/link';
+import { motion } from 'framer-motion';
 
 export default function Home() {
   return (
@@ -7,14 +10,29 @@ export default function Home() {
       <div className="relative bg-gradient-to-r from-blue-900 to-blue-800 h-screen flex items-center justify-center">
         <div className="absolute inset-0 bg-black opacity-40"></div>
         <div className="relative z-10 text-center text-white px-4 sm:px-6 lg:px-8">
-          <h1 className="text-4xl sm:text-5xl lg:text-6xl font-bold mb-6">
+          <motion.h1 
+            className="text-4xl sm:text-5xl lg:text-6xl font-bold mb-6"
+            initial={{ opacity: 0, y: 30 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ duration: 0.8, delay: 0.2 }}
+          >
             Discover the Magic of Peru
-          </h1>
-          <p className="text-xl sm:text-2xl mb-8 max-w-3xl mx-auto">
+          </motion.h1>
+          <motion.p 
+            className="text-xl sm:text-2xl mb-8 max-w-3xl mx-auto"
+            initial={{ opacity: 0, y: 20 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ duration: 0.8, delay: 0.4 }}
+          >
             Experience the ancient wonders of Machu Picchu, explore the vibrant Amazon rainforest, 
             and immerse yourself in Peru's rich cultural heritage with expertly crafted luxury tours.
-          </p>
-          <div className="flex flex-col sm:flex-row gap-4 justify-center">
+          </motion.p>
+          <motion.div 
+            className="flex flex-col sm:flex-row gap-4 justify-center"
+            initial={{ opacity: 0, y: 20 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ duration: 0.8, delay: 0.6 }}
+          >
             <Link
               href="/destinations"
               className="bg-white text-blue-900 px-8 py-4 rounded-md text-lg font-medium hover:bg-gray-100 transition-colors duration-200"
@@ -27,7 +45,7 @@ export default function Home() {
             >
               Plan Your Journey
             </Link>
-          </div>
+          </motion.div>
         </div>
       </div>
 
@@ -95,7 +113,13 @@ export default function Home() {
 
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
             {/* Machu Picchu */}
-            <div className="bg-white rounded-lg shadow-lg overflow-hidden hover:shadow-xl transition-shadow duration-300">
+            <motion.div 
+              className="bg-white rounded-lg shadow-lg overflow-hidden hover:shadow-xl transition-shadow duration-300"
+              initial={{ opacity: 0, y: 30 }}
+              whileInView={{ opacity: 1, y: 0 }}
+              viewport={{ once: true }}
+              transition={{ duration: 0.6, delay: 0.1 }}
+            >
               <div className="h-48 bg-gradient-to-br from-green-600 to-green-800 flex items-center justify-center">
                 <h3 className="text-white text-2xl font-bold">Machu Picchu</h3>
               </div>
@@ -107,10 +131,16 @@ export default function Home() {
                   Learn More →
                 </Link>
               </div>
-            </div>
+            </motion.div>
 
             {/* Amazon Rainforest */}
-            <div className="bg-white rounded-lg shadow-lg overflow-hidden hover:shadow-xl transition-shadow duration-300">
+            <motion.div 
+              className="bg-white rounded-lg shadow-lg overflow-hidden hover:shadow-xl transition-shadow duration-300"
+              initial={{ opacity: 0, y: 30 }}
+              whileInView={{ opacity: 1, y: 0 }}
+              viewport={{ once: true }}
+              transition={{ duration: 0.6, delay: 0.2 }}
+            >
               <div className="h-48 bg-gradient-to-br from-green-700 to-green-900 flex items-center justify-center">
                 <h3 className="text-white text-2xl font-bold">Amazon Rainforest</h3>
               </div>
@@ -122,10 +152,16 @@ export default function Home() {
                   Learn More →
                 </Link>
               </div>
-            </div>
+            </motion.div>
 
             {/* Sacred Valley */}
-            <div className="bg-white rounded-lg shadow-lg overflow-hidden hover:shadow-xl transition-shadow duration-300">
+            <motion.div 
+              className="bg-white rounded-lg shadow-lg overflow-hidden hover:shadow-xl transition-shadow duration-300"
+              initial={{ opacity: 0, y: 30 }}
+              whileInView={{ opacity: 1, y: 0 }}
+              viewport={{ once: true }}
+              transition={{ duration: 0.6, delay: 0.3 }}
+            >
               <div className="h-48 bg-gradient-to-br from-orange-600 to-red-600 flex items-center justify-center">
                 <h3 className="text-white text-2xl font-bold">Sacred Valley</h3>
               </div>
@@ -137,7 +173,7 @@ export default function Home() {
                   Learn More →
                 </Link>
               </div>
-            </div>
+            </motion.div>
           </div>
         </div>
       </div>

@@ -1,6 +1,7 @@
 'use client';
 
 import { useState } from 'react';
+import { motion } from 'framer-motion';
 
 export default function QuoteRequest() {
   const [formData, setFormData] = useState({
@@ -57,9 +58,20 @@ export default function QuoteRequest() {
 
       {/* Form Section */}
       <div className="py-16 px-4 sm:px-6 lg:px-8 max-w-4xl mx-auto">
-        <form onSubmit={handleSubmit} className="space-y-8">
+        <motion.form 
+          onSubmit={handleSubmit} 
+          className="space-y-8"
+          initial={{ opacity: 0, y: 20 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ duration: 0.6, delay: 0.2 }}
+        >
           {/* Contact Information */}
-          <div className="bg-gray-50 p-6 rounded-lg">
+          <motion.div 
+            className="bg-gray-50 p-6 rounded-lg"
+            initial={{ opacity: 0, x: -20 }}
+            animate={{ opacity: 1, x: 0 }}
+            transition={{ duration: 0.5, delay: 0.3 }}
+          >
             <h2 className="text-2xl font-bold text-gray-900 mb-6">Contact Information</h2>
             <div className="grid grid-cols-1 sm:grid-cols-2 gap-6">
               <div>
@@ -119,10 +131,15 @@ export default function QuoteRequest() {
                 />
               </div>
             </div>
-          </div>
+          </motion.div>
 
           {/* Travel Details */}
-          <div className="bg-gray-50 p-6 rounded-lg">
+          <motion.div 
+            className="bg-gray-50 p-6 rounded-lg"
+            initial={{ opacity: 0, x: 20 }}
+            animate={{ opacity: 1, x: 0 }}
+            transition={{ duration: 0.5, delay: 0.4 }}
+          >
             <h2 className="text-2xl font-bold text-gray-900 mb-6">Travel Details</h2>
             
             <div className="mb-6">
@@ -161,7 +178,7 @@ export default function QuoteRequest() {
                     onChange={handleInputChange}
                     className="h-4 w-4 text-blue-900 focus:ring-blue-900 border-gray-300"
                   />
-                  <span className="ml-2">I'm flexible with dates</span>
+                  <span className="ml-2 text-gray-700">I'm flexible with dates</span>
                 </label>
                 
                 {formData.dateType === 'flexible' && (
@@ -221,7 +238,7 @@ export default function QuoteRequest() {
                     onChange={handleInputChange}
                     className="h-4 w-4 text-blue-900 focus:ring-blue-900 border-gray-300"
                   />
-                  <span className="ml-2">I have specific dates in mind</span>
+                  <span className="ml-2 text-gray-700">I have specific dates in mind</span>
                 </label>
 
                 {formData.dateType === 'exact' && (
@@ -332,10 +349,15 @@ export default function QuoteRequest() {
                 <option value="5000+">$5,000+</option>
               </select>
             </div>
-          </div>
+          </motion.div>
 
           {/* Additional Information */}
-          <div className="bg-gray-50 p-6 rounded-lg">
+          <motion.div 
+            className="bg-gray-50 p-6 rounded-lg"
+            initial={{ opacity: 0, y: 20 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ duration: 0.5, delay: 0.5 }}
+          >
             <h2 className="text-2xl font-bold text-gray-900 mb-6">Additional Information</h2>
             
             <div className="mb-6">
@@ -367,10 +389,15 @@ export default function QuoteRequest() {
                 className="w-full px-4 py-3 border border-gray-300 rounded-md focus:ring-2 focus:ring-blue-900 focus:border-transparent"
               />
             </div>
-          </div>
+          </motion.div>
 
           {/* Submit Button */}
-          <div className="text-center">
+          <motion.div 
+            className="text-center"
+            initial={{ opacity: 0, scale: 0.95 }}
+            animate={{ opacity: 1, scale: 1 }}
+            transition={{ duration: 0.5, delay: 0.6 }}
+          >
             <button
               type="submit"
               className="bg-blue-900 hover:bg-blue-800 text-white px-8 py-4 rounded-md text-lg font-medium transition-colors duration-200"
@@ -380,8 +407,8 @@ export default function QuoteRequest() {
             <p className="text-gray-600 mt-4 text-sm">
               We'll contact you within 24 hours with a personalized itinerary and pricing.
             </p>
-          </div>
-        </form>
+          </motion.div>
+        </motion.form>
       </div>
     </div>
   );

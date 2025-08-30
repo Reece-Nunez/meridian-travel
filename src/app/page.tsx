@@ -129,8 +129,19 @@ export default function Home() {
               viewport={{ once: true }}
               transition={{ duration: 0.6, delay: 0.1 }}
             >
-              <div className="h-48 bg-gradient-to-br from-green-600 to-green-800 flex items-center justify-center">
-                <h3 className="text-white text-2xl font-bold">Machu Picchu</h3>
+              <div className="h-48 relative overflow-hidden bg-gray-200">
+                <img 
+                  src="/machu.jpg" 
+                  alt="Machu Picchu ancient citadel ruins"
+                  className="absolute inset-0 w-full h-full object-cover z-0"
+                  onError={(e) => {
+                    console.error('Failed to load machu.jpg');
+                    e.currentTarget.style.display = 'none';
+                  }}
+                />
+                <div className="absolute inset-0 bg-opacity-30 flex items-center justify-center z-10">
+                  <h3 className="text-white text-2xl font-bold">Machu Picchu</h3>
+                </div>
               </div>
               <div className="p-6">
                 <p className="text-gray-600 mb-4">
@@ -150,8 +161,19 @@ export default function Home() {
               viewport={{ once: true }}
               transition={{ duration: 0.6, delay: 0.2 }}
             >
-              <div className="h-48 bg-gradient-to-br from-green-700 to-green-900 flex items-center justify-center">
-                <h3 className="text-white text-2xl font-bold">Amazon Rainforest</h3>
+              <div className="h-48 relative overflow-hidden bg-gray-200">
+                <img 
+                  src="/rainforest.jpg" 
+                  alt="Amazon rainforest canopy and wildlife"
+                  className="absolute inset-0 w-full h-full object-cover z-0"
+                  onError={(e) => {
+                    console.error('Failed to load rainforest.jpg');
+                    e.currentTarget.style.display = 'none';
+                  }}
+                />
+                <div className="absolute inset-0 bg-opacity-30 flex items-center justify-center z-10">
+                  <h3 className="text-white text-2xl font-bold">Amazon Rainforest</h3>
+                </div>
               </div>
               <div className="p-6">
                 <p className="text-gray-600 mb-4">
@@ -171,8 +193,19 @@ export default function Home() {
               viewport={{ once: true }}
               transition={{ duration: 0.6, delay: 0.3 }}
             >
-              <div className="h-48 bg-gradient-to-br from-orange-600 to-red-600 flex items-center justify-center">
-                <h3 className="text-white text-2xl font-bold">Sacred Valley</h3>
+              <div className="h-48 relative overflow-hidden bg-gray-200">
+                <img 
+                  src="/sacred-valley.jpg" 
+                  alt="Sacred Valley terraced landscapes and Andean villages"
+                  className="absolute inset-0 w-full h-full object-cover z-0"
+                  onError={(e) => {
+                    console.error('Failed to load sacred-valley.jpg');
+                    e.currentTarget.style.display = 'none';
+                  }}
+                />
+                <div className="absolute inset-0 bg-opacity-30 flex items-center justify-center z-10">
+                  <h3 className="text-white text-2xl font-bold">Sacred Valley</h3>
+                </div>
               </div>
               <div className="p-6">
                 <p className="text-gray-600 mb-4">

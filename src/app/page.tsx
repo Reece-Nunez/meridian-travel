@@ -7,8 +7,17 @@ export default function Home() {
   return (
     <div className="min-h-screen bg-white">
       {/* Hero Section */}
-      <div className="relative bg-gradient-to-r from-blue-900 to-blue-800 h-screen flex items-center justify-center">
-        <div className="absolute inset-0 bg-black opacity-40"></div>
+      <div className="relative h-screen flex items-center justify-center overflow-hidden">
+        <video 
+          className="absolute inset-0 w-full h-full object-cover"
+          autoPlay 
+          muted 
+          loop
+          playsInline
+        >
+          <source src="/ecuador.mp4" type="video/mp4" />
+        </video>
+        <div className="absolute inset-0 bg-black opacity-50"></div>
         <div className="relative z-10 text-center text-white px-4 sm:px-6 lg:px-8">
           <motion.h1 
             className="text-4xl sm:text-5xl lg:text-6xl font-bold mb-6"

@@ -64,7 +64,7 @@ export default function Destinations() {
   return (
     <div className="min-h-screen bg-white">
       {/* Header Section */}
-      <div className="bg-gradient-to-r from-blue-900 to-blue-800 py-16">
+      <div className="bg-[#2D5016] py-16">
         <div className="px-4 sm:px-6 lg:px-8 max-w-7xl mx-auto">
           <div className="text-center text-white">
             <h1 className="text-4xl sm:text-5xl font-bold mb-4">
@@ -92,8 +92,8 @@ export default function Destinations() {
             >
               <div className="p-8">
                 <div className="flex justify-between items-start mb-4">
-                  <h3 className="text-2xl font-bold text-gray-900">{destination.name}</h3>
-                  <span className="text-blue-900 font-bold text-lg">{destination.price}</span>
+                  <h3 className="text-2xl font-bold text-[#8B4513]">{destination.name}</h3>
+                  <span className="text-[#B8860B] font-bold text-lg">{destination.price}</span>
                 </div>
                 
                 <div className="flex flex-wrap gap-4 mb-4 text-sm text-gray-600">
@@ -116,11 +116,11 @@ export default function Destinations() {
                 </p>
 
                 <div className="mb-6">
-                  <h4 className="font-semibold text-gray-900 mb-2">Tour Highlights:</h4>
+                  <h4 className="font-semibold text-[#8B4513] mb-2">Tour Highlights:</h4>
                   <ul className="grid grid-cols-1 sm:grid-cols-2 gap-1">
                     {destination.highlights.map((highlight, index) => (
                       <li key={index} className="flex items-center text-gray-600 text-sm">
-                        <svg className="w-4 h-4 text-green-500 mr-2 flex-shrink-0" fill="currentColor" viewBox="0 0 20 20">
+                        <svg className="w-4 h-4 text-[#2D5016] mr-2 flex-shrink-0" fill="currentColor" viewBox="0 0 20 20">
                           <path fillRule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" clipRule="evenodd" />
                         </svg>
                         {highlight}
@@ -132,13 +132,13 @@ export default function Destinations() {
                 <div className="flex flex-col sm:flex-row gap-3">
                   <Link
                     href="/quote"
-                    className="bg-blue-900 hover:bg-blue-800 text-white px-6 py-3 rounded-md text-center font-medium transition-colors duration-200 flex-1"
+                    className="bg-[#B8860B] hover:bg-[#DAA520] text-[#F5F5DC] px-6 py-3 rounded-md text-center font-medium transition-colors duration-200 flex-1"
                   >
                     Request Quote
                   </Link>
                   <Link
                     href="/contact"
-                    className="border border-blue-900 text-blue-900 hover:bg-blue-50 px-6 py-3 rounded-md text-center font-medium transition-colors duration-200 flex-1"
+                    className="border border-[#8B4513] text-[#8B4513] hover:bg-[#F5F5DC] px-6 py-3 rounded-md text-center font-medium transition-colors duration-200 flex-1"
                   >
                     Learn More
                   </Link>
@@ -150,9 +150,9 @@ export default function Destinations() {
       </div>
 
       {/* Call to Action */}
-      <div className="bg-gray-50 py-16">
+      <div className="bg-[#F5F5DC] py-16">
         <div className="px-4 sm:px-6 lg:px-8 max-w-4xl mx-auto text-center">
-          <h2 className="text-3xl font-bold text-gray-900 mb-4">
+          <h2 className="text-3xl font-bold text-[#8B4513] mb-4">
             Don't See What You're Looking For?
           </h2>
           <p className="text-xl text-gray-600 mb-8">
@@ -161,7 +161,7 @@ export default function Destinations() {
           </p>
           <Link
             href="/quote"
-            className="bg-blue-900 hover:bg-blue-800 text-white px-8 py-4 rounded-md text-lg font-medium transition-colors duration-200"
+            className="bg-[#B8860B] hover:bg-[#DAA520] text-[#F5F5DC] px-8 py-4 rounded-md text-lg font-medium transition-colors duration-200"
           >
             Plan Your Custom Journey
           </Link>

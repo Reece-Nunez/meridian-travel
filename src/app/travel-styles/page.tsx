@@ -112,7 +112,7 @@ export default function TravelStyles() {
   return (
     <div className="min-h-screen bg-white">
       {/* Header Section */}
-      <div className="bg-gradient-to-r from-blue-900 to-blue-800 py-16">
+      <div className="bg-[#2D5016] py-16">
         <div className="px-4 sm:px-6 lg:px-8 max-w-7xl mx-auto">
           <div className="text-center text-white">
             <h1 className="text-4xl sm:text-5xl font-bold mb-4">
@@ -141,10 +141,10 @@ export default function TravelStyles() {
               <div className="p-8">
                 <div className="flex justify-between items-start mb-4">
                   <div>
-                    <h3 className="text-2xl font-bold text-gray-900 mb-2">{style.name}</h3>
-                    <p className="text-blue-900 font-medium">{style.subtitle}</p>
+                    <h3 className="text-2xl font-bold text-[#8B4513] mb-2">{style.name}</h3>
+                    <p className="text-[#B8860B] font-medium">{style.subtitle}</p>
                   </div>
-                  <span className="text-blue-900 font-bold text-lg">{style.price}</span>
+                  <span className="text-[#B8860B] font-bold text-lg">{style.price}</span>
                 </div>
                 
                 <p className="text-gray-600 mb-6 leading-relaxed">
@@ -152,11 +152,11 @@ export default function TravelStyles() {
                 </p>
 
                 <div className="mb-6">
-                  <h4 className="font-semibold text-gray-900 mb-3">What's Included:</h4>
+                  <h4 className="font-semibold text-[#8B4513] mb-3">What's Included:</h4>
                   <ul className="space-y-1">
                     {style.features.map((feature, index) => (
                       <li key={index} className="flex items-center text-gray-600 text-sm">
-                        <svg className="w-4 h-4 text-green-500 mr-3 flex-shrink-0" fill="currentColor" viewBox="0 0 20 20">
+                        <svg className="w-4 h-4 text-[#2D5016] mr-3 flex-shrink-0" fill="currentColor" viewBox="0 0 20 20">
                           <path fillRule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" clipRule="evenodd" />
                         </svg>
                         {feature}
@@ -167,11 +167,11 @@ export default function TravelStyles() {
 
                 <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 mb-6 text-sm">
                   <div>
-                    <span className="font-semibold text-gray-900">Ideal for:</span>
+                    <span className="font-semibold text-[#8B4513]">Ideal for:</span>
                     <p className="text-gray-600">{style.idealFor}</p>
                   </div>
                   <div>
-                    <span className="font-semibold text-gray-900">Duration:</span>
+                    <span className="font-semibold text-[#8B4513]">Duration:</span>
                     <p className="text-gray-600">{style.duration}</p>
                   </div>
                 </div>
@@ -179,13 +179,13 @@ export default function TravelStyles() {
                 <div className="flex flex-col sm:flex-row gap-3">
                   <Link
                     href="/quote"
-                    className="bg-blue-900 hover:bg-blue-800 text-white px-6 py-3 rounded-md text-center font-medium transition-colors duration-200 flex-1"
+                    className="bg-[#B8860B] hover:bg-[#DAA520] text-[#F5F5DC] px-6 py-3 rounded-md text-center font-medium transition-colors duration-200 flex-1"
                   >
                     Request Quote
                   </Link>
                   <Link
                     href="/contact"
-                    className="border border-blue-900 text-blue-900 hover:bg-blue-50 px-6 py-3 rounded-md text-center font-medium transition-colors duration-200 flex-1"
+                    className="border border-[#8B4513] text-[#8B4513] hover:bg-[#F5F5DC] px-6 py-3 rounded-md text-center font-medium transition-colors duration-200 flex-1"
                   >
                     Learn More
                   </Link>
@@ -197,10 +197,10 @@ export default function TravelStyles() {
       </div>
 
       {/* Combination Tours */}
-      <div className="bg-gray-50 py-16">
+      <div className="bg-[#F5F5DC] py-16">
         <div className="px-4 sm:px-6 lg:px-8 max-w-7xl mx-auto">
           <div className="text-center mb-12">
-            <h2 className="text-3xl font-bold text-gray-900 mb-4">
+            <h2 className="text-3xl font-bold text-[#8B4513] mb-4">
               Can't Choose Just One Style?
             </h2>
             <p className="text-xl text-gray-600 max-w-2xl mx-auto">
@@ -212,12 +212,12 @@ export default function TravelStyles() {
           <div className="bg-white rounded-lg shadow-lg p-8">
             <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
               <div className="text-center">
-                <div className="w-16 h-16 bg-blue-100 rounded-full flex items-center justify-center mx-auto mb-4">
-                  <svg className="w-8 h-8 text-blue-900" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <div className="w-16 h-16 bg-[#B8860B] rounded-full flex items-center justify-center mx-auto mb-4">
+                  <svg className="w-8 h-8 text-[#F5F5DC]" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                     <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4.318 6.318a4.5 4.5 0 000 6.364L12 20.364l7.682-7.682a4.5 4.5 0 00-6.364-6.364L12 7.636l-1.318-1.318a4.5 4.5 0 00-6.364 0z" />
                   </svg>
                 </div>
-                <h3 className="text-lg font-semibold text-gray-900 mb-2">
+                <h3 className="text-lg font-semibold text-[#8B4513] mb-2">
                   Custom Combinations
                 </h3>
                 <p className="text-gray-600">
@@ -226,12 +226,12 @@ export default function TravelStyles() {
               </div>
 
               <div className="text-center">
-                <div className="w-16 h-16 bg-blue-100 rounded-full flex items-center justify-center mx-auto mb-4">
-                  <svg className="w-8 h-8 text-blue-900" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <div className="w-16 h-16 bg-[#B8860B] rounded-full flex items-center justify-center mx-auto mb-4">
+                  <svg className="w-8 h-8 text-[#F5F5DC]" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                     <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M17 20h5v-2a3 3 0 00-5.356-1.857M17 20H7m10 0v-2c0-.656-.126-1.283-.356-1.857M7 20H2v-2a3 3 0 015.356-1.857M7 20v-2c0-.656.126-1.283.356-1.857m0 0a5.002 5.002 0 019.288 0M15 7a3 3 0 11-6 0 3 3 0 016 0zm6 3a2 2 0 11-4 0 2 2 0 014 0zM7 10a2 2 0 11-4 0 2 2 0 014 0z" />
                   </svg>
                 </div>
-                <h3 className="text-lg font-semibold text-gray-900 mb-2">
+                <h3 className="text-lg font-semibold text-[#8B4513] mb-2">
                   Group Flexibility
                 </h3>
                 <p className="text-gray-600">
@@ -240,12 +240,12 @@ export default function TravelStyles() {
               </div>
 
               <div className="text-center">
-                <div className="w-16 h-16 bg-blue-100 rounded-full flex items-center justify-center mx-auto mb-4">
-                  <svg className="w-8 h-8 text-blue-900" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <div className="w-16 h-16 bg-[#B8860B] rounded-full flex items-center justify-center mx-auto mb-4">
+                  <svg className="w-8 h-8 text-[#F5F5DC]" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                     <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z" />
                   </svg>
                 </div>
-                <h3 className="text-lg font-semibold text-gray-900 mb-2">
+                <h3 className="text-lg font-semibold text-[#8B4513] mb-2">
                   Extended Journeys
                 </h3>
                 <p className="text-gray-600">
@@ -259,7 +259,7 @@ export default function TravelStyles() {
 
       {/* Call to Action */}
       <div className="py-16 px-4 sm:px-6 lg:px-8 max-w-4xl mx-auto text-center">
-        <h2 className="text-3xl font-bold text-gray-900 mb-4">
+        <h2 className="text-3xl font-bold text-[#8B4513] mb-4">
           Ready to Discover Your Perfect Peru Style?
         </h2>
         <p className="text-xl text-gray-600 mb-8">
@@ -268,7 +268,7 @@ export default function TravelStyles() {
         </p>
         <Link
           href="/quote"
-          className="bg-blue-900 hover:bg-blue-800 text-white px-8 py-4 rounded-md text-lg font-medium transition-colors duration-200"
+          className="bg-[#B8860B] hover:bg-[#DAA520] text-[#F5F5DC] px-8 py-4 rounded-md text-lg font-medium transition-colors duration-200"
         >
           Start Planning Your Adventure
         </Link>

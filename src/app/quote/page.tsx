@@ -40,7 +40,7 @@ export default function QuoteRequest() {
   return (
     <div className="min-h-screen bg-white">
       {/* Header Section */}
-      <div className="bg-gradient-to-r from-blue-900 to-blue-800 py-16">
+      <div className="bg-[#2D5016] py-16">
         <div className="px-4 sm:px-6 lg:px-8 max-w-4xl mx-auto">
           <div className="text-center text-white">
             <h1 className="text-4xl sm:text-5xl font-bold mb-4">
@@ -49,7 +49,7 @@ export default function QuoteRequest() {
             <p className="text-xl mb-4">
               Tell us about your dream Peru adventure and we'll create a personalized itinerary just for you.
             </p>
-            <p className="text-blue-100">
+            <p className="text-[#F5F5DC]">
               Our Peru specialists will contact you within 24 hours with a detailed proposal.
             </p>
           </div>
@@ -67,12 +67,12 @@ export default function QuoteRequest() {
         >
           {/* Contact Information */}
           <motion.div 
-            className="bg-gray-50 p-6 rounded-lg"
+            className="bg-[#F5F5DC] p-6 rounded-lg"
             initial={{ opacity: 0, x: -20 }}
             animate={{ opacity: 1, x: 0 }}
             transition={{ duration: 0.5, delay: 0.3 }}
           >
-            <h2 className="text-2xl font-bold text-gray-900 mb-6">Contact Information</h2>
+            <h2 className="text-2xl font-bold text-[#8B4513] mb-6">Contact Information</h2>
             <div className="grid grid-cols-1 sm:grid-cols-2 gap-6">
               <div>
                 <label htmlFor="firstName" className="block text-sm font-medium text-gray-700 mb-2">
@@ -85,7 +85,7 @@ export default function QuoteRequest() {
                   required
                   value={formData.firstName}
                   onChange={handleInputChange}
-                  className="w-full px-4 py-3 border border-gray-300 rounded-md focus:ring-2 focus:ring-blue-900 focus:border-transparent"
+                  className="w-full px-4 py-3 border border-gray-300 rounded-md focus:ring-2 focus:ring-[#B8860B] focus:border-transparent"
                 />
               </div>
               <div>
@@ -99,7 +99,7 @@ export default function QuoteRequest() {
                   required
                   value={formData.lastName}
                   onChange={handleInputChange}
-                  className="w-full px-4 py-3 border border-gray-300 rounded-md focus:ring-2 focus:ring-blue-900 focus:border-transparent"
+                  className="w-full px-4 py-3 border border-gray-300 rounded-md focus:ring-2 focus:ring-[#B8860B] focus:border-transparent"
                 />
               </div>
               <div>
@@ -113,7 +113,7 @@ export default function QuoteRequest() {
                   required
                   value={formData.email}
                   onChange={handleInputChange}
-                  className="w-full px-4 py-3 border border-gray-300 rounded-md focus:ring-2 focus:ring-blue-900 focus:border-transparent"
+                  className="w-full px-4 py-3 border border-gray-300 rounded-md focus:ring-2 focus:ring-[#B8860B] focus:border-transparent"
                 />
               </div>
               <div>
@@ -127,7 +127,7 @@ export default function QuoteRequest() {
                   required
                   value={formData.phone}
                   onChange={handleInputChange}
-                  className="w-full px-4 py-3 border border-gray-300 rounded-md focus:ring-2 focus:ring-blue-900 focus:border-transparent"
+                  className="w-full px-4 py-3 border border-gray-300 rounded-md focus:ring-2 focus:ring-[#B8860B] focus:border-transparent"
                 />
               </div>
             </div>
@@ -135,12 +135,12 @@ export default function QuoteRequest() {
 
           {/* Travel Details */}
           <motion.div 
-            className="bg-gray-50 p-6 rounded-lg"
+            className="bg-[#F5F5DC] p-6 rounded-lg"
             initial={{ opacity: 0, x: 20 }}
             animate={{ opacity: 1, x: 0 }}
             transition={{ duration: 0.5, delay: 0.4 }}
           >
-            <h2 className="text-2xl font-bold text-gray-900 mb-6">Travel Details</h2>
+            <h2 className="text-2xl font-bold text-[#8B4513] mb-6">Travel Details</h2>
             
             <div className="mb-6">
               <label htmlFor="destination" className="block text-sm font-medium text-gray-700 mb-2">
@@ -176,7 +176,7 @@ export default function QuoteRequest() {
                     value="flexible"
                     checked={formData.dateType === 'flexible'}
                     onChange={handleInputChange}
-                    className="h-4 w-4 text-blue-900 focus:ring-blue-900 border-gray-300"
+                    className="h-4 w-4 text-[#B8860B] focus:ring-[#B8860B] border-gray-300"
                   />
                   <span className="ml-2 text-gray-700">I'm flexible with dates</span>
                 </label>
@@ -192,7 +192,7 @@ export default function QuoteRequest() {
                         name="flexibleMonth"
                         value={formData.flexibleMonth}
                         onChange={handleInputChange}
-                        className="w-full px-4 py-3 border border-gray-300 rounded-md focus:ring-2 focus:ring-blue-900 focus:border-transparent"
+                        className="w-full px-4 py-3 border border-gray-300 rounded-md focus:ring-2 focus:ring-[#B8860B] focus:border-transparent"
                       >
                         <option value="">Select Month</option>
                         <option value="January">January</option>
@@ -218,7 +218,7 @@ export default function QuoteRequest() {
                         name="flexibleYear"
                         value={formData.flexibleYear}
                         onChange={handleInputChange}
-                        className="w-full px-4 py-3 border border-gray-300 rounded-md focus:ring-2 focus:ring-blue-900 focus:border-transparent"
+                        className="w-full px-4 py-3 border border-gray-300 rounded-md focus:ring-2 focus:ring-[#B8860B] focus:border-transparent"
                       >
                         <option value="">Select Year</option>
                         <option value="2024">2024</option>
@@ -236,7 +236,7 @@ export default function QuoteRequest() {
                     value="exact"
                     checked={formData.dateType === 'exact'}
                     onChange={handleInputChange}
-                    className="h-4 w-4 text-blue-900 focus:ring-blue-900 border-gray-300"
+                    className="h-4 w-4 text-[#B8860B] focus:ring-[#B8860B] border-gray-300"
                   />
                   <span className="ml-2 text-gray-700">I have specific dates in mind</span>
                 </label>
@@ -253,7 +253,7 @@ export default function QuoteRequest() {
                         name="exactStartDate"
                         value={formData.exactStartDate}
                         onChange={handleInputChange}
-                        className="w-full px-4 py-3 border border-gray-300 rounded-md focus:ring-2 focus:ring-blue-900 focus:border-transparent"
+                        className="w-full px-4 py-3 border border-gray-300 rounded-md focus:ring-2 focus:ring-[#B8860B] focus:border-transparent"
                       />
                     </div>
                     <div>
@@ -266,7 +266,7 @@ export default function QuoteRequest() {
                         name="exactEndDate"
                         value={formData.exactEndDate}
                         onChange={handleInputChange}
-                        className="w-full px-4 py-3 border border-gray-300 rounded-md focus:ring-2 focus:ring-blue-900 focus:border-transparent"
+                        className="w-full px-4 py-3 border border-gray-300 rounded-md focus:ring-2 focus:ring-[#B8860B] focus:border-transparent"
                       />
                     </div>
                   </div>
@@ -286,7 +286,7 @@ export default function QuoteRequest() {
                   required
                   value={formData.adults}
                   onChange={handleInputChange}
-                  className="w-full px-4 py-3 border border-gray-300 rounded-md focus:ring-2 focus:ring-blue-900 focus:border-transparent"
+                  className="w-full px-4 py-3 border border-gray-300 rounded-md focus:ring-2 focus:ring-[#B8860B] focus:border-transparent"
                 >
                   {[...Array(10)].map((_, i) => (
                     <option key={i} value={i + 1}>{i + 1}</option>
@@ -302,7 +302,7 @@ export default function QuoteRequest() {
                   name="children"
                   value={formData.children}
                   onChange={handleInputChange}
-                  className="w-full px-4 py-3 border border-gray-300 rounded-md focus:ring-2 focus:ring-blue-900 focus:border-transparent"
+                  className="w-full px-4 py-3 border border-gray-300 rounded-md focus:ring-2 focus:ring-[#B8860B] focus:border-transparent"
                 >
                   {[...Array(6)].map((_, i) => (
                     <option key={i} value={i}>{i}</option>
@@ -319,7 +319,7 @@ export default function QuoteRequest() {
                   required
                   value={formData.rooms}
                   onChange={handleInputChange}
-                  className="w-full px-4 py-3 border border-gray-300 rounded-md focus:ring-2 focus:ring-blue-900 focus:border-transparent"
+                  className="w-full px-4 py-3 border border-gray-300 rounded-md focus:ring-2 focus:ring-[#B8860B] focus:border-transparent"
                 >
                   {[...Array(5)].map((_, i) => (
                     <option key={i} value={i + 1}>{i + 1}</option>
@@ -353,12 +353,12 @@ export default function QuoteRequest() {
 
           {/* Additional Information */}
           <motion.div 
-            className="bg-gray-50 p-6 rounded-lg"
+            className="bg-[#F5F5DC] p-6 rounded-lg"
             initial={{ opacity: 0, y: 20 }}
             animate={{ opacity: 1, y: 0 }}
             transition={{ duration: 0.5, delay: 0.5 }}
           >
-            <h2 className="text-2xl font-bold text-gray-900 mb-6">Additional Information</h2>
+            <h2 className="text-2xl font-bold text-[#8B4513] mb-6">Additional Information</h2>
             
             <div className="mb-6">
               <label htmlFor="specialRequirements" className="block text-sm font-medium text-gray-700 mb-2">
@@ -400,7 +400,7 @@ export default function QuoteRequest() {
           >
             <button
               type="submit"
-              className="bg-blue-900 hover:bg-blue-800 text-white px-8 py-4 rounded-md text-lg font-medium transition-colors duration-200"
+              className="bg-[#B8860B] hover:bg-[#DAA520] text-[#F5F5DC] px-8 py-4 rounded-md text-lg font-medium transition-colors duration-200"
             >
               Request My Custom Quote
             </button>

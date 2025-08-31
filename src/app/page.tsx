@@ -8,35 +8,35 @@ export default function Home() {
     <div className="min-h-screen bg-white">
       {/* Hero Section */}
       <div className="relative h-screen flex items-center justify-center overflow-hidden">
-        <video 
+        <video
           className="absolute inset-0 w-full h-full object-cover"
-          autoPlay 
-          muted 
+          autoPlay
+          muted
           loop
           playsInline
         >
-          <source src="/ecuador.mp4" type="video/mp4" />
+          <source src="/meridian-header.mp4" type="video/mp4" />
         </video>
         <div className="absolute inset-0 bg-black opacity-50"></div>
         <div className="relative z-10 text-center text-white px-4 sm:px-6 lg:px-8">
-          <motion.h1 
+          <motion.h1
             className="text-4xl sm:text-5xl lg:text-6xl font-bold mb-6"
             initial={{ opacity: 0, y: 30 }}
             animate={{ opacity: 1, y: 0 }}
             transition={{ duration: 0.8, delay: 0.2 }}
           >
-            Discover the Magic of Peru
+            Discover the Magic of South America
           </motion.h1>
-          <motion.p 
+          <motion.p
             className="text-xl sm:text-2xl mb-8 max-w-3xl mx-auto"
             initial={{ opacity: 0, y: 20 }}
             animate={{ opacity: 1, y: 0 }}
             transition={{ duration: 0.8, delay: 0.4 }}
           >
-            Experience the ancient wonders of Machu Picchu, explore the vibrant Amazon rainforest, 
-            and immerse yourself in Peru's rich cultural heritage with expertly crafted luxury tours.
+            From Machu Picchu to Patagonia, explore South America’s
+            rich heritage and stunning landscapes with curated luxury adventures designed just for you.
           </motion.p>
-          <motion.div 
+          <motion.div
             className="flex flex-col sm:flex-row gap-4 justify-center"
             initial={{ opacity: 0, y: 20 }}
             animate={{ opacity: 1, y: 0 }}
@@ -62,7 +62,7 @@ export default function Home() {
       <div className="py-16 px-4 sm:px-6 lg:px-8 max-w-7xl mx-auto bg-white">
         <div className="text-center mb-16">
           <h2 className="text-3xl sm:text-4xl font-bold text-[#8B4513] mb-4">
-            Why Choose Meridian Travel?
+            Why Choose Meridian Luxury Travel?
           </h2>
           <p className="text-xl text-gray-600 max-w-2xl mx-auto">
             We create personalized luxury adventures that go beyond typical tourist experiences.
@@ -122,7 +122,7 @@ export default function Home() {
 
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
             {/* Machu Picchu */}
-            <motion.div 
+            <motion.div
               className="bg-white rounded-lg shadow-lg overflow-hidden hover:shadow-xl transition-shadow duration-300"
               initial={{ opacity: 0, y: 30 }}
               whileInView={{ opacity: 1, y: 0 }}
@@ -130,8 +130,8 @@ export default function Home() {
               transition={{ duration: 0.6, delay: 0.1 }}
             >
               <div className="h-48 relative overflow-hidden bg-gray-200">
-                <img 
-                  src="/machu.jpg" 
+                <img
+                  src="/machu.jpg"
                   alt="Machu Picchu ancient citadel ruins"
                   className="absolute inset-0 w-full h-full object-cover z-0"
                   onError={(e) => {
@@ -154,7 +154,7 @@ export default function Home() {
             </motion.div>
 
             {/* Amazon Rainforest */}
-            <motion.div 
+            <motion.div
               className="bg-white rounded-lg shadow-lg overflow-hidden hover:shadow-xl transition-shadow duration-300"
               initial={{ opacity: 0, y: 30 }}
               whileInView={{ opacity: 1, y: 0 }}
@@ -162,8 +162,8 @@ export default function Home() {
               transition={{ duration: 0.6, delay: 0.2 }}
             >
               <div className="h-48 relative overflow-hidden bg-gray-200">
-                <img 
-                  src="/rainforest.jpg" 
+                <img
+                  src="/rainforest.jpg"
                   alt="Amazon rainforest canopy and wildlife"
                   className="absolute inset-0 w-full h-full object-cover z-0"
                   onError={(e) => {
@@ -186,7 +186,7 @@ export default function Home() {
             </motion.div>
 
             {/* Sacred Valley */}
-            <motion.div 
+            <motion.div
               className="bg-white rounded-lg shadow-lg overflow-hidden hover:shadow-xl transition-shadow duration-300"
               initial={{ opacity: 0, y: 30 }}
               whileInView={{ opacity: 1, y: 0 }}
@@ -194,8 +194,8 @@ export default function Home() {
               transition={{ duration: 0.6, delay: 0.3 }}
             >
               <div className="h-48 relative overflow-hidden bg-gray-200">
-                <img 
-                  src="/sacred-valley.jpg" 
+                <img
+                  src="/sacred-valley.jpg"
                   alt="Sacred Valley terraced landscapes and Andean villages"
                   className="absolute inset-0 w-full h-full object-cover z-0"
                   onError={(e) => {

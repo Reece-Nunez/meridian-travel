@@ -7,11 +7,23 @@ export default function About() {
   return (
     <div className="min-h-screen bg-white">
       {/* Header Section */}
-      <div className="bg-[#2D5016] py-16">
-        <div className="px-4 sm:px-6 lg:px-8 max-w-7xl mx-auto">
+      <div className="relative py-24 overflow-hidden">
+        <div className="absolute inset-0">
+          <img 
+            src="/about-us.jpg" 
+            alt="About us team and travel experiences"
+            className="w-full h-full object-cover"
+            onError={(e) => {
+              console.error('Failed to load about-us.jpg');
+              e.currentTarget.style.display = 'none';
+            }}
+          />
+          <div className="absolute inset-0 bg-black opacity-50"></div>
+        </div>
+        <div className="relative z-10 px-4 sm:px-6 lg:px-8 max-w-7xl mx-auto">
           <div className="text-center text-white">
             <h1 className="text-4xl sm:text-5xl font-bold mb-4">
-              About Meridian Travel
+              About Meridian Luxury Travel
             </h1>
             <p className="text-xl sm:text-2xl mb-8 max-w-3xl mx-auto">
               Your trusted Peru travel specialists, dedicated to creating extraordinary adventures 
@@ -30,7 +42,7 @@ export default function About() {
             </h2>
             <p className="text-lg text-gray-600 leading-relaxed">
               Founded by passionate travelers who fell in love with Peru's incredible diversity, 
-              Meridian Travel was born from a desire to share authentic, transformative experiences 
+              Meridian Luxury Travel was born from a desire to share authentic, transformative experiences 
               with fellow adventurers. We believe that travel should be more than just visiting places—it 
               should be about connecting with cultures, understanding histories, and creating memories that last a lifetime.
             </p>
@@ -67,7 +79,7 @@ export default function About() {
         <div className="px-4 sm:px-6 lg:px-8 max-w-7xl mx-auto">
           <div className="text-center mb-16">
             <h2 className="text-3xl sm:text-4xl font-bold text-[#8B4513] mb-4">
-              Why Choose Meridian Travel?
+              Why Choose Meridian Luxury Travel?
             </h2>
             <p className="text-xl text-gray-600 max-w-2xl mx-auto">
               We're not just another travel agency. We're your Peru adventure specialists.
@@ -113,7 +125,7 @@ export default function About() {
               </h3>
               <p className="text-gray-600">
                 Every itinerary is custom-crafted based on your interests, budget, and travel style. 
-                No two Meridian Travel journeys are exactly alike.
+                No two Meridian Luxury Travel journeys are exactly alike.
               </p>
             </motion.div>
 
@@ -211,7 +223,7 @@ export default function About() {
             Our Commitment to You
           </h2>
           <p className="text-lg text-gray-600 mb-8 leading-relaxed">
-            At Meridian Travel, we don't just plan trips—we create transformational experiences. 
+            At Meridian Luxury Travel, we don't just plan trips—we create transformational experiences. 
             We're committed to showing you the Peru that lives beyond the guidebooks, the Peru 
             that captures hearts and changes perspectives. Every journey we craft is designed to 
             connect you deeply with this incredible country's landscapes, cultures, and people.

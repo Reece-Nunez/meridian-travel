@@ -7,8 +7,20 @@ export default function Contact() {
   return (
     <div className="min-h-screen bg-white">
       {/* Header Section */}
-      <div className="bg-[#2D5016] py-16">
-        <div className="px-4 sm:px-6 lg:px-8 max-w-7xl mx-auto">
+      <div className="relative py-24 overflow-hidden">
+        <div className="absolute inset-0">
+          <img 
+            src="/contact.jpg" 
+            alt="Contact us for travel planning"
+            className="w-full h-full object-cover"
+            onError={(e) => {
+              console.error('Failed to load contact.jpg');
+              e.currentTarget.style.display = 'none';
+            }}
+          />
+          <div className="absolute inset-0 bg-black opacity-50"></div>
+        </div>
+        <div className="relative z-10 px-4 sm:px-6 lg:px-8 max-w-7xl mx-auto">
           <div className="text-center text-white">
             <h1 className="text-4xl sm:text-5xl font-bold mb-4">
               Contact Us

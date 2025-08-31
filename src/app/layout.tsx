@@ -15,7 +15,7 @@ const geistMono = Geist_Mono({
 });
 
 export const metadata: Metadata = {
-  title: "Meridian Travel - Luxury Peru Adventures",
+  title: "Meridian Luxury Travel - Luxury Peru Adventures",
   description: "Discover Peru with expertly crafted travel experiences. Luxury tours to Machu Picchu, Amazon rainforest, and more. Request your custom quote today.",
 };
 

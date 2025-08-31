@@ -6,6 +6,7 @@ import { motion, AnimatePresence } from 'framer-motion';
 
 export default function Navigation() {
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
+  const [isDestinationsOpen, setIsDestinationsOpen] = useState(false);
 
   return (
     <nav className="bg-[#F5F5DC] shadow-sm border-b border-gray-200 sticky top-0 z-50">
@@ -13,18 +14,62 @@ export default function Navigation() {
         <div className="flex justify-between items-center h-16">
           <div className="flex items-center">
             <Link href="/" className="flex-shrink-0">
-              <span className="text-2xl font-bold text-[#8B4513]">Meridian Travel</span>
+              <span className="text-2xl font-bold text-[#8B4513]">Meridian Luxury Travel</span>
             </Link>
           </div>
 
           <div className="hidden md:block">
             <div className="ml-10 flex items-baseline space-x-8">
-              <Link
-                href="/destinations"
-                className="text-[#8B4513] hover:text-[#B8860B] px-3 py-2 text-sm font-medium transition-colors duration-200"
-              >
-                Destinations
-              </Link>
+              <div className="relative">
+                <button
+                  onClick={() => setIsDestinationsOpen(!isDestinationsOpen)}
+                  onMouseEnter={() => setIsDestinationsOpen(true)}
+                  onMouseLeave={() => setIsDestinationsOpen(false)}
+                  className="text-[#8B4513] hover:text-[#B8860B] px-3 py-2 text-sm font-medium transition-colors duration-200 flex items-center"
+                >
+                  Destinations
+                  <svg className="ml-1 h-4 w-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 9l-7 7-7-7" />
+                  </svg>
+                </button>
+                <AnimatePresence>
+                  {isDestinationsOpen && (
+                    <motion.div
+                      initial={{ opacity: 0, y: -10 }}
+                      animate={{ opacity: 1, y: 0 }}
+                      exit={{ opacity: 0, y: -10 }}
+                      transition={{ duration: 0.2 }}
+                      className="absolute top-full left-0 mt-1 w-56 bg-white border border-gray-200 rounded-md shadow-lg z-50"
+                      onMouseEnter={() => setIsDestinationsOpen(true)}
+                      onMouseLeave={() => setIsDestinationsOpen(false)}
+                    >
+                      <div className="py-1">
+                        <Link
+                          href="/destinations/peru"
+                          className="block px-4 py-2 text-sm text-[#8B4513] hover:bg-gray-50 hover:text-[#B8860B]"
+                        >
+                          Peru
+                        </Link>
+                        <div className="block px-4 py-2 text-sm text-gray-400 cursor-not-allowed">
+                          Galapagos/Ecuador - Coming Soon
+                        </div>
+                        <div className="block px-4 py-2 text-sm text-gray-400 cursor-not-allowed">
+                          Brazil - Coming Soon
+                        </div>
+                        <div className="block px-4 py-2 text-sm text-gray-400 cursor-not-allowed">
+                          Argentina - Coming Soon
+                        </div>
+                        <div className="block px-4 py-2 text-sm text-gray-400 cursor-not-allowed">
+                          Chile - Coming Soon
+                        </div>
+                        <div className="block px-4 py-2 text-sm text-gray-400 cursor-not-allowed">
+                          Antarctica - Coming Soon
+                        </div>
+                      </div>
+                    </motion.div>
+                  )}
+                </AnimatePresence>
+              </div>
               <Link
                 href="/travel-styles"
                 className="text-[#8B4513] hover:text-[#B8860B] px-3 py-2 text-sm font-medium transition-colors duration-200"
@@ -74,7 +119,7 @@ export default function Navigation() {
 
       <AnimatePresence>
         {isMobileMenuOpen && (
-          <motion.div 
+          <motion.div
             className="md:hidden"
             initial={{ opacity: 0, height: 0 }}
             animate={{ opacity: 1, height: 'auto' }}
@@ -82,41 +127,81 @@ export default function Navigation() {
             transition={{ duration: 0.2 }}
           >
             <div className="px-2 pt-2 pb-3 space-y-1 sm:px-3 bg-[#F5F5DC] border-t border-gray-200">
-            <Link
-              href="/destinations"
-              className="text-[#8B4513] hover:text-[#B8860B] block px-3 py-2 text-base font-medium"
-              onClick={() => setIsMobileMenuOpen(false)}
-            >
-              Destinations
-            </Link>
-            <Link
-              href="/travel-styles"
-              className="text-[#8B4513] hover:text-[#B8860B] block px-3 py-2 text-base font-medium"
-              onClick={() => setIsMobileMenuOpen(false)}
-            >
-              Travel Styles
-            </Link>
-            <Link
-              href="/about"
-              className="text-[#8B4513] hover:text-[#B8860B] block px-3 py-2 text-base font-medium"
-              onClick={() => setIsMobileMenuOpen(false)}
-            >
-              About Us
-            </Link>
-            <Link
-              href="/contact"
-              className="text-[#8B4513] hover:text-[#B8860B] block px-3 py-2 text-base font-medium"
-              onClick={() => setIsMobileMenuOpen(false)}
-            >
-              Contact
-            </Link>
-            <Link
-              href="/quote"
-              className="bg-[#B8860B] hover:bg-[#DAA520] text-[#F5F5DC] block px-3 py-2 rounded-md text-base font-medium mt-4"
-              onClick={() => setIsMobileMenuOpen(false)}
-            >
-              Request Quote
-            </Link>
+              <div>
+                <button
+                  onClick={() => setIsDestinationsOpen(!isDestinationsOpen)}
+                  className="text-[#8B4513] hover:text-[#B8860B] w-full text-left px-3 py-2 text-base font-medium flex items-center justify-between"
+                >
+                  Destinations
+                  <svg className={`h-4 w-4 transform transition-transform ${isDestinationsOpen ? 'rotate-180' : ''}`} fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 9l-7 7-7-7" />
+                  </svg>
+                </button>
+                <AnimatePresence>
+                  {isDestinationsOpen && (
+                    <motion.div
+                      initial={{ opacity: 0, height: 0 }}
+                      animate={{ opacity: 1, height: 'auto' }}
+                      exit={{ opacity: 0, height: 0 }}
+                      transition={{ duration: 0.2 }}
+                      className="overflow-hidden"
+                    >
+                      <div className="pl-6 space-y-1">
+                        <Link
+                          href="/destinations/peru"
+                          className="text-[#8B4513] hover:text-[#B8860B] block px-3 py-2 text-sm"
+                          onClick={() => setIsMobileMenuOpen(false)}
+                        >
+                          Peru
+                        </Link>
+                        <div className="block px-3 py-2 text-sm text-gray-400">
+                          Galapagos/Ecuador - Coming Soon
+                        </div>
+                        <div className="block px-3 py-2 text-sm text-gray-400">
+                          Brazil - Coming Soon
+                        </div>
+                        <div className="block px-3 py-2 text-sm text-gray-400">
+                          Argentina - Coming Soon
+                        </div>
+                        <div className="block px-3 py-2 text-sm text-gray-400">
+                          Chile - Coming Soon
+                        </div>
+                        <div className="block px-3 py-2 text-sm text-gray-400">
+                          Antarctica - Coming Soon
+                        </div>
+                      </div>
+                    </motion.div>
+                  )}
+                </AnimatePresence>
+              </div>
+              <Link
+                href="/travel-styles"
+                className="text-[#8B4513] hover:text-[#B8860B] block px-3 py-2 text-base font-medium"
+                onClick={() => setIsMobileMenuOpen(false)}
+              >
+                Travel Styles
+              </Link>
+              <Link
+                href="/about"
+                className="text-[#8B4513] hover:text-[#B8860B] block px-3 py-2 text-base font-medium"
+                onClick={() => setIsMobileMenuOpen(false)}
+              >
+                About Us
+              </Link>
+              <Link
+                href="/contact"
+                className="text-[#8B4513] hover:text-[#B8860B] block px-3 py-2 text-base font-medium"
+                onClick={() => setIsMobileMenuOpen(false)}
+              >
+                Contact
+              </Link>
+              <Link
+                href="/quote"
+                className="bg-[#B8860B] hover:bg-[#DAA520] text-[#F5F5DC] block px-3 py-2 rounded-md text-base font-medium mt-4"
+                onClick={() => setIsMobileMenuOpen(false)}
+              >
+                Request Quote
+              </Link>
             </div>
           </motion.div>
         )}

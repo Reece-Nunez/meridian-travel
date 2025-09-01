@@ -14,7 +14,7 @@ export default function Footer() {
               <img 
                 src="/logo.png" 
                 alt="Meridian Luxury Travel" 
-                className="h-16 w-auto mb-4"
+                className="h-32 w-auto mb-4"
                 onError={(e) => {
                   console.error('Failed to load logo.png');
                   e.currentTarget.style.display = 'none';

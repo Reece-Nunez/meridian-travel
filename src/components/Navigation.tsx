@@ -1,18 +1,29 @@
 'use client';
 
 import Link from 'next/link';
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 
 export default function Navigation() {
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
   const [isDestinationsOpen, setIsDestinationsOpen] = useState(false);
+  const [isScrolled, setIsScrolled] = useState(false);
+
+  useEffect(() => {
+    const handleScroll = () => {
+      const scrollTop = window.scrollY;
+      setIsScrolled(scrollTop > 50);
+    };
+
+    window.addEventListener('scroll', handleScroll);
+    return () => window.removeEventListener('scroll', handleScroll);
+  }, []);
 
   return (
-    <nav className="bg-[#F5F5DC] shadow-sm border-b border-gray-200 sticky top-0 z-50">
+    <nav className={`${isScrolled ? 'bg-[#F5F5DC]/80 backdrop-blur-md' : 'bg-[#F5F5DC]'} shadow-sm border-b border-gray-200 sticky top-0 z-50 transition-all duration-300`}>
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
         <div className="flex justify-between items-center h-22">
-          <div className="flex items-center">
+          <div className="flex items-center space-x-4">
             <Link href="/" className="flex-shrink-0">
               <img 
                 src="/logo.png" 
@@ -24,6 +35,16 @@ export default function Navigation() {
                 }}
               />
             </Link>
+            <Link href="/" className="flex-shrink-0">
+              <div className="text-center">
+                <h1 className="text-2xl font-serif font-bold text-[#8B4513] tracking-wide">
+                  Meridian Luxury Travel
+                </h1>
+                <p className="text-sm font-serif text-[#B8860B] tracking-wider -mt-1">
+                  Tailor-Made Journeys
+                </p>
+              </div>
+            </Link>
           </div>
 
           <div className="hidden md:block">
@@ -33,7 +54,7 @@ export default function Navigation() {
                   onClick={() => setIsDestinationsOpen(!isDestinationsOpen)}
                   onMouseEnter={() => setIsDestinationsOpen(true)}
                   onMouseLeave={() => setIsDestinationsOpen(false)}
-                  className="text-[#8B4513] hover:text-[#B8860B] px-3 py-2 text-sm font-medium transition-colors duration-200 flex items-center"
+                  className="text-[#8B4513] hover:text-[#B8860B] px-3 py-2 text-md font-medium transition-colors duration-200 flex items-center"
                 >
                   Destinations
                   <svg className="ml-1 h-4 w-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -54,23 +75,23 @@ export default function Navigation() {
                       <div className="py-1">
                         <Link
                           href="/destinations/peru"
-                          className="block px-4 py-2 text-sm text-[#8B4513] hover:bg-gray-50 hover:text-[#B8860B]"
+                          className="block px-4 py-2 text-md text-[#8B4513] hover:bg-gray-50 hover:text-[#B8860B]"
                         >
                           Peru
                         </Link>
-                        <div className="block px-4 py-2 text-sm text-gray-400 cursor-not-allowed">
+                        <div className="block px-4 py-2 text-md text-gray-400 cursor-not-allowed">
                           Galapagos/Ecuador - Coming Soon
                         </div>
-                        <div className="block px-4 py-2 text-sm text-gray-400 cursor-not-allowed">
+                        <div className="block px-4 py-2 text-md text-gray-400 cursor-not-allowed">
                           Brazil - Coming Soon
                         </div>
-                        <div className="block px-4 py-2 text-sm text-gray-400 cursor-not-allowed">
+                        <div className="block px-4 py-2 text-md text-gray-400 cursor-not-allowed">
                           Argentina - Coming Soon
                         </div>
-                        <div className="block px-4 py-2 text-sm text-gray-400 cursor-not-allowed">
+                        <div className="block px-4 py-2 text-md text-gray-400 cursor-not-allowed">
                           Chile - Coming Soon
                         </div>
-                        <div className="block px-4 py-2 text-sm text-gray-400 cursor-not-allowed">
+                        <div className="block px-4 py-2 text-md text-gray-400 cursor-not-allowed">
                           Antarctica - Coming Soon
                         </div>
                       </div>
@@ -80,25 +101,25 @@ export default function Navigation() {
               </div>
               <Link
                 href="/travel-styles"
-                className="text-[#8B4513] hover:text-[#B8860B] px-3 py-2 text-sm font-medium transition-colors duration-200"
+                className="text-[#8B4513] hover:text-[#B8860B] px-3 py-2 text-md font-medium transition-colors duration-200"
               >
                 Travel Styles
               </Link>
               <Link
                 href="/about"
-                className="text-[#8B4513] hover:text-[#B8860B] px-3 py-2 text-sm font-medium transition-colors duration-200"
+                className="text-[#8B4513] hover:text-[#B8860B] px-3 py-2 text-md font-medium transition-colors duration-200"
               >
                 About Us
               </Link>
               <Link
                 href="/contact"
-                className="text-[#8B4513] hover:text-[#B8860B] px-3 py-2 text-sm font-medium transition-colors duration-200"
+                className="text-[#8B4513] hover:text-[#B8860B] px-3 py-2 text-md font-medium transition-colors duration-200"
               >
                 Contact
               </Link>
               <Link
                 href="/quote"
-                className="bg-[#B8860B] hover:bg-[#DAA520] text-[#F5F5DC] px-4 py-2 rounded-md text-sm font-medium transition-colors duration-200"
+                className="bg-[#B8860B] hover:bg-[#DAA520] text-[#F5F5DC] px-4 py-2 rounded-md text-md font-medium transition-colors duration-200"
               >
                 Request Quote
               </Link>

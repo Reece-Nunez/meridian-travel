@@ -113,7 +113,7 @@ export default function Home() {
         <div className="px-4 sm:px-6 lg:px-8 max-w-7xl mx-auto">
           <div className="text-center mb-16">
             <h2 className="text-3xl sm:text-4xl font-bold text-[#8B4513] mb-4">
-              Featured Peru Destinations
+              Featured Destinations
             </h2>
             <p className="text-xl text-gray-600 max-w-2xl mx-auto">
               From ancient ruins to natural wonders, discover Peru's most captivating destinations.
@@ -147,7 +147,7 @@ export default function Home() {
                 <p className="text-gray-600 mb-4">
                   Explore the mystical ancient citadel and marvel at Incan engineering prowess.
                 </p>
-                <Link href="/destinations" className="text-[#8B4513] hover:text-[#B8860B] font-medium">
+                <Link href="/destinations/peru#machu-picchu" className="text-[#8B4513] hover:text-[#B8860B] font-medium">
                   Learn More →
                 </Link>
               </div>
@@ -179,7 +179,7 @@ export default function Home() {
                 <p className="text-gray-600 mb-4">
                   Immerse yourself in the world's most biodiverse ecosystem with expert naturalist guides.
                 </p>
-                <Link href="/destinations" className="text-[#8B4513] hover:text-[#B8860B] font-medium">
+                <Link href="/destinations/peru#amazon-rainforest" className="text-[#8B4513] hover:text-[#B8860B] font-medium">
                   Learn More →
                 </Link>
               </div>
@@ -211,7 +211,7 @@ export default function Home() {
                 <p className="text-gray-600 mb-4">
                   Experience authentic Andean culture and visit traditional markets and villages.
                 </p>
-                <Link href="/destinations" className="text-[#8B4513] hover:text-[#B8860B] font-medium">
+                <Link href="/destinations/peru#sacred-valley" className="text-[#8B4513] hover:text-[#B8860B] font-medium">
                   Learn More →
                 </Link>
               </div>

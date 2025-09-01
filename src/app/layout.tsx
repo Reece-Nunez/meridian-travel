@@ -1,5 +1,6 @@
 import type { Metadata } from "next";
 import { Geist, Geist_Mono } from "next/font/google";
+import localFont from "next/font/local";
 import Script from "next/script";
 import "./globals.css";
 import Navigation from "../components/Navigation";
@@ -15,6 +16,24 @@ const geistMono = Geist_Mono({
   subsets: ["latin"],
 });
 
+const leJourSerif = localFont({
+  src: [
+    {
+      path: "../fonts/LeJourSerif.woff2",
+      weight: "400",
+      style: "normal",
+    },
+    {
+      path: "../fonts/LeJourSerif.woff",
+      weight: "400", 
+      style: "normal",
+    }
+  ],
+  variable: "--font-le-jour-serif",
+  display: "swap",
+  fallback: ["serif"],
+});
+
 export const metadata: Metadata = {
   title: "Meridian Luxury Travel - Luxury South American Adventures",
   description: "Discover South America with expertly crafted travel experiences. Luxury tours to Machu Picchu, Amazon rainforest, and more. Request your custom quote today.",
@@ -28,7 +47,7 @@ export default function RootLayout({
   return (
     <html lang="en">
       <body
-        className={`${geistSans.variable} ${geistMono.variable} antialiased`}
+        className={`${geistSans.variable} ${geistMono.variable} ${leJourSerif.variable} antialiased`}
       >
         <Script
           src="https://www.googletagmanager.com/gtag/js?id=G-PQXF6QPH5Y"

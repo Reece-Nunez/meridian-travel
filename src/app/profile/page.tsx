@@ -113,7 +113,7 @@ export default function Profile() {
                     type="text"
                     value={firstName}
                     onChange={(e) => setFirstName(e.target.value)}
-                    className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-[#B8860B] focus:border-[#B8860B]"
+                    className="w-full text-[#8B4513] px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-[#B8860B] focus:border-[#B8860B]"
                     placeholder="Your first name"
                   />
                 </div>
@@ -126,7 +126,7 @@ export default function Profile() {
                     type="text"
                     value={lastName}
                     onChange={(e) => setLastName(e.target.value)}
-                    className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-[#B8860B] focus:border-[#B8860B]"
+                    className="w-full text-[#8B4513] px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-[#B8860B] focus:border-[#B8860B]"
                     placeholder="Your last name"
                   />
                 </div>
@@ -141,7 +141,7 @@ export default function Profile() {
                   type="tel"
                   value={phone}
                   onChange={(e) => setPhone(e.target.value)}
-                  className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-[#B8860B] focus:border-[#B8860B]"
+                  className="w-full text-[#8B4513] px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-[#B8860B] focus:border-[#B8860B]"
                   placeholder="+1 (555) 123-4567"
                 />
               </div>
@@ -155,7 +155,7 @@ export default function Profile() {
                   type="text"
                   value={emergencyContact}
                   onChange={(e) => setEmergencyContact(e.target.value)}
-                  className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-[#B8860B] focus:border-[#B8860B]"
+                  className="w-full text-[#8B4513] px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-[#B8860B] focus:border-[#B8860B]"
                   placeholder="Name and phone number"
                 />
               </div>
@@ -169,7 +169,7 @@ export default function Profile() {
                   value={dietaryRestrictions}
                   onChange={(e) => setDietaryRestrictions(e.target.value)}
                   rows={3}
-                  className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-[#B8860B] focus:border-[#B8860B]"
+                  className="w-full text-[#8B4513] px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-[#B8860B] focus:border-[#B8860B]"
                   placeholder="Any allergies or dietary preferences..."
                 />
               </div>
@@ -183,7 +183,7 @@ export default function Profile() {
                   value={travelPreferences}
                   onChange={(e) => setTravelPreferences(e.target.value)}
                   rows={3}
-                  className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-[#B8860B] focus:border-[#B8860B]"
+                  className="w-full text-[#8B4513] px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-[#B8860B] focus:border-[#B8860B]"
                   placeholder="Adventure level, accommodation preferences, special interests..."
                 />
               </div>

@@ -15,18 +15,30 @@ export default function Dashboard() {
   const router = useRouter();
 
   useEffect(() => {
+    console.log('Dashboard: useEffect triggered with authLoading:', authLoading, 'user:', !!user);
+    
     if (!authLoading && !user) {
+      console.log('Dashboard: No user, redirecting to signin');
       router.push('/auth/signin?redirect=/dashboard');
       return;
     }
 
     if (user) {
+      console.log('Dashboard: User found, fetching user data');
       fetchUserData();
     }
   }, [user, authLoading, router]);
 
+  useEffect(() => {
+    console.log('Dashboard: Component mounted');
+    return () => console.log('Dashboard: Component unmounted');
+  }, []);
+
   const fetchUserData = async () => {
     if (!user) return;
+
+    console.log('Dashboard: Starting to fetch user data for user:', user.id);
+    setLoading(true);
 
     try {
       // Fetch user bookings
@@ -47,11 +59,13 @@ export default function Dashboard() {
         .eq('user_id', user.id)
         .order('created_at', { ascending: false });
 
+      console.log('Dashboard: User data fetched successfully');
       setBookings(bookingsData || []);
       setQuotes(quotesData || []);
     } catch (error) {
       console.error('Error fetching user data:', error);
     } finally {
+      console.log('Dashboard: Setting dashboard loading to false');
       setLoading(false);
     }
   };
@@ -87,6 +101,7 @@ export default function Dashboard() {
   };
 
   if (authLoading || loading) {
+    console.log('Dashboard: Showing loading spinner - authLoading:', authLoading, 'loading:', loading);
     return (
       <div className="min-h-screen flex items-center justify-center">
         <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-[#8B4513]"></div>

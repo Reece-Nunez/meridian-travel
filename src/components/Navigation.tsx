@@ -85,6 +85,7 @@ export default function Navigation() {
                           </div>
                           <Link
                             href="/dashboard"
+                            onClick={() => setIsAccountMenuOpen(false)}
                             className="flex items-center px-4 py-2 text-sm text-[#8B4513] hover:bg-gray-50 hover:text-[#B8860B]"
                           >
                             <svg className="w-4 h-4 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -94,6 +95,7 @@ export default function Navigation() {
                           </Link>
                           <Link
                             href="/profile"
+                            onClick={() => setIsAccountMenuOpen(false)}
                             className="flex items-center px-4 py-2 text-sm text-[#8B4513] hover:bg-gray-50 hover:text-[#B8860B]"
                           >
                             <svg className="w-4 h-4 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">

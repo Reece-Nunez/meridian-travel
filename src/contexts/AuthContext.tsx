@@ -54,32 +54,50 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   };
 
   useEffect(() => {
+    console.log('AuthContext: useEffect triggered, initial loading state:', loading);
+    
     // Get initial session
     supabase.auth.getSession().then(({ data: { session } }) => {
+      console.log('AuthContext: Initial session retrieved:', !!session);
       setSession(session);
       setUser(session?.user ?? null);
       
       if (session?.user) {
-        fetchProfile(session.user.id).then(setProfile);
+        console.log('AuthContext: Fetching profile for user:', session.user.id);
+        fetchProfile(session.user.id).then((profileData) => {
+          console.log('AuthContext: Profile fetched:', !!profileData);
+          setProfile(profileData);
+        });
       }
       
+      console.log('AuthContext: Setting loading to false (initial)');
       setLoading(false);
     });
 
     // Listen for auth changes
     const { data: { subscription } } = supabase.auth.onAuthStateChange(
       async (event, session) => {
+        console.log('AuthContext: Auth state change event:', event, !!session);
+        
         if (event === 'SIGNED_IN' || event === 'SIGNED_OUT' || event === 'TOKEN_REFRESHED') {
+          // Only set loading to true if we're actually changing from one auth state to another
+          if (event === 'SIGNED_OUT' || (event === 'SIGNED_IN' && !user)) {
+            setLoading(true);
+          }
+          
           setSession(session);
           setUser(session?.user ?? null);
           
           if (session?.user) {
+            console.log('AuthContext: Fetching profile after auth change for user:', session.user.id);
             const profileData = await fetchProfile(session.user.id);
+            console.log('AuthContext: Profile fetched after auth change:', !!profileData);
             setProfile(profileData);
           } else {
             setProfile(null);
           }
           
+          console.log('AuthContext: Setting loading to false (auth change)');
           setLoading(false);
         }
       }

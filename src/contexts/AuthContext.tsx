@@ -131,7 +131,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       return { error: null };
     } catch (catchError) {
       console.error('AuthContext: Sign out catch error:', catchError);
-      return { error: catchError };
+      return { error: catchError as AuthError };
     }
   };
 

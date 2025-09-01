@@ -4,13 +4,15 @@ const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL
 const supabaseAnonKey = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY
 
 // During build time or when environment variables are missing, create a dummy client
-if (!supabaseUrl || !supabaseAnonKey) {
-  console.warn('Supabase environment variables missing - using dummy client for build')
-  // Create a dummy client for build-time rendering
-  export const supabase = createClient('https://dummy.supabase.co', 'dummy-key')
-} else {
-  export const supabase = createClient(supabaseUrl, supabaseAnonKey)
+const createSupabaseClient = () => {
+  if (!supabaseUrl || !supabaseAnonKey) {
+    console.warn('Supabase environment variables missing - using dummy client for build')
+    return createClient('https://dummy.supabase.co', 'dummy-key')
+  }
+  return createClient(supabaseUrl, supabaseAnonKey)
 }
+
+export const supabase = createSupabaseClient()
 
 // Server-side client with service role key (for admin operations)
 // Only create this on the server side where the service role key is available

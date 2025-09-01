@@ -11,6 +11,19 @@ export default function Navigation() {
   const [isAccountMenuOpen, setIsAccountMenuOpen] = useState(false);
   const { user, profile, signOut, loading } = useAuth();
 
+  // Close dropdown menus when tab visibility changes to prevent state issues
+  useEffect(() => {
+    const handleVisibilityChange = () => {
+      if (document.hidden) {
+        setIsAccountMenuOpen(false);
+        setIsDestinationsOpen(false);
+      }
+    };
+
+    document.addEventListener('visibilitychange', handleVisibilityChange);
+    return () => document.removeEventListener('visibilitychange', handleVisibilityChange);
+  }, []);
+
   useEffect(() => {
     const handleScroll = () => {
       const scrollTop = window.scrollY;
@@ -57,9 +70,7 @@ export default function Navigation() {
           <div className="flex items-center space-x-4">
             {/* Account Menu - Desktop */}
             <div className="hidden md:block">
-              {loading ? (
-                <div className="w-8 h-8 animate-pulse bg-gray-200 rounded-full"></div>
-              ) : user ? (
+              {user ? (
                 <div 
                   className="relative"
                   onMouseEnter={() => setIsAccountMenuOpen(true)}
@@ -115,6 +126,11 @@ export default function Navigation() {
                         </div>
                       </div>
                     )}
+                </div>
+              ) : loading ? (
+                <div className="flex items-center space-x-3">
+                  <div className="h-10 w-16 bg-gray-200 animate-pulse rounded"></div>
+                  <div className="h-10 w-24 bg-gray-200 animate-pulse rounded"></div>
                 </div>
               ) : (
                 <div className="flex items-center space-x-3">

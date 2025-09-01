@@ -115,7 +115,16 @@ export default function Navigation() {
                             Profile
                           </Link>
                           <button
-                            onClick={() => signOut()}
+                            onClick={async () => {
+                              setIsAccountMenuOpen(false);
+                              const { error } = await signOut();
+                              if (error) {
+                                console.error('Navigation: Sign out failed:', error);
+                                alert('Sign out failed. Please try again.');
+                              } else {
+                                window.location.href = '/';
+                              }
+                            }}
                             className="flex items-center w-full text-left px-4 py-2 text-sm text-[#8B4513] hover:bg-gray-50 hover:text-[#B8860B]"
                           >
                             <svg className="w-4 h-4 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">

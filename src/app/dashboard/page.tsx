@@ -51,8 +51,14 @@ export default function Dashboard() {
   };
 
   const handleSignOut = async () => {
-    await signOut();
-    router.push('/');
+    const { error } = await signOut();
+    if (error) {
+      console.error('Dashboard: Sign out failed:', error);
+      alert('Sign out failed. Please try again.');
+    } else {
+      // Use window.location to ensure immediate redirect without useEffect interference
+      window.location.href = '/';
+    }
   };
 
   const getStatusBadge = (status: string) => {

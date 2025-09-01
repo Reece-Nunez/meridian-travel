@@ -114,13 +114,25 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   };
 
   const signOut = async () => {
-    const { error } = await supabase.auth.signOut();
-    if (!error) {
+    try {
+      const { error } = await supabase.auth.signOut();
+      
+      if (error) {
+        console.error('AuthContext: Sign out error:', error);
+        return { error };
+      }
+      
+      // Clear state immediately on successful signOut
       setUser(null);
       setSession(null);
       setProfile(null);
+      setLoading(false);
+      
+      return { error: null };
+    } catch (catchError) {
+      console.error('AuthContext: Sign out catch error:', catchError);
+      return { error: catchError };
     }
-    return { error };
   };
 
   const signInWithOAuth = async (provider: 'google' | 'github' | 'apple') => {

@@ -9,7 +9,10 @@
       "Bash(timeout:*)",
       "Bash(npm install:*)",
       "Bash(git push:*)",
-      "Read(C:\\Users\\reece\\Downloads/**)"
+      "Read(C:\\Users\\reece\\Downloads/**)",
+      "Bash(git rm:*)",
+      "Bash(cat:*)",
+      "Bash(curl:*)"
     ],
     "deny": [],
     "ask": []

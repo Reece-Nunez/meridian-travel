@@ -123,7 +123,7 @@ export default function BookingDetail() {
 
     try {
       const updateData = {
-        status: formData.status,
+        status: formData.status as 'pending' | 'confirmed' | 'paid' | 'cancelled',
         cancellation_reason: formData.cancellation_reason || null,
         special_requests: formData.special_requests || null,
         deposit_paid: formData.deposit_paid,

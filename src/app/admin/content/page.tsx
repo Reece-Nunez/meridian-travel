@@ -38,10 +38,15 @@ export default function AdminContent() {
   const [editingSection, setEditingSection] = useState<string | null>(null);
 
   // Form states
-  const [contentForm, setContentForm] = useState({
+  const [contentForm, setContentForm] = useState<{
+    title: string;
+    content: string;
+    section_type: 'hero' | 'about' | 'services' | 'contact' | 'footer';
+    is_active: boolean;
+  }>({
     title: '',
     content: '',
-    section_type: 'hero' as const,
+    section_type: 'hero',
     is_active: true
   });
 

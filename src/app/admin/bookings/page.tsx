@@ -80,7 +80,7 @@ export default function AdminBookings() {
       const { error } = await supabase
         .from('bookings')
         .update({ 
-          status: newStatus,
+          status: newStatus as 'pending' | 'confirmed' | 'paid' | 'cancelled',
           updated_at: new Date().toISOString()
         })
         .eq('id', bookingId);

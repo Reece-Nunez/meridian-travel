@@ -60,7 +60,7 @@ export default function AdminQuotes() {
       const { error } = await supabase
         .from('custom_quotes')
         .update({ 
-          status: newStatus,
+          status: newStatus as 'pending' | 'reviewing' | 'quoted' | 'approved' | 'rejected',
           updated_at: new Date().toISOString()
         })
         .eq('id', quoteId);

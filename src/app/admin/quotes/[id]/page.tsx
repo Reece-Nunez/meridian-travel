@@ -74,7 +74,7 @@ export default function QuoteDetail() {
 
     try {
       const updateData = {
-        status: formData.status,
+        status: formData.status as 'pending' | 'reviewing' | 'quoted' | 'approved' | 'rejected',
         quoted_price: formData.quoted_price ? parseFloat(formData.quoted_price) : null,
         quoted_currency: formData.quoted_currency,
         admin_notes: formData.admin_notes,

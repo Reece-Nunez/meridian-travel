@@ -103,12 +103,12 @@ export default function NewPackage() {
     try {
       const packageData = {
         ...formData,
-        includes: formData.includes.filter(item => item.trim() !== ''),
-        excludes: formData.excludes.filter(item => item.trim() !== ''),
-        images: formData.images.filter(item => item.trim() !== ''),
+        includes: formData.includes.filter((item: string) => item.trim() !== ''),
+        excludes: formData.excludes.filter((item: string) => item.trim() !== ''),
+        images: formData.images.filter((item: string) => item.trim() !== ''),
         itinerary: itinerary.map((day: any) => ({
           ...day,
-          activities: day.activities.filter(activity => activity.trim() !== '')
+          activities: day.activities.filter((activity: string) => activity.trim() !== '')
         }))
       };
 

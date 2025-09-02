@@ -106,7 +106,7 @@ export default function NewPackage() {
         includes: formData.includes.filter(item => item.trim() !== ''),
         excludes: formData.excludes.filter(item => item.trim() !== ''),
         images: formData.images.filter(item => item.trim() !== ''),
-        itinerary: itinerary.map(day => ({
+        itinerary: itinerary.map((day: any) => ({
           ...day,
           activities: day.activities.filter(activity => activity.trim() !== '')
         }))

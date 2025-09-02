@@ -68,7 +68,7 @@ export default function EditPackage() {
         });
 
         if (data.itinerary && data.itinerary.length > 0) {
-          setItinerary(data.itinerary.map(day => ({
+          setItinerary(data.itinerary.map((day: any) => ({
             ...day,
             activities: day.activities && day.activities.length > 0 ? day.activities : ['']
           })));
@@ -159,7 +159,7 @@ export default function EditPackage() {
         includes: formData.includes.filter(item => item.trim() !== ''),
         excludes: formData.excludes.filter(item => item.trim() !== ''),
         images: formData.images.filter(item => item.trim() !== ''),
-        itinerary: itinerary.map(day => ({
+        itinerary: itinerary.map((day: any) => ({
           ...day,
           activities: day.activities.filter(activity => activity.trim() !== '')
         })),

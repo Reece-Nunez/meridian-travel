@@ -266,6 +266,67 @@ export interface Database {
           refund_reason?: string | null
         }
       }
+      content_sections: {
+        Row: {
+          id: string
+          created_at: string
+          updated_at: string
+          section_key: string
+          title: string
+          content: string
+          section_type: 'hero' | 'about' | 'services' | 'contact' | 'footer'
+          is_active: boolean
+        }
+        Insert: {
+          id?: string
+          created_at?: string
+          updated_at?: string
+          section_key: string
+          title: string
+          content: string
+          section_type: 'hero' | 'about' | 'services' | 'contact' | 'footer'
+          is_active?: boolean
+        }
+        Update: {
+          id?: string
+          created_at?: string
+          updated_at?: string
+          section_key?: string
+          title?: string
+          content?: string
+          section_type?: 'hero' | 'about' | 'services' | 'contact' | 'footer'
+          is_active?: boolean
+        }
+      }
+      site_settings: {
+        Row: {
+          id: string
+          created_at: string
+          updated_at: string
+          setting_key: string
+          setting_value: string
+          setting_type: 'text' | 'email' | 'phone' | 'url' | 'textarea'
+          description: string
+        }
+        Insert: {
+          id?: string
+          created_at?: string
+          updated_at?: string
+          setting_key: string
+          setting_value: string
+          setting_type: 'text' | 'email' | 'phone' | 'url' | 'textarea'
+          description: string
+        }
+        Update: {
+          id?: string
+          created_at?: string
+          updated_at?: string
+          setting_key?: string
+          setting_value?: string
+          setting_type?: 'text' | 'email' | 'phone' | 'url' | 'textarea'
+          description?: string
+        }
+      }
     }
     Views: {
       [_ in never]: never
@@ -301,3 +362,5 @@ export type CustomQuote = Database['public']['Tables']['custom_quotes']['Row']
 export type Booking = Database['public']['Tables']['bookings']['Row']
 export type Profile = Database['public']['Tables']['profiles']['Row']
 export type PaymentHistory = Database['public']['Tables']['payment_history']['Row']
+export type ContentSection = Database['public']['Tables']['content_sections']['Row']
+export type SiteSetting = Database['public']['Tables']['site_settings']['Row']

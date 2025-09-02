@@ -2,8 +2,54 @@
 
 import Link from 'next/link';
 import { motion } from 'framer-motion';
+import { useState, useEffect } from 'react';
+import { getContentByKey, getSettingByKey } from '@/lib/content';
 
 export default function Home() {
+  const [content, setContent] = useState({
+    heroTitle: 'Discover the Magic of South America',
+    heroSubtitle: 'From Machu Picchu to Patagonia, explore South America\'s rich heritage and stunning landscapes with curated luxury adventures designed just for you.',
+    heroCta: 'Explore Destinations',
+    aboutTitle: 'Why Choose Meridian Luxury Travel?',
+    aboutContent: 'We create personalized luxury adventures that go beyond typical tourist experiences.',
+    companyName: 'Meridian Luxury Travel'
+  });
+
+  useEffect(() => {
+    const fetchContent = async () => {
+      try {
+        const [
+          heroTitle,
+          heroSubtitle,
+          heroCta,
+          aboutTitle,
+          aboutContent,
+          companyName
+        ] = await Promise.all([
+          getContentByKey('hero_title'),
+          getContentByKey('hero_subtitle'),
+          getContentByKey('hero_cta'),
+          getContentByKey('about_title'),
+          getContentByKey('about_content'),
+          getSettingByKey('company_name')
+        ]);
+
+        setContent({
+          heroTitle,
+          heroSubtitle,
+          heroCta,
+          aboutTitle,
+          aboutContent,
+          companyName
+        });
+      } catch (error) {
+        console.log('Using fallback content');
+      }
+    };
+
+    fetchContent();
+  }, []);
+
   return (
     <div className="min-h-screen bg-white">
       {/* Hero Section */}
@@ -25,7 +71,7 @@ export default function Home() {
             animate={{ opacity: 1, y: 0 }}
             transition={{ duration: 0.8, delay: 0.2 }}
           >
-            Discover the Magic of South America
+            {content.heroTitle}
           </motion.h1>
           <motion.p
             className="text-xl sm:text-2xl mb-8 max-w-3xl mx-auto"
@@ -33,8 +79,7 @@ export default function Home() {
             animate={{ opacity: 1, y: 0 }}
             transition={{ duration: 0.8, delay: 0.4 }}
           >
-            From Machu Picchu to Patagonia, explore South America’s
-            rich heritage and stunning landscapes with curated luxury adventures designed just for you.
+            {content.heroSubtitle}
           </motion.p>
           <motion.div
             className="flex flex-col sm:flex-row gap-4 justify-center"
@@ -46,7 +91,7 @@ export default function Home() {
               href="/destinations"
               className="bg-[#F5F5DC] text-[#8B4513] px-8 py-4 rounded-md text-lg font-medium hover:bg-white transition-colors duration-200"
             >
-              Explore Destinations
+              {content.heroCta}
             </Link>
             <Link
               href="/quote"
@@ -62,10 +107,10 @@ export default function Home() {
       <div className="py-16 px-4 sm:px-6 lg:px-8 max-w-7xl mx-auto bg-white">
         <div className="text-center mb-16">
           <h2 className="text-3xl sm:text-4xl font-bold text-[#8B4513] mb-4">
-            Why Choose Meridian Luxury Travel?
+            Why Choose {content.companyName}?
           </h2>
-          <p className="text-xl text-gray-600 max-w-2xl mx-auto">
-            We create personalized luxury adventures that go beyond typical tourist experiences.
+          <p className="text-xl text-gray-800 max-w-2xl mx-auto">
+            {content.aboutContent}
           </p>
         </div>
 
@@ -77,7 +122,7 @@ export default function Home() {
               </svg>
             </div>
             <h3 className="text-xl font-bold text-[#8B4513] mb-2">Expert Local Knowledge</h3>
-            <p className="text-gray-600">
+            <p className="text-gray-800">
               Our Peru specialists have personally explored every destination we offer, ensuring authentic and meaningful experiences.
             </p>
           </div>
@@ -89,7 +134,7 @@ export default function Home() {
               </svg>
             </div>
             <h3 className="text-xl font-bold text-[#8B4513] mb-2">Tailored Experiences</h3>
-            <p className="text-gray-600">
+            <p className="text-gray-800">
               Every journey is carefully crafted around your interests, travel style, and budget for a truly personal adventure.
             </p>
           </div>
@@ -101,7 +146,7 @@ export default function Home() {
               </svg>
             </div>
             <h3 className="text-xl font-bold text-[#8B4513] mb-2">24/7 Support</h3>
-            <p className="text-gray-600">
+            <p className="text-gray-800">
               From planning to your safe return home, our dedicated team provides round-the-clock support for peace of mind.
             </p>
           </div>
@@ -115,7 +160,7 @@ export default function Home() {
             <h2 className="text-3xl sm:text-4xl font-bold text-[#8B4513] mb-4">
               Featured Destinations
             </h2>
-            <p className="text-xl text-gray-600 max-w-2xl mx-auto">
+            <p className="text-xl text-gray-800 max-w-2xl mx-auto">
               From ancient ruins to natural wonders, discover Peru's most captivating destinations.
             </p>
           </div>
@@ -144,7 +189,7 @@ export default function Home() {
                 </div>
               </div>
               <div className="p-6">
-                <p className="text-gray-600 mb-4">
+                <p className="text-gray-800 mb-4">
                   Explore the mystical ancient citadel and marvel at Incan engineering prowess.
                 </p>
                 <Link href="/destinations/peru#machu-picchu" className="text-[#8B4513] hover:text-[#B8860B] font-medium">
@@ -176,7 +221,7 @@ export default function Home() {
                 </div>
               </div>
               <div className="p-6">
-                <p className="text-gray-600 mb-4">
+                <p className="text-gray-800 mb-4">
                   Immerse yourself in the world's most biodiverse ecosystem with expert naturalist guides.
                 </p>
                 <Link href="/destinations/peru#amazon-rainforest" className="text-[#8B4513] hover:text-[#B8860B] font-medium">
@@ -208,7 +253,7 @@ export default function Home() {
                 </div>
               </div>
               <div className="p-6">
-                <p className="text-gray-600 mb-4">
+                <p className="text-gray-800 mb-4">
                   Experience authentic Andean culture and visit traditional markets and villages.
                 </p>
                 <Link href="/destinations/peru#sacred-valley" className="text-[#8B4513] hover:text-[#B8860B] font-medium">

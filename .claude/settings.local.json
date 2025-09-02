@@ -12,7 +12,16 @@
       "Read(C:\\Users\\reece\\Downloads/**)",
       "Bash(git rm:*)",
       "Bash(cat:*)",
-      "Bash(curl:*)"
+      "Bash(curl:*)",
+      "Bash(taskkill:*)",
+      "Read(C:\\Users\\reece\\OneDrive\\Documents\\NunezDev\\nunezdev/**)",
+      "Read(C:\\Users\\reece\\OneDrive\\Documents\\NunezDev\\nunezdev/**)",
+      "Read(C:\\Users\\reece\\OneDrive\\Documents\\NunezDev\\nunezdev/**)",
+      "Read(C:\\Users\\reece\\OneDrive\\Documents\\NunezDev\\nunezdev\\src\\app\\api\\stripe\\webhook/**)",
+      "Read(C:\\Users\\reece\\OneDrive\\Documents\\NunezDev\\nunezdev/**)",
+      "Read(C:\\Users\\reece\\OneDrive\\Documents\\NunezDev\\nunezdev\\src\\app\\api\\debug\\fix-payments/**)",
+      "Read(C:\\Users\\reece\\OneDrive\\Documents\\NunezDev\\nunezdev/**)",
+      "Bash(powershell:*)"
     ],
     "deny": [],
     "ask": []

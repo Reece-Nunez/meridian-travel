@@ -2,8 +2,54 @@
 
 import Link from 'next/link';
 import { motion } from 'framer-motion';
+import { useState, useEffect } from 'react';
+import { getContentByKey, getSettingByKey, getContentByType, clearContentCache } from '@/lib/content';
 
 export default function About() {
+  const [content, setContent] = useState({
+    aboutTitle: 'About Meridian Luxury Travel',
+    aboutContent: 'Your trusted Peru travel specialists, dedicated to creating extraordinary adventures that connect you with the heart of this remarkable country.',
+    storyTitle: 'Our Story',
+    storyContent: 'Founded by passionate travelers who fell in love with Peru\'s incredible diversity, Meridian Luxury Travel was born from a desire to share authentic, transformative experiences with fellow adventurers.',
+    companyName: 'Meridian Luxury Travel',
+    servicesTitle: 'Why Choose Meridian Luxury Travel?',
+    servicesContent: 'We\'re not just another travel agency. We\'re your Peru adventure specialists.'
+  });
+
+  useEffect(() => {
+    const fetchContent = async () => {
+      try {
+        // Clear cache to get latest content
+        clearContentCache();
+        const aboutSections = await getContentByType('about');
+        const companyName = await getSettingByKey('company_name');
+        const servicesTitle = await getContentByKey('services_title');
+        const servicesContent = await getContentByKey('services_content');
+
+        // Find specific about content - look for content with "About Us Title" in the title field
+        const aboutTitleSection = aboutSections.find(s => s.title.toLowerCase().includes('about us title') || s.title.toLowerCase().includes('about title'));
+        const aboutContentSection = aboutSections.find(s => s.title.toLowerCase().includes('about us content') || s.title.toLowerCase().includes('about content'));
+        
+        const aboutTitle = aboutTitleSection ? aboutTitleSection.content : content.aboutTitle;
+        const aboutContent = aboutContentSection ? aboutContentSection.content : (aboutSections.length > 0 ? aboutSections[0].content : content.aboutContent);
+
+        setContent({
+          aboutTitle,
+          aboutContent,
+          storyTitle: 'Our Story',
+          storyContent: aboutContent, // Use about content for story too
+          companyName,
+          servicesTitle,
+          servicesContent
+        });
+      } catch (error) {
+        console.log('Using fallback content for about page');
+      }
+    };
+
+    fetchContent();
+  }, []);
+
   return (
     <div className="min-h-screen bg-white">
       {/* Header Section */}
@@ -23,11 +69,10 @@ export default function About() {
         <div className="relative z-10 px-4 sm:px-6 lg:px-8 max-w-7xl mx-auto">
           <div className="text-center text-white">
             <h1 className="text-4xl sm:text-5xl font-bold mb-4">
-              About Meridian Luxury Travel
+              {content.aboutTitle}
             </h1>
             <p className="text-xl sm:text-2xl mb-8 max-w-3xl mx-auto">
-              Your trusted Peru travel specialists, dedicated to creating extraordinary adventures 
-              that connect you with the heart of this remarkable country.
+              {content.aboutContent}
             </p>
           </div>
         </div>
@@ -38,13 +83,10 @@ export default function About() {
         <div className="max-w-4xl mx-auto">
           <div className="text-center mb-16">
             <h2 className="text-3xl sm:text-4xl font-bold text-[#8B4513] mb-6">
-              Our Story
+              {content.storyTitle}
             </h2>
             <p className="text-lg text-gray-600 leading-relaxed">
-              Founded by passionate travelers who fell in love with Peru's incredible diversity, 
-              Meridian Luxury Travel was born from a desire to share authentic, transformative experiences 
-              with fellow adventurers. We believe that travel should be more than just visiting places—it 
-              should be about connecting with cultures, understanding histories, and creating memories that last a lifetime.
+              {content.storyContent}
             </p>
           </div>
 
@@ -79,10 +121,10 @@ export default function About() {
         <div className="px-4 sm:px-6 lg:px-8 max-w-7xl mx-auto">
           <div className="text-center mb-16">
             <h2 className="text-3xl sm:text-4xl font-bold text-[#8B4513] mb-4">
-              Why Choose Meridian Luxury Travel?
+              Why Choose {content.companyName}?
             </h2>
             <p className="text-xl text-gray-600 max-w-2xl mx-auto">
-              We're not just another travel agency. We're your Peru adventure specialists.
+              {content.servicesContent}
             </p>
           </div>
 

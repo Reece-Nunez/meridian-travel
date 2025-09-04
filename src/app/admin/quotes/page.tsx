@@ -40,12 +40,18 @@ export default function AdminQuotes() {
   const fetchQuotes = async () => {
     try {
       setLoading(true);
-      const { data, error } = await supabase
-        .from('custom_quotes')
-        .select('*')
-        .order('created_at', { ascending: false });
-
-      if (error) throw error;
+      
+      // Get admin email from session
+      const session = localStorage.getItem('admin_session');
+      const adminEmail = session ? JSON.parse(session).email : '';
+      
+      const response = await fetch(`/api/admin/quotes?admin_email=${encodeURIComponent(adminEmail)}`);
+      
+      if (!response.ok) {
+        throw new Error('Failed to fetch quotes');
+      }
+      
+      const data = await response.json();
       setQuotes(data || []);
     } catch (err) {
       console.error('Error fetching quotes:', err);
@@ -57,16 +63,28 @@ export default function AdminQuotes() {
 
   const updateQuoteStatus = async (quoteId: string, newStatus: string) => {
     try {
-      const { error } = await supabase
-        .from('custom_quotes')
-        .update({ 
-          status: newStatus as 'pending' | 'reviewing' | 'quoted' | 'approved' | 'rejected',
-          updated_at: new Date().toISOString()
-        })
-        .eq('id', quoteId);
+      // Get admin email from session
+      const session = localStorage.getItem('admin_session');
+      const adminEmail = session ? JSON.parse(session).email : '';
 
-      if (error) throw error;
+      const response = await fetch('/api/admin/quotes', {
+        method: 'PATCH',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          quoteId,
+          status: newStatus,
+          adminEmail
+        }),
+      });
 
+      if (!response.ok) {
+        throw new Error('Failed to update quote status');
+      }
+
+      const updatedQuote = await response.json();
+      
       setQuotes(quotes.map(quote => 
         quote.id === quoteId 
           ? { ...quote, status: newStatus as any }

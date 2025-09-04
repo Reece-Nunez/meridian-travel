@@ -1,7 +1,7 @@
 'use client';
 
 import { useAuth } from '@/contexts/AuthContext';
-import { useRouter } from 'next/navigation';
+import { useRouter, useSearchParams } from 'next/navigation';
 import { useEffect, useState } from 'react';
 import { supabase } from '@/lib/supabase';
 import Link from 'next/link';
@@ -12,10 +12,22 @@ export default function Dashboard() {
   const [bookings, setBookings] = useState<Booking[]>([]);
   const [quotes, setQuotes] = useState<CustomQuote[]>([]);
   const [loading, setLoading] = useState(false);
+  const [showQuoteSuccess, setShowQuoteSuccess] = useState(false);
   const router = useRouter();
+  const searchParams = useSearchParams();
 
   useEffect(() => {
     console.log('Dashboard: useEffect - authLoading:', authLoading, 'user:', !!user);
+    
+    // Check for quote attachment success
+    const quoteAttached = searchParams.get('quote_attached');
+    if (quoteAttached === 'true') {
+      setShowQuoteSuccess(true);
+      // Clean URL after showing notification
+      router.replace('/dashboard');
+      // Hide notification after 8 seconds
+      setTimeout(() => setShowQuoteSuccess(false), 8000);
+    }
     
     // Only redirect if we're certain there's no user and not loading
     if (!authLoading && !user) {
@@ -31,7 +43,7 @@ export default function Dashboard() {
     } else {
       console.log('Dashboard: No user or still loading auth');
     }
-  }, [user, authLoading, router]);
+  }, [user, authLoading, router, searchParams]);
 
   const fetchUserData = async () => {
     if (!user) {
@@ -40,14 +52,46 @@ export default function Dashboard() {
     }
 
     console.log('Dashboard: Starting to fetch data for user:', user.id);
+    setLoading(true);
     
-    // Skip database queries for now - just set empty data
-    console.log('Dashboard: Setting empty data (skipping DB queries for now)');
-    setBookings([]);
-    setQuotes([]);
-    
-    // Don't set loading state - let component render immediately
-    console.log('Dashboard: Fetch completed without loading state');
+    try {
+      // Fetch user's quotes
+      const { data: quotesData, error: quotesError } = await supabase
+        .from('custom_quotes')
+        .select('*')
+        .eq('user_id', user.id)
+        .order('created_at', { ascending: false });
+
+      if (quotesError) {
+        console.error('Dashboard: Error fetching quotes:', quotesError);
+      } else {
+        console.log('Dashboard: Fetched quotes:', quotesData);
+        setQuotes(quotesData || []);
+      }
+
+      // Fetch user's bookings
+      const { data: bookingsData, error: bookingsError } = await supabase
+        .from('bookings')
+        .select(`
+          *,
+          trip_packages(*),
+          custom_quotes(*)
+        `)
+        .eq('user_id', user.id)
+        .order('created_at', { ascending: false });
+
+      if (bookingsError) {
+        console.error('Dashboard: Error fetching bookings:', bookingsError);
+      } else {
+        console.log('Dashboard: Fetched bookings:', bookingsData);
+        setBookings(bookingsData || []);
+      }
+
+    } catch (error) {
+      console.error('Dashboard: Error in fetchUserData:', error);
+    } finally {
+      setLoading(false);
+    }
   };
 
   const handleSignOut = async () => {
@@ -127,6 +171,31 @@ export default function Dashboard() {
             </div>
           </div>
         </div>
+
+        {/* Quote Attachment Success Notification */}
+        {showQuoteSuccess && (
+          <div className="bg-green-50 border border-green-200 rounded-lg p-6 mb-8">
+            <div className="flex items-center">
+              <svg className="w-8 h-8 text-green-600 mr-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" />
+              </svg>
+              <div className="flex-1">
+                <h3 className="text-lg font-semibold text-green-800">Quote Successfully Attached!</h3>
+                <p className="text-green-700 mt-1">
+                  Your approved Peru travel quote has been attached to your account. You can now view the details and proceed with booking.
+                </p>
+              </div>
+              <button
+                onClick={() => setShowQuoteSuccess(false)}
+                className="text-green-600 hover:text-green-800 transition-colors ml-4"
+              >
+                <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
+                </svg>
+              </button>
+            </div>
+          </div>
+        )}
 
         <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
           {/* Quick Actions */}
@@ -250,7 +319,11 @@ export default function Dashboard() {
                 ) : (
                   <div className="space-y-4">
                     {quotes.map((quote) => (
-                      <div key={quote.id} className="border rounded-lg p-4 hover:bg-gray-50">
+                      <Link
+                        key={quote.id}
+                        href={`/dashboard/quotes/${quote.id}`}
+                        className="block border rounded-lg p-4 hover:bg-gray-50 hover:border-[#B8860B] transition-colors cursor-pointer"
+                      >
                         <div className="flex justify-between items-start">
                           <div>
                             <h3 className="font-semibold text-gray-900">
@@ -264,6 +337,11 @@ export default function Dashboard() {
                                 Quoted: {quote.quoted_currency} ${quote.quoted_price}
                               </p>
                             )}
+                            {quote.status === 'approved' && quote.quoted_price && (
+                              <p className="text-xs text-blue-600 mt-2 font-medium">
+                                Click to view details and book →
+                              </p>
+                            )}
                           </div>
                           <div className="text-right">
                             <span className={getStatusBadge(quote.status || 'pending')}>
@@ -274,7 +352,7 @@ export default function Dashboard() {
                             </p>
                           </div>
                         </div>
-                      </div>
+                      </Link>
                     ))}
                   </div>
                 )}

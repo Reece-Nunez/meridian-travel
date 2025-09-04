@@ -35,14 +35,19 @@ export default function QuoteDetail() {
   const fetchQuote = async () => {
     try {
       setLoading(true);
-      const { data, error } = await supabase
-        .from('custom_quotes')
-        .select('*')
-        .eq('id', quoteId)
-        .single();
-
-      if (error) throw error;
-
+      
+      // Get admin email from session
+      const session = localStorage.getItem('admin_session');
+      const adminEmail = session ? JSON.parse(session).email : '';
+      
+      const response = await fetch(`/api/admin/quotes/${quoteId}?admin_email=${encodeURIComponent(adminEmail)}`);
+      
+      if (!response.ok) {
+        throw new Error('Quote not found');
+      }
+      
+      const data = await response.json();
+      
       if (data) {
         setQuote(data);
         setFormData({
@@ -73,27 +78,60 @@ export default function QuoteDetail() {
     setSaving(true);
 
     try {
-      const updateData = {
-        status: formData.status as 'pending' | 'reviewing' | 'quoted' | 'approved' | 'rejected',
-        quoted_price: formData.quoted_price ? parseFloat(formData.quoted_price) : null,
-        quoted_currency: formData.quoted_currency,
-        admin_notes: formData.admin_notes,
-        updated_at: new Date().toISOString()
-      };
+      // Get admin email from session
+      const session = localStorage.getItem('admin_session');
+      const adminEmail = session ? JSON.parse(session).email : '';
 
-      const { error } = await supabase
-        .from('custom_quotes')
-        .update(updateData)
-        .eq('id', quoteId);
+      const response = await fetch('/api/admin/quotes', {
+        method: 'PATCH',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          quoteId,
+          status: formData.status,
+          quoted_price: formData.quoted_price ? parseFloat(formData.quoted_price) : null,
+          quoted_currency: formData.quoted_currency,
+          admin_notes: formData.admin_notes,
+          adminEmail
+        }),
+      });
 
-      if (error) throw error;
-
-      // Update local state
-      if (quote) {
-        setQuote({ ...quote, ...updateData });
+      if (!response.ok) {
+        throw new Error('Failed to update quote');
       }
 
-      alert('Quote updated successfully!');
+      const updatedQuote = await response.json();
+
+      // Update local state
+      setQuote(updatedQuote);
+
+      // Send email notification if status was changed to approved
+      if (formData.status === 'approved' && updatedQuote.quoted_price) {
+        try {
+          const emailResponse = await fetch('/api/notifications/quote-approved', {
+            method: 'POST',
+            headers: {
+              'Content-Type': 'application/json',
+            },
+            body: JSON.stringify({
+              quoteId: quoteId,
+              adminEmail: adminEmail
+            }),
+          });
+
+          if (emailResponse.ok) {
+            alert('Quote updated successfully! Email notification sent to client.');
+          } else {
+            alert('Quote updated successfully, but failed to send email notification.');
+          }
+        } catch (emailError) {
+          console.error('Email notification error:', emailError);
+          alert('Quote updated successfully, but failed to send email notification.');
+        }
+      } else {
+        alert('Quote updated successfully!');
+      }
     } catch (error) {
       console.error('Error updating quote:', error);
       alert('Failed to update quote. Please try again.');

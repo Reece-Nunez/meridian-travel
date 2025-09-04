@@ -393,9 +393,15 @@ export default function Navigation() {
                     Browse Packages
                   </Link>
                   <button
-                    onClick={() => {
-                      signOut();
+                    onClick={async () => {
                       setIsMobileMenuOpen(false);
+                      const { error } = await signOut();
+                      if (error) {
+                        console.error('Navigation Mobile: Sign out failed:', error);
+                        alert('Sign out failed. Please try again.');
+                      } else {
+                        window.location.href = '/';
+                      }
                     }}
                     className="w-full text-left text-[#8B4513] hover:text-[#B8860B] px-3 py-2 text-base font-medium"
                   >

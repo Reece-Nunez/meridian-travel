@@ -1,7 +1,7 @@
 'use client';
 
 import { useState } from 'react';
-import { motion } from 'framer-motion';
+import { motion, AnimatePresence } from 'framer-motion';
 
 export default function QuoteRequest() {
   const [formData, setFormData] = useState({
@@ -13,6 +13,7 @@ export default function QuoteRequest() {
     dateType: '',
     flexibleMonth: '',
     flexibleYear: '',
+    flexibleDuration: '7',
     exactStartDate: '',
     exactEndDate: '',
     adults: '2',
@@ -23,10 +24,66 @@ export default function QuoteRequest() {
     travelPlans: ''
   });
 
-  const handleSubmit = (e: React.FormEvent) => {
+  const [showToast, setShowToast] = useState(false);
+  const [isSubmitting, setIsSubmitting] = useState(false);
+
+  const initialFormState = {
+    firstName: '',
+    lastName: '',
+    email: '',
+    phone: '',
+    destination: 'Peru',
+    dateType: '',
+    flexibleMonth: '',
+    flexibleYear: '',
+    flexibleDuration: '7',
+    exactStartDate: '',
+    exactEndDate: '',
+    adults: '2',
+    children: '0',
+    rooms: '1',
+    budget: '',
+    specialRequirements: '',
+    travelPlans: ''
+  };
+
+  const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    alert('Thank you for your quote request! We will contact you within 24 hours to discuss your Peru adventure.');
-    console.log('Form Data:', formData);
+    setIsSubmitting(true);
+
+    try {
+      const response = await fetch('/api/quotes', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify(formData),
+      });
+
+      const result = await response.json();
+
+      if (response.ok) {
+        // Show success toast
+        setShowToast(true);
+        
+        // Clear form
+        setFormData(initialFormState);
+        
+        // Hide toast after 5 seconds
+        setTimeout(() => {
+          setShowToast(false);
+        }, 5000);
+      } else {
+        // Show error message
+        alert('Failed to submit quote request. Please try again.');
+        console.error('Submission error:', result);
+      }
+    } catch (error) {
+      console.error('Network error:', error);
+      alert('Network error. Please check your connection and try again.');
+    } finally {
+      setIsSubmitting(false);
+    }
   };
 
   const handleInputChange = (e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement | HTMLTextAreaElement>) => {
@@ -39,6 +96,34 @@ export default function QuoteRequest() {
 
   return (
     <div className="min-h-screen bg-white">
+      {/* Success Toast */}
+      <AnimatePresence>
+        {showToast && (
+          <motion.div
+            initial={{ opacity: 0, y: -50, x: "-50%" }}
+            animate={{ opacity: 1, y: 0, x: "-50%" }}
+            exit={{ opacity: 0, y: -50, x: "-50%" }}
+            transition={{ duration: 0.3 }}
+            className="fixed top-4 left-1/2 transform -translate-x-1/2 z-50 bg-green-600 text-white px-6 py-4 rounded-lg shadow-lg flex items-center space-x-3"
+          >
+            <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" />
+            </svg>
+            <div>
+              <p className="font-semibold">Quote Request Submitted!</p>
+              <p className="text-sm">We'll contact you within 24 hours to discuss your Peru adventure.</p>
+            </div>
+            <button
+              onClick={() => setShowToast(false)}
+              className="ml-4 text-white hover:text-gray-200 transition-colors"
+            >
+              <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
+              </svg>
+            </button>
+          </motion.div>
+        )}
+      </AnimatePresence>
       {/* Header Section */}
       <div className="relative py-24 overflow-hidden">
         <div className="absolute inset-0">
@@ -97,7 +182,7 @@ export default function QuoteRequest() {
                   required
                   value={formData.firstName}
                   onChange={handleInputChange}
-                  className="w-full px-4 py-3 border border-gray-300 rounded-md focus:ring-2 focus:ring-[#B8860B] focus:border-transparent"
+                  className="w-full text-black px-4 py-3 border border-gray-300 rounded-md focus:ring-2 focus:ring-[#B8860B] focus:border-transparent"
                 />
               </div>
               <div>
@@ -111,7 +196,7 @@ export default function QuoteRequest() {
                   required
                   value={formData.lastName}
                   onChange={handleInputChange}
-                  className="w-full px-4 py-3 border border-gray-300 rounded-md focus:ring-2 focus:ring-[#B8860B] focus:border-transparent"
+                  className="w-full text-black px-4 py-3 border border-gray-300 rounded-md focus:ring-2 focus:ring-[#B8860B] focus:border-transparent"
                 />
               </div>
               <div>
@@ -125,7 +210,7 @@ export default function QuoteRequest() {
                   required
                   value={formData.email}
                   onChange={handleInputChange}
-                  className="w-full px-4 py-3 border border-gray-300 rounded-md focus:ring-2 focus:ring-[#B8860B] focus:border-transparent"
+                  className="w-full text-black px-4 py-3 border border-gray-300 rounded-md focus:ring-2 focus:ring-[#B8860B] focus:border-transparent"
                 />
               </div>
               <div>
@@ -139,7 +224,7 @@ export default function QuoteRequest() {
                   required
                   value={formData.phone}
                   onChange={handleInputChange}
-                  className="w-full px-4 py-3 border border-gray-300 rounded-md focus:ring-2 focus:ring-[#B8860B] focus:border-transparent"
+                  className="w-full text-black px-4 py-3 border border-gray-300 rounded-md focus:ring-2 focus:ring-[#B8860B] focus:border-transparent"
                 />
               </div>
             </div>
@@ -164,7 +249,7 @@ export default function QuoteRequest() {
                 required
                 value={formData.destination}
                 onChange={handleInputChange}
-                className="w-full px-4 py-3 border border-gray-300 rounded-md focus:ring-2 focus:ring-blue-900 focus:border-transparent"
+                className="w-full text-black px-4 py-3 border border-gray-300 rounded-md focus:ring-2 focus:ring-blue-900 focus:border-transparent"
               >
                 <option value="Peru">Peru</option>
                 <option value="Ecuador" disabled>Ecuador (Coming Soon)</option>
@@ -194,7 +279,7 @@ export default function QuoteRequest() {
                 </label>
                 
                 {formData.dateType === 'flexible' && (
-                  <div className="ml-6 grid grid-cols-1 sm:grid-cols-2 gap-4">
+                  <div className="ml-6 grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
                     <div>
                       <label htmlFor="flexibleMonth" className="block text-sm font-medium text-gray-700 mb-2">
                         Preferred Month
@@ -204,7 +289,7 @@ export default function QuoteRequest() {
                         name="flexibleMonth"
                         value={formData.flexibleMonth}
                         onChange={handleInputChange}
-                        className="w-full px-4 py-3 border border-gray-300 rounded-md focus:ring-2 focus:ring-[#B8860B] focus:border-transparent"
+                        className="w-full text-black px-4 py-3 border border-gray-300 rounded-md focus:ring-2 focus:ring-[#B8860B] focus:border-transparent"
                       >
                         <option value="">Select Month</option>
                         <option value="January">January</option>
@@ -230,12 +315,40 @@ export default function QuoteRequest() {
                         name="flexibleYear"
                         value={formData.flexibleYear}
                         onChange={handleInputChange}
-                        className="w-full px-4 py-3 border border-gray-300 rounded-md focus:ring-2 focus:ring-[#B8860B] focus:border-transparent"
+                        className="w-full text-black px-4 py-3 border border-gray-300 rounded-md focus:ring-2 focus:ring-[#B8860B] focus:border-transparent"
                       >
                         <option value="">Select Year</option>
                         <option value="2024">2024</option>
                         <option value="2025">2025</option>
                         <option value="2026">2026</option>
+                      </select>
+                    </div>
+                    <div>
+                      <label htmlFor="flexibleDuration" className="block text-sm font-medium text-gray-700 mb-2">
+                        Trip Duration *
+                      </label>
+                      <select
+                        id="flexibleDuration"
+                        name="flexibleDuration"
+                        required
+                        value={formData.flexibleDuration}
+                        onChange={handleInputChange}
+                        className="w-full text-black px-4 py-3 border border-gray-300 rounded-md focus:ring-2 focus:ring-[#B8860B] focus:border-transparent"
+                      >
+                        <option value="3">3 days</option>
+                        <option value="4">4 days</option>
+                        <option value="5">5 days</option>
+                        <option value="6">6 days</option>
+                        <option value="7">7 days</option>
+                        <option value="8">8 days</option>
+                        <option value="9">9 days</option>
+                        <option value="10">10 days</option>
+                        <option value="11">11 days</option>
+                        <option value="12">12 days</option>
+                        <option value="14">14 days (2 weeks)</option>
+                        <option value="21">21 days (3 weeks)</option>
+                        <option value="28">28 days (4 weeks)</option>
+                        <option value="custom">Custom duration</option>
                       </select>
                     </div>
                   </div>
@@ -265,7 +378,7 @@ export default function QuoteRequest() {
                         name="exactStartDate"
                         value={formData.exactStartDate}
                         onChange={handleInputChange}
-                        className="w-full px-4 py-3 border border-gray-300 rounded-md focus:ring-2 focus:ring-[#B8860B] focus:border-transparent"
+                        className="w-full text-black px-4 py-3 border border-gray-300 rounded-md focus:ring-2 focus:ring-[#B8860B] focus:border-transparent"
                       />
                     </div>
                     <div>
@@ -278,7 +391,7 @@ export default function QuoteRequest() {
                         name="exactEndDate"
                         value={formData.exactEndDate}
                         onChange={handleInputChange}
-                        className="w-full px-4 py-3 border border-gray-300 rounded-md focus:ring-2 focus:ring-[#B8860B] focus:border-transparent"
+                        className="w-full text-black px-4 py-3 border border-gray-300 rounded-md focus:ring-2 focus:ring-[#B8860B] focus:border-transparent"
                       />
                     </div>
                   </div>
@@ -298,7 +411,7 @@ export default function QuoteRequest() {
                   required
                   value={formData.adults}
                   onChange={handleInputChange}
-                  className="w-full px-4 py-3 border border-gray-300 rounded-md focus:ring-2 focus:ring-[#B8860B] focus:border-transparent"
+                  className="w-full text-black px-4 py-3 border border-gray-300 rounded-md focus:ring-2 focus:ring-[#B8860B] focus:border-transparent"
                 >
                   {[...Array(10)].map((_, i) => (
                     <option key={i} value={i + 1}>{i + 1}</option>
@@ -314,7 +427,7 @@ export default function QuoteRequest() {
                   name="children"
                   value={formData.children}
                   onChange={handleInputChange}
-                  className="w-full px-4 py-3 border border-gray-300 rounded-md focus:ring-2 focus:ring-[#B8860B] focus:border-transparent"
+                  className="w-full text-black px-4 py-3 border border-gray-300 rounded-md focus:ring-2 focus:ring-[#B8860B] focus:border-transparent"
                 >
                   {[...Array(6)].map((_, i) => (
                     <option key={i} value={i}>{i}</option>
@@ -331,7 +444,7 @@ export default function QuoteRequest() {
                   required
                   value={formData.rooms}
                   onChange={handleInputChange}
-                  className="w-full px-4 py-3 border border-gray-300 rounded-md focus:ring-2 focus:ring-[#B8860B] focus:border-transparent"
+                  className="w-full text-black px-4 py-3 border border-gray-300 rounded-md focus:ring-2 focus:ring-[#B8860B] focus:border-transparent"
                 >
                   {[...Array(5)].map((_, i) => (
                     <option key={i} value={i + 1}>{i + 1}</option>
@@ -351,7 +464,7 @@ export default function QuoteRequest() {
                 required
                 value={formData.budget}
                 onChange={handleInputChange}
-                className="w-full px-4 py-3 border border-gray-300 rounded-md focus:ring-2 focus:ring-blue-900 focus:border-transparent"
+                className="w-full text-black px-4 py-3 border border-gray-300 rounded-md focus:ring-2 focus:ring-blue-900 focus:border-transparent"
               >
                 <option value="">Select budget range</option>
                 <option value="1000-2000">$1,000 - $2,000</option>
@@ -383,7 +496,7 @@ export default function QuoteRequest() {
                 value={formData.specialRequirements}
                 onChange={handleInputChange}
                 placeholder="Dietary restrictions, mobility requirements, allergies, etc."
-                className="w-full px-4 py-3 border border-gray-300 rounded-md focus:ring-2 focus:ring-blue-900 focus:border-transparent"
+                className="w-full text-black px-4 py-3 border border-gray-300 rounded-md focus:ring-2 focus:ring-blue-900 focus:border-transparent"
               />
             </div>
 
@@ -398,7 +511,7 @@ export default function QuoteRequest() {
                 value={formData.travelPlans}
                 onChange={handleInputChange}
                 placeholder="What experiences are you most excited about? Are you interested in adventure activities, cultural immersion, wildlife viewing, luxury accommodations? Any specific sites you must see? Any concerns or questions?"
-                className="w-full px-4 py-3 border border-gray-300 rounded-md focus:ring-2 focus:ring-blue-900 focus:border-transparent"
+                className="w-full text-black px-4 py-3 border border-gray-300 rounded-md focus:ring-2 focus:ring-blue-900 focus:border-transparent"
               />
             </div>
           </motion.div>
@@ -412,11 +525,18 @@ export default function QuoteRequest() {
           >
             <button
               type="submit"
-              className="bg-[#B8860B] hover:bg-[#DAA520] text-[#F5F5DC] px-8 py-4 rounded-md text-lg font-medium transition-colors duration-200"
+              disabled={isSubmitting}
+              className="bg-[#B8860B] hover:bg-[#DAA520] disabled:bg-gray-400 disabled:cursor-not-allowed text-[#F5F5DC] px-8 py-4 rounded-md text-lg font-medium transition-colors duration-200 flex items-center justify-center space-x-2"
             >
-              Request My Custom Quote
+              {isSubmitting && (
+                <svg className="animate-spin h-5 w-5" fill="none" viewBox="0 0 24 24">
+                  <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle>
+                  <path className="opacity-75" fill="currentColor" d="m4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
+                </svg>
+              )}
+              <span>{isSubmitting ? 'Submitting...' : 'Request My Custom Quote'}</span>
             </button>
-            <p className="text-gray-600 mt-4 text-sm">
+            <p className="text-gray-800 mt-4 text-sm">
               We'll contact you within 24 hours with a personalized itinerary and pricing.
             </p>
           </motion.div>

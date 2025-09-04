@@ -32,11 +32,22 @@ export default function AdminDashboard() {
         .select('*', { count: 'exact', head: true })
         .eq('is_active', true);
 
-      // Fetch quote requests count
-      const { count: quoteRequestsCount } = await supabase
-        .from('custom_quotes')
-        .select('*', { count: 'exact', head: true })
-        .in('status', ['pending', 'reviewing']);
+      // Fetch quote requests count using admin API
+      let quoteRequestsCount = 0;
+      try {
+        const session = localStorage.getItem('admin_session');
+        const adminEmail = session ? JSON.parse(session).email : '';
+        
+        const quotesResponse = await fetch(`/api/admin/quotes?admin_email=${encodeURIComponent(adminEmail)}`);
+        if (quotesResponse.ok) {
+          const allQuotes = await quotesResponse.json();
+          quoteRequestsCount = allQuotes.filter((quote: any) => 
+            ['pending', 'reviewing'].includes(quote.status)
+          ).length;
+        }
+      } catch (error) {
+        console.error('Error fetching quote requests count:', error);
+      }
 
       // Fetch active bookings count
       const { count: activeBookingsCount } = await supabase
@@ -60,7 +71,7 @@ export default function AdminDashboard() {
 
       setStats({
         activePackages: activePackagesCount || 0,
-        quoteRequests: quoteRequestsCount || 0,
+        quoteRequests: quoteRequestsCount,
         activeBookings: activeBookingsCount || 0,
         monthlyRevenue: monthlyRevenue
       });

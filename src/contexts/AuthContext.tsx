@@ -10,8 +10,8 @@ interface AuthContextType {
   session: Session | null;
   profile: Profile | null;
   loading: boolean;
-  signUp: (email: string, password: string) => Promise<{ error: AuthError | null }>;
-  signIn: (email: string, password: string) => Promise<{ error: AuthError | null }>;
+  signUp: (email: string, password: string) => Promise<{ data?: { user?: User } | null; error: AuthError | null }>;
+  signIn: (email: string, password: string) => Promise<{ data?: { user?: User } | null; error: AuthError | null }>;
   signOut: () => Promise<{ error: AuthError | null }>;
   signInWithOAuth: (provider: 'google' | 'github' | 'apple') => Promise<{ error: AuthError | null }>;
   updateProfile: (updates: Partial<Profile>) => Promise<{ error: any }>;
@@ -69,6 +69,8 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     // Listen for auth changes
     const { data: { subscription } } = supabase.auth.onAuthStateChange(
       async (event, session) => {
+        console.log('Auth state change:', event, 'session:', !!session?.user);
+        
         // Handle auth state changes but avoid unnecessary loading states
         if (event === 'SIGNED_IN' || event === 'SIGNED_OUT') {
           setSession(session);
@@ -86,6 +88,10 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
           // Token refresh should not trigger loading states or UI changes
           setSession(session);
           setUser(session?.user ?? null);
+        } else {
+          // For any other events, ensure loading is false
+          console.log('Other auth event, setting loading to false');
+          setLoading(false);
         }
       }
     );
@@ -96,21 +102,21 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   }, []);
 
   const signUp = async (email: string, password: string) => {
-    const { error } = await supabase.auth.signUp({
+    const { data, error } = await supabase.auth.signUp({
       email,
       password,
     });
     
-    return { error };
+    return { data, error };
   };
 
   const signIn = async (email: string, password: string) => {
-    const { error } = await supabase.auth.signInWithPassword({
+    const { data, error } = await supabase.auth.signInWithPassword({
       email,
       password,
     });
     
-    return { error };
+    return { data, error };
   };
 
   const signOut = async () => {

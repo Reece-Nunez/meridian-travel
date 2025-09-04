@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, Suspense } from 'react';
+import { useState, useEffect, Suspense } from 'react';
 import { useRouter, useSearchParams } from 'next/navigation';
 import Link from 'next/link';
 import { useAuth } from '@/contexts/AuthContext';
@@ -10,25 +10,80 @@ function SignInForm() {
   const [password, setPassword] = useState('');
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
-  const { signIn, signInWithOAuth } = useAuth();
+  const [quoteToken, setQuoteToken] = useState<string | null>(null);
+  const [quoteInfo, setQuoteInfo] = useState<any>(null);
+  const { signIn, signInWithOAuth, user } = useAuth();
   const router = useRouter();
   const searchParams = useSearchParams();
 
   const redirectTo = searchParams.get('redirect') || '/dashboard';
   const errorParam = searchParams.get('error');
 
+  // Check for quote token on component mount
+  useEffect(() => {
+    const token = searchParams.get('quote_token');
+    if (token) {
+      setQuoteToken(token);
+      validateQuoteToken(token);
+    }
+  }, [searchParams]);
+
+  const validateQuoteToken = async (token: string) => {
+    try {
+      const response = await fetch(`/api/quote-tokens/validate?token=${token}`);
+      if (response.ok) {
+        const data = await response.json();
+        setQuoteInfo(data);
+        setEmail(data.email); // Pre-fill email from quote
+      } else {
+        console.error('Invalid quote token');
+        setError('Invalid or expired quote link. Please request a new quote.');
+      }
+    } catch (error) {
+      console.error('Error validating quote token:', error);
+    }
+  };
+
   const handleEmailSignIn = async (e: React.FormEvent) => {
     e.preventDefault();
     setLoading(true);
     setError(null);
 
-    const { error } = await signIn(email, password);
+    const { data, error } = await signIn(email, password);
 
     if (error) {
       setError(error.message);
       setLoading(false);
     } else {
-      router.push(redirectTo);
+      // If there's a quote token, attach it to the user account
+      if (quoteToken && data?.user?.id) {
+        try {
+          const response = await fetch('/api/quote-tokens/validate', {
+            method: 'POST',
+            headers: {
+              'Content-Type': 'application/json',
+            },
+            body: JSON.stringify({
+              token: quoteToken,
+              userId: data.user.id
+            }),
+          });
+          
+          if (response.ok) {
+            console.log('Quote attached to existing user account');
+            // Redirect to dashboard to show the quote
+            router.push('/dashboard?quote_attached=true');
+          } else {
+            console.error('Failed to attach quote');
+            router.push(redirectTo);
+          }
+        } catch (attachError) {
+          console.error('Failed to attach quote to account:', attachError);
+          router.push(redirectTo);
+        }
+      } else {
+        router.push(redirectTo);
+      }
     }
   };
 
@@ -77,6 +132,27 @@ function SignInForm() {
           <div className="bg-red-50 border border-red-200 rounded-md p-4">
             <div className="text-sm text-red-600">
               {error || (errorParam === 'callback_error' ? 'Authentication failed. Please try again.' : errorParam)}
+            </div>
+          </div>
+        )}
+
+        {quoteInfo && (
+          <div className="bg-green-50 border border-green-200 rounded-md p-4">
+            <div className="flex items-center mb-2">
+              <svg className="w-5 h-5 text-green-600 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" />
+              </svg>
+              <p className="text-sm font-semibold text-green-800">Quote Approved!</p>
+            </div>
+            <div className="text-sm text-green-700">
+              <p><strong>{quoteInfo.quote?.destination}</strong> • {quoteInfo.quote?.duration} days</p>
+              <p className="text-lg font-bold text-green-800">
+                {new Intl.NumberFormat('en-US', {
+                  style: 'currency',
+                  currency: quoteInfo.quote?.quoted_currency || 'USD',
+                }).format(quoteInfo.quote?.quoted_price || 0)}
+              </p>
+              <p className="mt-2 text-xs">Sign in to attach this quote to your existing account.</p>
             </div>
           </div>
         )}

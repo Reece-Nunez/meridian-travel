@@ -83,7 +83,7 @@ export default function Packages() {
       <div className="min-h-screen bg-gray-50 flex items-center justify-center">
         <div className="text-center">
           <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-[#8B4513] mx-auto mb-4"></div>
-          <p className="text-gray-600">Loading trip packages...</p>
+          <p className="text-gray-800">Loading trip packages...</p>
         </div>
       </div>
     );
@@ -175,7 +175,7 @@ export default function Packages() {
 
         {/* Results Summary */}
         <div className="flex justify-between items-center mb-6">
-          <p className="text-gray-600">
+          <p className="text-gray-800">
             Showing {filteredPackages.length} of {packages.length} packages
           </p>
           <Link
@@ -244,7 +244,7 @@ export default function Packages() {
                     </div>
                   </div>
                   
-                  <div className="flex items-center text-sm text-gray-600 mb-3">
+                  <div className="flex items-center text-sm text-gray-800 mb-3">
                     <svg className="w-4 h-4 mr-1" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                       <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M17.657 16.657L13.414 20.9a1.998 1.998 0 01-2.827 0l-4.244-4.243a8 8 0 1111.314 0z" />
                       <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 11a3 3 0 11-6 0 3 3 0 016 0z" />
@@ -257,7 +257,7 @@ export default function Packages() {
                     {pkg.duration} days
                   </div>
                   
-                  <p className="text-gray-600 text-sm mb-4 line-clamp-3">
+                  <p className="text-gray-800 text-sm mb-4 line-clamp-3">
                     {pkg.description}
                   </p>
                   

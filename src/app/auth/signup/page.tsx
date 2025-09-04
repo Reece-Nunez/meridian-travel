@@ -1,7 +1,7 @@
 'use client';
 
-import { useState } from 'react';
-import { useRouter } from 'next/navigation';
+import { useState, useEffect } from 'react';
+import { useRouter, useSearchParams } from 'next/navigation';
 import Link from 'next/link';
 import { useAuth } from '@/contexts/AuthContext';
 
@@ -12,13 +12,63 @@ export default function SignUp() {
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [success, setSuccess] = useState(false);
+  const [existingEmail, setExistingEmail] = useState(false);
+  const [quoteToken, setQuoteToken] = useState<string | null>(null);
+  const [quoteInfo, setQuoteInfo] = useState<any>(null);
   const { signUp, signInWithOAuth } = useAuth();
   const router = useRouter();
+  const searchParams = useSearchParams();
+
+  // Check for quote token on component mount
+  useEffect(() => {
+    const token = searchParams.get('quote_token');
+    if (token) {
+      setQuoteToken(token);
+      validateQuoteToken(token);
+    }
+  }, [searchParams]);
+
+  const validateQuoteToken = async (token: string) => {
+    try {
+      const response = await fetch(`/api/quote-tokens/validate?token=${token}`);
+      if (response.ok) {
+        const data = await response.json();
+        setQuoteInfo(data);
+        setEmail(data.email); // Pre-fill email from quote
+      } else {
+        console.error('Invalid quote token');
+        setError('Invalid or expired quote link. Please request a new quote.');
+      }
+    } catch (error) {
+      console.error('Error validating quote token:', error);
+    }
+  };
+
+  const checkEmailExists = async (email: string) => {
+    try {
+      const response = await fetch('/api/auth/check-email', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({ email }),
+      });
+      
+      if (response.ok) {
+        const { exists } = await response.json();
+        return exists;
+      }
+    } catch (error) {
+      console.error('Error checking email:', error);
+    }
+    return false;
+  };
 
   const handleSignUp = async (e: React.FormEvent) => {
     e.preventDefault();
     setLoading(true);
     setError(null);
+    setExistingEmail(false);
 
     if (password !== confirmPassword) {
       setError('Passwords do not match');
@@ -32,12 +82,50 @@ export default function SignUp() {
       return;
     }
 
-    const { error } = await signUp(email, password);
+    // Check if email already exists before attempting signup
+    const emailExists = await checkEmailExists(email);
+    if (emailExists) {
+      setError('This email is already associated with an account.');
+      setExistingEmail(true);
+      setLoading(false);
+      return;
+    }
+
+    const { data, error } = await signUp(email, password);
 
     if (error) {
-      setError(error.message);
+      // Check if the error is related to existing email
+      if (error.message.includes('User already registered') || 
+          error.message.includes('already registered') ||
+          error.message.includes('already exists')) {
+        setError(`This email is already associated with an account.`);
+        setExistingEmail(true);
+      } else {
+        setError(error.message);
+        setExistingEmail(false);
+      }
       setLoading(false);
     } else {
+      // If there's a quote token, attach it to the user account
+      if (quoteToken && data?.user?.id) {
+        try {
+          await fetch('/api/quote-tokens/validate', {
+            method: 'POST',
+            headers: {
+              'Content-Type': 'application/json',
+            },
+            body: JSON.stringify({
+              token: quoteToken,
+              userId: data.user.id
+            }),
+          });
+          console.log('Quote attached to new user account');
+        } catch (attachError) {
+          console.error('Failed to attach quote to account:', attachError);
+          // Don't fail signup if quote attachment fails
+        }
+      }
+      
       setSuccess(true);
       setLoading(false);
     }
@@ -134,8 +222,44 @@ export default function SignUp() {
         </div>
 
         {error && (
-          <div className="bg-red-50 border border-red-200 rounded-md p-4">
-            <div className="text-sm text-red-600">{error}</div>
+          <div className={`${existingEmail ? 'bg-blue-50 border-blue-200' : 'bg-red-50 border-red-200'} border rounded-md p-4`}>
+            <div className={`text-sm ${existingEmail ? 'text-blue-600' : 'text-red-600'}`}>
+              {error}
+              {existingEmail && (
+                <div className="mt-3 space-y-2">
+                  <Link
+                    href={`/auth/signin${quoteToken ? `?quote_token=${quoteToken}` : ''}`}
+                    className="inline-flex items-center px-3 py-2 border border-transparent text-sm leading-4 font-medium rounded-md text-white bg-[#B8860B] hover:bg-[#DAA520] focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-[#B8860B]"
+                  >
+                    Sign in to existing account
+                  </Link>
+                  <p className="text-xs text-blue-500">
+                    Or use a different email address to create a new account.
+                  </p>
+                </div>
+              )}
+            </div>
+          </div>
+        )}
+
+        {quoteInfo && (
+          <div className="bg-green-50 border border-green-200 rounded-md p-4">
+            <div className="flex items-center mb-2">
+              <svg className="w-5 h-5 text-green-600 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" />
+              </svg>
+              <p className="text-sm font-semibold text-green-800">Quote Approved!</p>
+            </div>
+            <div className="text-sm text-green-700">
+              <p><strong>{quoteInfo.quote?.destination}</strong> • {quoteInfo.quote?.duration} days</p>
+              <p className="text-lg font-bold text-green-800">
+                {new Intl.NumberFormat('en-US', {
+                  style: 'currency',
+                  currency: quoteInfo.quote?.quoted_currency || 'USD',
+                }).format(quoteInfo.quote?.quoted_price || 0)}
+              </p>
+              <p className="mt-2 text-xs">Creating an account will automatically attach this quote to your profile.</p>
+            </div>
           </div>
         )}
 
@@ -154,7 +278,11 @@ export default function SignUp() {
                 className="relative block w-full px-3 py-2 border border-gray-300 placeholder-gray-500 text-gray-900 rounded-t-md focus:outline-none focus:ring-[#B8860B] focus:border-[#B8860B] focus:z-10 sm:text-sm"
                 placeholder="Email address"
                 value={email}
-                onChange={(e) => setEmail(e.target.value)}
+                onChange={(e) => {
+                  setEmail(e.target.value);
+                  setError(null);
+                  setExistingEmail(false);
+                }}
               />
             </div>
             <div>

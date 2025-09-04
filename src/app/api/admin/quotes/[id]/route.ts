@@ -3,11 +3,12 @@ import { createSupabaseAdmin } from '@/lib/supabase';
 
 export async function GET(
   request: Request,
-  { params }: { params: { id: string } }
+  { params }: { params: Promise<{ id: string }> }
 ) {
   try {
     const { searchParams } = new URL(request.url);
     const adminEmail = searchParams.get('admin_email');
+    const resolvedParams = await params;
     
     // Simple admin check
     if (adminEmail !== 'chris@meridianluxury.travel') {
@@ -22,7 +23,7 @@ export async function GET(
     const { data, error } = await supabaseAdmin
       .from('custom_quotes')
       .select('*')
-      .eq('id', params.id)
+      .eq('id', resolvedParams.id)
       .single();
 
     if (error) {

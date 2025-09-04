@@ -10,8 +10,8 @@ interface AuthContextType {
   session: Session | null;
   profile: Profile | null;
   loading: boolean;
-  signUp: (email: string, password: string) => Promise<{ data?: { user?: User } | null; error: AuthError | null }>;
-  signIn: (email: string, password: string) => Promise<{ data?: { user?: User } | null; error: AuthError | null }>;
+  signUp: (email: string, password: string) => Promise<{ data: any; error: AuthError | null }>;
+  signIn: (email: string, password: string) => Promise<{ data: any; error: AuthError | null }>;
   signOut: () => Promise<{ error: AuthError | null }>;
   signInWithOAuth: (provider: 'google' | 'github' | 'apple') => Promise<{ error: AuthError | null }>;
   updateProfile: (updates: Partial<Profile>) => Promise<{ error: any }>;

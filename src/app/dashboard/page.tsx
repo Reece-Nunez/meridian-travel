@@ -230,17 +230,17 @@ export default function Dashboard() {
               <div className="space-y-3">
                 <div className="flex justify-between">
                   <span className="text-gray-600">Total Bookings:</span>
-                  <span className="font-semibold">{bookings.length}</span>
+                  <span className="font-semibold text-[#8B4513]">{bookings.length}</span>
                 </div>
                 <div className="flex justify-between">
                   <span className="text-gray-600">Pending Quotes:</span>
-                  <span className="font-semibold">
+                  <span className="font-semibold text-[#8B4513]">
                     {quotes.filter(q => q.status === 'pending' || q.status === 'reviewing').length}
                   </span>
                 </div>
                 <div className="flex justify-between">
                   <span className="text-gray-600">Member Since:</span>
-                  <span className="font-semibold">
+                  <span className="font-semibold text-[#8B4513]">
                     {new Date(user.created_at).toLocaleDateString()}
                   </span>
                 </div>

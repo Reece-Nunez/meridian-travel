@@ -64,7 +64,7 @@ export default function QuoteDetails() {
         },
         body: JSON.stringify({
           quoteId: quote.id,
-          amount: parseFloat(quote.quoted_price) * 100, // Convert to cents
+          amount: parseFloat(quote.quoted_price.toString()) * 100, // Convert to cents
           currency: quote.quoted_currency?.toLowerCase() || 'usd',
         }),
       });
@@ -169,7 +169,7 @@ export default function QuoteDetails() {
                       {new Intl.NumberFormat('en-US', {
                         style: 'currency',
                         currency: quote.quoted_currency || 'USD',
-                      }).format(parseFloat(quote.quoted_price))}
+                      }).format(parseFloat(quote.quoted_price.toString()))}
                     </span>
                   </div>
                 </div>
@@ -181,7 +181,7 @@ export default function QuoteDetails() {
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-4 text-sm">
                   <div>
                     <p className="text-gray-600">Budget Range:</p>
-                    <p className="font-medium">${quote.budget_range}</p>
+                    <p className="font-medium text-[#8B4513]">${quote.budget_range}</p>
                   </div>
                   {quote.travel_dates_start && (
                     <div>
@@ -194,11 +194,11 @@ export default function QuoteDetails() {
                   )}
                   <div>
                     <p className="text-gray-600">Contact Email:</p>
-                    <p className="font-medium">{quote.contact_email}</p>
+                    <p className="font-medium text-[#8B4513]">{quote.contact_email}</p>
                   </div>
                   <div>
                     <p className="text-gray-600">Contact Phone:</p>
-                    <p className="font-medium">{quote.contact_phone}</p>
+                    <p className="font-medium text-[#8B4513]">{quote.contact_phone}</p>
                   </div>
                 </div>
               </div>
@@ -235,26 +235,26 @@ export default function QuoteDetails() {
               <div className="space-y-3 mb-6">
                 <div className="flex justify-between">
                   <span className="text-gray-600">Destination:</span>
-                  <span className="font-medium">{quote.destination}</span>
+                  <span className="font-medium text-[#8B4513]">{quote.destination}</span>
                 </div>
                 <div className="flex justify-between">
                   <span className="text-gray-600">Duration:</span>
-                  <span className="font-medium">{quote.duration} days</span>
+                  <span className="font-medium text-[#8B4513]">{quote.duration} days</span>
                 </div>
                 <div className="flex justify-between">
                   <span className="text-gray-600">Participants:</span>
-                  <span className="font-medium">{quote.participants}</span>
+                  <span className="font-medium text-[#8B4513]">{quote.participants}</span>
                 </div>
                 {quote.quoted_price && (
                   <>
                     <div className="border-t pt-3">
                       <div className="flex justify-between text-lg font-semibold">
-                        <span>Total:</span>
+                        <span className='text-gray-600'>Total:</span>
                         <span className="text-[#8B4513]">
                           {new Intl.NumberFormat('en-US', {
                             style: 'currency',
                             currency: quote.quoted_currency || 'USD',
-                          }).format(parseFloat(quote.quoted_price))}
+                          }).format(parseFloat(quote.quoted_price.toString()))}
                         </span>
                       </div>
                     </div>

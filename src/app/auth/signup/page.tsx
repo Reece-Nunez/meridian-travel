@@ -1,11 +1,11 @@
 'use client';
 
-import { useState, useEffect } from 'react';
+import { useState, useEffect, Suspense } from 'react';
 import { useRouter, useSearchParams } from 'next/navigation';
 import Link from 'next/link';
 import { useAuth } from '@/contexts/AuthContext';
 
-export default function SignUp() {
+function SignUpForm() {
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [confirmPassword, setConfirmPassword] = useState('');
@@ -398,5 +398,17 @@ export default function SignUp() {
         </div>
       </div>
     </div>
+  );
+}
+
+export default function SignUp() {
+  return (
+    <Suspense fallback={
+      <div className="min-h-screen flex items-center justify-center bg-[#F5F5DC]">
+        <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-[#8B4513]"></div>
+      </div>
+    }>
+      <SignUpForm />
+    </Suspense>
   );
 }

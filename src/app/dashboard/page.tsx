@@ -2,12 +2,12 @@
 
 import { useAuth } from '@/contexts/AuthContext';
 import { useRouter, useSearchParams } from 'next/navigation';
-import { useEffect, useState } from 'react';
+import { useEffect, useState, Suspense } from 'react';
 import { supabase } from '@/lib/supabase';
 import Link from 'next/link';
 import { Booking, CustomQuote } from '@/types/database';
 
-export default function Dashboard() {
+function DashboardContent() {
   const { user, profile, loading: authLoading, signOut } = useAuth();
   const [bookings, setBookings] = useState<Booking[]>([]);
   const [quotes, setQuotes] = useState<CustomQuote[]>([]);
@@ -362,5 +362,17 @@ export default function Dashboard() {
         </div>
       </div>
     </div>
+  );
+}
+
+export default function Dashboard() {
+  return (
+    <Suspense fallback={
+      <div className="min-h-screen flex items-center justify-center">
+        <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-[#8B4513]"></div>
+      </div>
+    }>
+      <DashboardContent />
+    </Suspense>
   );
 }

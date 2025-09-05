@@ -5,14 +5,26 @@ export async function POST(request: Request) {
   try {
     console.log('API /quotes: POST request received');
     
+    // Debug environment variables
+    const debugInfo = {
+      hasUrl: !!process.env.NEXT_PUBLIC_SUPABASE_URL,
+      hasServiceKey: !!process.env.SUPABASE_SERVICE_ROLE_KEY,
+      nodeEnv: process.env.NODE_ENV,
+      availableSupabaseEnvs: Object.keys(process.env).filter(key => key.includes('SUPABASE')),
+      totalEnvVars: Object.keys(process.env).length,
+      someEnvKeys: Object.keys(process.env).slice(0, 10) // First 10 env var names
+    };
+    
+    console.log('API /quotes: Environment debug info', debugInfo);
+
     // Check environment variables first
     if (!process.env.NEXT_PUBLIC_SUPABASE_URL || !process.env.SUPABASE_SERVICE_ROLE_KEY) {
-      console.error('API /quotes: Missing required environment variables', {
-        hasUrl: !!process.env.NEXT_PUBLIC_SUPABASE_URL,
-        hasServiceKey: !!process.env.SUPABASE_SERVICE_ROLE_KEY
-      });
+      console.error('API /quotes: Missing required environment variables', debugInfo);
       return NextResponse.json(
-        { error: 'Server configuration error' },
+        { 
+          error: 'Server configuration error',
+          debug: debugInfo
+        },
         { status: 500 }
       );
     }

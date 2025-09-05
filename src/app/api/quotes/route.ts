@@ -5,14 +5,34 @@ export async function POST(request: Request) {
   try {
     console.log('API /quotes: POST request received');
     
+    // Debug all environment variables
+    console.log('API /quotes: Environment variables check', {
+      NODE_ENV: process.env.NODE_ENV,
+      NEXT_PUBLIC_SUPABASE_URL: process.env.NEXT_PUBLIC_SUPABASE_URL ? `${process.env.NEXT_PUBLIC_SUPABASE_URL.substring(0, 20)}...` : 'MISSING',
+      SUPABASE_SERVICE_ROLE_KEY: process.env.SUPABASE_SERVICE_ROLE_KEY ? `${process.env.SUPABASE_SERVICE_ROLE_KEY.substring(0, 10)}...` : 'MISSING',
+      DATABASE_URL: process.env.DATABASE_URL ? `${process.env.DATABASE_URL.substring(0, 20)}...` : 'MISSING',
+      NEXT_PUBLIC_SUPABASE_ANON_KEY: process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY ? `${process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY.substring(0, 10)}...` : 'MISSING',
+      allEnvKeys: Object.keys(process.env).filter(key => key.includes('SUPABASE')).join(', ')
+    });
+    
     // Check environment variables first
     if (!process.env.NEXT_PUBLIC_SUPABASE_URL || !process.env.SUPABASE_SERVICE_ROLE_KEY) {
       console.error('API /quotes: Missing required environment variables', {
         hasUrl: !!process.env.NEXT_PUBLIC_SUPABASE_URL,
-        hasServiceKey: !!process.env.SUPABASE_SERVICE_ROLE_KEY
+        hasServiceKey: !!process.env.SUPABASE_SERVICE_ROLE_KEY,
+        urlValue: process.env.NEXT_PUBLIC_SUPABASE_URL || 'undefined',
+        serviceKeyValue: process.env.SUPABASE_SERVICE_ROLE_KEY ? 'present' : 'undefined'
       });
       return NextResponse.json(
-        { error: 'Server configuration error' },
+        { 
+          error: 'Server configuration error',
+          debug: {
+            hasUrl: !!process.env.NEXT_PUBLIC_SUPABASE_URL,
+            hasServiceKey: !!process.env.SUPABASE_SERVICE_ROLE_KEY,
+            nodeEnv: process.env.NODE_ENV,
+            availableSupabaseEnvs: Object.keys(process.env).filter(key => key.includes('SUPABASE'))
+          }
+        },
         { status: 500 }
       );
     }

@@ -108,19 +108,31 @@ export async function POST(request: Request) {
       combinedRequirements += `Travel Plans & Interests: ${travelPlans}`;
     }
 
-    // Prepare data for database
+    // Prepare data for database with proper type validation
     const quoteData = {
-      destination,
-      duration,
-      participants: parseInt(adults) + parseInt(children),
-      budget_range: budget,
-      travel_dates_start,
-      travel_dates_end,
+      destination: destination?.toString() || '',
+      duration: Number.isInteger(duration) ? duration : 7,
+      participants: parseInt(adults || '0') + parseInt(children || '0'),
+      budget_range: budget?.toString() || '',
+      travel_dates_start: travel_dates_start || null,
+      travel_dates_end: travel_dates_end || null,
       special_requirements: combinedRequirements.trim() || null,
-      contact_email: email,
-      contact_phone: phone,
+      contact_email: email?.toString() || '',
+      contact_phone: phone?.toString() || '',
       status: 'pending' as const
     };
+
+    // Validate required fields
+    if (!quoteData.destination || !quoteData.contact_email) {
+      console.error('API /quotes: Missing required fields', {
+        hasDestination: !!quoteData.destination,
+        hasEmail: !!quoteData.contact_email
+      });
+      return NextResponse.json(
+        { error: 'Missing required fields: destination and email are required' },
+        { status: 400 }
+      );
+    }
 
     console.log('API /quotes: Prepared quote data', { 
       destination: quoteData.destination, 

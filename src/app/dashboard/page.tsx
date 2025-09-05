@@ -13,41 +13,50 @@ function DashboardContent() {
   const [quotes, setQuotes] = useState<CustomQuote[]>([]);
   const [loading, setLoading] = useState(false);
   const [showQuoteSuccess, setShowQuoteSuccess] = useState(false);
+  const [dataLoaded, setDataLoaded] = useState(false);
   const router = useRouter();
   const searchParams = useSearchParams();
 
+  // Simple auth check - redirect if no user
   useEffect(() => {
-    console.log('Dashboard: useEffect - authLoading:', authLoading, 'user:', !!user);
-    
-    // Check for quote attachment success
+    if (!authLoading && !user) {
+      router.push('/auth/signin?redirect=/dashboard');
+    }
+  }, [user, authLoading, router]);
+
+  // Handle quote attachment success notification
+  useEffect(() => {
     const quoteAttached = searchParams.get('quote_attached');
     if (quoteAttached === 'true') {
       setShowQuoteSuccess(true);
-      // Clean URL after showing notification
       router.replace('/dashboard');
-      // Hide notification after 8 seconds
       setTimeout(() => setShowQuoteSuccess(false), 8000);
     }
-    
-    // Only redirect if we're certain there's no user and not loading
-    if (!authLoading && !user) {
-      console.log('Dashboard: No user, redirecting to signin');
-      router.push('/auth/signin?redirect=/dashboard');
-      return;
-    }
+  }, [searchParams, router]);
 
-    // Fetch data when we have a user
-    if (user) {
-      console.log('Dashboard: User found, calling fetchUserData');
+  // Fetch data when user is available
+  useEffect(() => {
+    if (user && !dataLoaded) {
+      console.log('Dashboard: Fetching data for user:', user.id);
       fetchUserData();
-    } else {
-      console.log('Dashboard: No user or still loading auth');
     }
-  }, [user, authLoading, router, searchParams]);
+  }, [user, dataLoaded]);
+
+  // Handle tab visibility changes
+  useEffect(() => {
+    const handleVisibilityChange = () => {
+      if (!document.hidden && user && dataLoaded) {
+        console.log('Dashboard: Tab became visible, refreshing data');
+        fetchUserData();
+      }
+    };
+
+    document.addEventListener('visibilitychange', handleVisibilityChange);
+    return () => document.removeEventListener('visibilitychange', handleVisibilityChange);
+  }, [user, dataLoaded]);
 
   const fetchUserData = async () => {
-    if (!user) {
-      console.log('Dashboard: No user, skipping fetch');
+    if (!user || loading) {
       return;
     }
 
@@ -65,7 +74,7 @@ function DashboardContent() {
       if (quotesError) {
         console.error('Dashboard: Error fetching quotes:', quotesError);
       } else {
-        console.log('Dashboard: Fetched quotes:', quotesData);
+        console.log('Dashboard: Fetched quotes:', quotesData?.length || 0, 'items');
         setQuotes(quotesData || []);
       }
 
@@ -83,13 +92,17 @@ function DashboardContent() {
       if (bookingsError) {
         console.error('Dashboard: Error fetching bookings:', bookingsError);
       } else {
-        console.log('Dashboard: Fetched bookings:', bookingsData);
+        console.log('Dashboard: Fetched bookings:', bookingsData?.length || 0, 'items');
         setBookings(bookingsData || []);
       }
+
+      setDataLoaded(true);
+      console.log('Dashboard: Data fetch completed successfully');
 
     } catch (error) {
       console.error('Dashboard: Error in fetchUserData:', error);
     } finally {
+      console.log('Dashboard: Setting loading to false');
       setLoading(false);
     }
   };
@@ -130,8 +143,8 @@ function DashboardContent() {
     }
   };
 
-  if (authLoading || loading) {
-    console.log('Dashboard: Showing loading spinner - authLoading:', authLoading, 'loading:', loading);
+  // Show loading while auth is loading or if no user yet
+  if (authLoading || (!user && !authLoading)) {
     return (
       <div className="min-h-screen flex items-center justify-center">
         <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-[#8B4513]"></div>
@@ -139,8 +152,9 @@ function DashboardContent() {
     );
   }
 
+  // If no user after auth loading is complete, redirect will happen
   if (!user) {
-    return null; // Will redirect to signin
+    return null;
   }
 
   return (

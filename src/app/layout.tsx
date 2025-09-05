@@ -6,6 +6,7 @@ import "./globals.css";
 import Navigation from "../components/Navigation";
 import Footer from "../components/Footer";
 import { AuthProvider } from "../contexts/AuthContext";
+import SessionManager from "../components/SessionManager";
 
 const geistSans = Geist({
   variable: "--font-geist-sans",
@@ -66,6 +67,7 @@ export default function RootLayout({
           <Navigation />
           {children}
           <Footer />
+          <SessionManager timeout={30} warningTime={2} />
         </AuthProvider>
       </body>
     </html>

@@ -72,25 +72,42 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
         console.log('Auth state change:', event, 'session:', !!session?.user);
         
         // Handle auth state changes but avoid unnecessary loading states
-        if (event === 'SIGNED_IN' || event === 'SIGNED_OUT') {
+        if (event === 'SIGNED_IN') {
           setSession(session);
           setUser(session?.user ?? null);
           
           if (session?.user) {
             const profileData = await fetchProfile(session.user.id);
             setProfile(profileData);
-          } else {
-            setProfile(null);
           }
           
           setLoading(false);
+        } else if (event === 'SIGNED_OUT') {
+          setSession(null);
+          setUser(null);
+          setProfile(null);
+          setLoading(false);
         } else if (event === 'TOKEN_REFRESHED') {
           // Token refresh should not trigger loading states or UI changes
+          // Only update session and user if they're different
+          if (session?.user?.id !== user?.id) {
+            setSession(session);
+            setUser(session?.user ?? null);
+          }
+        } else if (event === 'INITIAL_SESSION') {
+          // Handle initial session load
           setSession(session);
           setUser(session?.user ?? null);
+          
+          if (session?.user) {
+            const profileData = await fetchProfile(session.user.id);
+            setProfile(profileData);
+          }
+          
+          setLoading(false);
         } else {
-          // For any other events, ensure loading is false
-          console.log('Other auth event, setting loading to false');
+          // For any other events, ensure loading is false but don't change user state
+          console.log('Other auth event:', event, '- ensuring loading is false');
           setLoading(false);
         }
       }

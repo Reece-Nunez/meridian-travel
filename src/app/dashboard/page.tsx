@@ -108,13 +108,22 @@ function DashboardContent() {
   };
 
   const handleSignOut = async () => {
-    const { error } = await signOut();
-    if (error) {
-      console.error('Dashboard: Sign out failed:', error);
+    console.log('Dashboard: Starting logout process...');
+    try {
+      const { error } = await signOut();
+      if (error) {
+        console.error('Dashboard: Sign out failed:', error);
+        alert('Sign out failed. Please try again.');
+      } else {
+        console.log('Dashboard: Sign out successful, redirecting...');
+        // Force clear any cached auth state and redirect
+        localStorage.clear();
+        sessionStorage.clear();
+        window.location.href = '/';
+      }
+    } catch (e) {
+      console.error('Dashboard: Sign out exception:', e);
       alert('Sign out failed. Please try again.');
-    } else {
-      // Use window.location to ensure immediate redirect without useEffect interference
-      window.location.href = '/';
     }
   };
 
@@ -178,7 +187,7 @@ function DashboardContent() {
               </Link>
               <button
                 onClick={handleSignOut}
-                className="bg-gray-600 hover:bg-gray-700 text-white px-4 py-2 rounded-md text-sm font-medium transition-colors"
+                className="bg-gray-600 hover:bg-gray-700 text-white px-4 py-2 rounded-md text-sm font-medium transition-colors cursor-pointer"
               >
                 Sign Out
               </button>

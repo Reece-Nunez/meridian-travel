@@ -117,15 +117,25 @@ export default function Navigation() {
                           <button
                             onClick={async () => {
                               setIsAccountMenuOpen(false);
-                              const { error } = await signOut();
-                              if (error) {
-                                console.error('Navigation: Sign out failed:', error);
+                              console.log('Navigation desktop: Starting logout process...');
+                              try {
+                                const { error } = await signOut();
+                                if (error) {
+                                  console.error('Navigation desktop: Sign out failed:', error);
+                                  alert('Sign out failed. Please try again.');
+                                } else {
+                                  console.log('Navigation desktop: Sign out successful, redirecting...');
+                                  // Force clear any cached auth state and redirect
+                                  localStorage.clear();
+                                  sessionStorage.clear();
+                                  window.location.href = '/';
+                                }
+                              } catch (e) {
+                                console.error('Navigation desktop: Sign out exception:', e);
                                 alert('Sign out failed. Please try again.');
-                              } else {
-                                window.location.href = '/';
                               }
                             }}
-                            className="flex items-center w-full text-left px-4 py-2 text-sm text-[#8B4513] hover:bg-gray-50 hover:text-[#B8860B]"
+                            className="flex items-center w-full text-left px-4 py-2 text-sm text-[#8B4513] hover:bg-gray-50 hover:text-[#B8860B] cursor-pointer"
                           >
                             <svg className="w-4 h-4 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                               <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M17 16l4-4m0 0l-4-4m4 4H7m6 4v1a3 3 0 01-3 3H6a3 3 0 01-3-3V7a3 3 0 013-3h4a3 3 0 013 3v1" />
@@ -395,15 +405,25 @@ export default function Navigation() {
                   <button
                     onClick={async () => {
                       setIsMobileMenuOpen(false);
-                      const { error } = await signOut();
-                      if (error) {
-                        console.error('Navigation Mobile: Sign out failed:', error);
+                      console.log('Navigation mobile: Starting logout process...');
+                      try {
+                        const { error } = await signOut();
+                        if (error) {
+                          console.error('Navigation mobile: Sign out failed:', error);
+                          alert('Sign out failed. Please try again.');
+                        } else {
+                          console.log('Navigation mobile: Sign out successful, redirecting...');
+                          // Force clear any cached auth state and redirect
+                          localStorage.clear();
+                          sessionStorage.clear();
+                          window.location.href = '/';
+                        }
+                      } catch (e) {
+                        console.error('Navigation mobile: Sign out exception:', e);
                         alert('Sign out failed. Please try again.');
-                      } else {
-                        window.location.href = '/';
                       }
                     }}
-                    className="w-full text-left text-[#8B4513] hover:text-[#B8860B] px-3 py-2 text-base font-medium"
+                    className="w-full text-left text-[#8B4513] hover:text-[#B8860B] px-3 py-2 text-base font-medium cursor-pointer"
                   >
                     Sign Out
                   </button>

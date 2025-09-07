@@ -277,7 +277,7 @@ export default function QuoteDetails() {
                     <div className="border-t pt-3">
                       <div className="flex justify-between mb-2">
                         <span className="text-gray-900 font-medium">Price Per Person:</span>
-                        <span className="font-medium">
+                        <span className="font-medium text-[#8B4513]">
                           {new Intl.NumberFormat('en-US', {
                             style: 'currency',
                             currency: quote.quoted_currency || 'USD',

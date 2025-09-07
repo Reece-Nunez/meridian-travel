@@ -26,11 +26,56 @@ interface ImageData extends Omit<ItineraryImage, 'id' | 'day_id' | 'created_at' 
 }
 
 const ACTIVITY_TYPES = [
-  { value: 'flight', label: 'Flight', icon: '✈️', color: 'bg-[#8B4513]' },
-  { value: 'tour', label: 'Tour', icon: '🗺️', color: 'bg-[#B8860B]' },
-  { value: 'excursion', label: 'Excursion', icon: '🏔️', color: 'bg-[#DAA520]' },
-  { value: 'activity', label: 'Activity', icon: '🎯', color: 'bg-[#8B4513]' },
-  { value: 'custom', label: 'Custom', icon: '✨', color: 'bg-[#B8860B]' }
+  { 
+    value: 'flight', 
+    label: 'Flight', 
+    icon: (
+      <svg className="w-4 h-4 text-white" fill="currentColor" viewBox="0 0 24 24">
+        <path d="M21 16v-2l-8-5V3.5c0-.83-.67-1.5-1.5-1.5S10 2.67 10 3.5V9l-8 5v2l8-2.5V19l-2 1.5V22l3.5-1 3.5 1v-1.5L13 19v-5.5l8 2.5z"/>
+      </svg>
+    ),
+    color: 'bg-[#8B4513]' 
+  },
+  { 
+    value: 'tour', 
+    label: 'Tour', 
+    icon: (
+      <svg className="w-4 h-4 text-white" fill="currentColor" viewBox="0 0 24 24">
+        <path d="M12 2C8.13 2 5 5.13 5 9c0 5.25 7 13 7 13s7-7.75 7-13c0-3.87-3.13-7-7-7zm0 9.5c-1.38 0-2.5-1.12-2.5-2.5s1.12-2.5 2.5-2.5 2.5 1.12 2.5 2.5-1.12 2.5-2.5 2.5z"/>
+      </svg>
+    ),
+    color: 'bg-[#B8860B]' 
+  },
+  { 
+    value: 'excursion', 
+    label: 'Excursion', 
+    icon: (
+      <svg className="w-4 h-4 text-white" fill="currentColor" viewBox="0 0 24 24">
+        <path d="M14 6l-3.75 5 2.85 3.8-1.6 1.2C9.81 13.75 7 10 7 10l-6 8h22L14 6z"/>
+      </svg>
+    ),
+    color: 'bg-[#DAA520]' 
+  },
+  { 
+    value: 'activity', 
+    label: 'Activity', 
+    icon: (
+      <svg className="w-4 h-4 text-white" fill="currentColor" viewBox="0 0 24 24">
+        <path d="M12 2l3.09 6.26L22 9.27l-5 4.87 1.18 6.88L12 17.77l-6.18 3.25L7 14.14 2 9.27l6.91-1.01L12 2z"/>
+      </svg>
+    ),
+    color: 'bg-[#8B4513]' 
+  },
+  { 
+    value: 'custom', 
+    label: 'Custom', 
+    icon: (
+      <svg className="w-4 h-4 text-white" fill="currentColor" viewBox="0 0 24 24">
+        <path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm-2 15l-5-5 1.41-1.41L10 14.17l7.59-7.59L19 8l-9 9z"/>
+      </svg>
+    ),
+    color: 'bg-[#B8860B]' 
+  }
 ] as const;
 
 export default function ItineraryBuilder({ quoteId, onSave }: ItineraryBuilderProps) {
@@ -468,7 +513,7 @@ export default function ItineraryBuilder({ quoteId, onSave }: ItineraryBuilderPr
                                         >
                                           {ACTIVITY_TYPES.map(type => (
                                             <option key={type.value} value={type.value}>
-                                              {type.icon} {type.label}
+                                              {type.label}
                                             </option>
                                           ))}
                                         </select>

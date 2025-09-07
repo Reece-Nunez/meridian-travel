@@ -30,6 +30,8 @@ export default function QuoteDetails() {
 
   const fetchQuoteDetails = async () => {
     try {
+      console.log('QuoteDetails: Starting fetchQuoteDetails for ID:', quoteId, 'User ID:', user?.id);
+      
       const { data, error } = await supabase
         .from('custom_quotes')
         .select('*')
@@ -37,16 +39,20 @@ export default function QuoteDetails() {
         .eq('user_id', user?.id) // Ensure user can only access their own quotes
         .single();
 
+      console.log('QuoteDetails: Supabase response:', { data, error });
+
       if (error) {
-        console.error('Error fetching quote:', error);
+        console.error('QuoteDetails: Supabase error:', error);
         setError('Quote not found or access denied');
       } else {
+        console.log('QuoteDetails: Quote loaded successfully:', data);
         setQuote(data);
       }
     } catch (err) {
-      console.error('Error:', err);
+      console.error('QuoteDetails: Fetch error:', err);
       setError('Failed to load quote details');
     } finally {
+      console.log('QuoteDetails: Fetch complete, setting loading to false');
       setLoading(false);
     }
   };
@@ -102,7 +108,28 @@ export default function QuoteDetails() {
     }
   };
 
-  if (authLoading || loading) {
+  if (authLoading) {
+    console.log('QuoteDetails: Auth loading...');
+    return (
+      <div className="min-h-screen flex items-center justify-center">
+        <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-[#8B4513]"></div>
+      </div>
+    );
+  }
+
+  if (!user) {
+    console.log('QuoteDetails: No user found, redirecting...');
+    return (
+      <div className="min-h-screen flex items-center justify-center">
+        <div className="text-center">
+          <p className="text-gray-600">Please sign in to view your quote.</p>
+        </div>
+      </div>
+    );
+  }
+
+  if (loading) {
+    console.log('QuoteDetails: Quote loading...');
     return (
       <div className="min-h-screen flex items-center justify-center">
         <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-[#8B4513]"></div>

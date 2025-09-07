@@ -224,15 +224,6 @@ export default function QuoteDetails() {
                 </div>
               )}
 
-              {/* Itinerary Display */}
-              {quote.status === 'approved' && (
-                <div className="border-t pt-6">
-                  <ItineraryDisplay 
-                    quoteId={quote.id} 
-                    title={`${quote.destination} Itinerary`}
-                  />
-                </div>
-              )}
             </div>
           </div>
 
@@ -296,6 +287,19 @@ export default function QuoteDetails() {
             </div>
           </div>
         </div>
+
+        {/* Full-Width Itinerary Display - Below payment section */}
+        {quote.status === 'approved' && (
+          <div className="mt-12">
+            <div className="bg-white shadow-sm rounded-lg p-8">
+              <ItineraryDisplay 
+                quoteId={quote.id} 
+                title={`${quote.destination} Itinerary`}
+                className="max-w-none"
+              />
+            </div>
+          </div>
+        )}
       </div>
     </div>
   );

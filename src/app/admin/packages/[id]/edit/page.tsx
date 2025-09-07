@@ -5,8 +5,15 @@ import { motion } from 'framer-motion';
 import Link from 'next/link';
 import { useRouter, useParams } from 'next/navigation';
 import { supabase } from '@/lib/supabase';
-import { TripPackage, ItineraryDay } from '@/types/database';
+import { TripPackage } from '@/types/database';
 import { useSimpleAdminAuth } from '@/hooks/useSimpleAdminAuth';
+
+interface PackageItineraryDay {
+  day: number;
+  title: string;
+  activities: string[];
+  accommodation?: string | null;
+}
 
 export default function EditPackage() {
   const { loading: authLoading, isAuthenticated } = useSimpleAdminAuth();
@@ -31,7 +38,7 @@ export default function EditPackage() {
     excludes: [''],
     images: ['']
   });
-  const [itinerary, setItinerary] = useState<ItineraryDay[]>([
+  const [itinerary, setItinerary] = useState<PackageItineraryDay[]>([
     { day: 1, title: '', activities: [''], accommodation: '' }
   ]);
 
@@ -112,7 +119,7 @@ export default function EditPackage() {
     }));
   };
 
-  const handleItineraryChange = (dayIndex: number, field: keyof ItineraryDay, value: string | string[]) => {
+  const handleItineraryChange = (dayIndex: number, field: keyof PackageItineraryDay, value: string | string[]) => {
     setItinerary(prev => prev.map((day, i) => 
       i === dayIndex ? { ...day, [field]: value } : day
     ));

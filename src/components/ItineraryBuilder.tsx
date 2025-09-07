@@ -360,65 +360,65 @@ export default function ItineraryBuilder({ quoteId, onSave }: ItineraryBuilderPr
                           {/* Basic Day Info */}
                           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
                             <div>
-                              <label className="block text-sm font-medium text-gray-700 mb-2">
+                              <label className="block text-sm font-medium text-gray-900 mb-2">
                                 Day Label *
                               </label>
                               <input
                                 type="text"
                                 value={day.day_label}
                                 onChange={(e) => updateDay(dayIndex, { day_label: e.target.value })}
-                                className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-[#B8860B] focus:border-[#B8860B]"
+                                className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-[#B8860B] focus:border-[#B8860B] text-gray-900"
                                 placeholder="e.g., Days 1 & 2, Day 3, Days 5-7"
                               />
                             </div>
 
                             <div>
-                              <label className="block text-sm font-medium text-gray-700 mb-2">
+                              <label className="block text-sm font-medium text-gray-900 mb-2">
                                 Start Date *
                               </label>
                               <input
                                 type="date"
                                 value={day.start_date}
                                 onChange={(e) => updateDay(dayIndex, { start_date: e.target.value })}
-                                className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-[#B8860B] focus:border-[#B8860B]"
+                                className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-[#B8860B] focus:border-[#B8860B] text-gray-900"
                               />
                             </div>
 
                             <div>
-                              <label className="block text-sm font-medium text-gray-700 mb-2">
+                              <label className="block text-sm font-medium text-gray-900 mb-2">
                                 End Date (for ranges)
                               </label>
                               <input
                                 type="date"
                                 value={day.end_date || ''}
                                 onChange={(e) => updateDay(dayIndex, { end_date: e.target.value || null })}
-                                className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-[#B8860B] focus:border-[#B8860B]"
+                                className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-[#B8860B] focus:border-[#B8860B] text-gray-900"
                               />
                             </div>
 
                             <div className="md:col-span-2 lg:col-span-1">
-                              <label className="block text-sm font-medium text-gray-700 mb-2">
+                              <label className="block text-sm font-medium text-gray-900 mb-2">
                                 City *
                               </label>
                               <input
                                 type="text"
                                 value={day.city}
                                 onChange={(e) => updateDay(dayIndex, { city: e.target.value })}
-                                className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-[#B8860B] focus:border-[#B8860B]"
+                                className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-[#B8860B] focus:border-[#B8860B] text-gray-900"
                                 placeholder="e.g., Lima, La Paz"
                               />
                             </div>
                           </div>
 
                           <div>
-                            <label className="block text-sm font-medium text-gray-700 mb-2">
+                            <label className="block text-sm font-medium text-gray-900 mb-2">
                               Description *
                             </label>
                             <textarea
                               value={day.description}
                               onChange={(e) => updateDay(dayIndex, { description: e.target.value })}
                               rows={3}
-                              className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-[#B8860B] focus:border-[#B8860B]"
+                              className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-[#B8860B] focus:border-[#B8860B] text-gray-900"
                               placeholder="Describe what the customer will be doing on this day..."
                             />
                           </div>
@@ -443,7 +443,7 @@ export default function ItineraryBuilder({ quoteId, onSave }: ItineraryBuilderPr
                                   <div key={activityIndex} className="border border-gray-200 rounded-lg p-4">
                                     <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mb-3">
                                       <div>
-                                        <label className="block text-sm font-medium text-gray-700 mb-1">
+                                        <label className="block text-sm font-medium text-gray-900 mb-1">
                                           Activity Type
                                         </label>
                                         <select
@@ -452,7 +452,7 @@ export default function ItineraryBuilder({ quoteId, onSave }: ItineraryBuilderPr
                                             activity_type: e.target.value as any,
                                             custom_type: e.target.value === 'custom' ? '' : null
                                           })}
-                                          className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-[#B8860B] focus:border-[#B8860B]"
+                                          className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-[#B8860B] focus:border-[#B8860B] text-gray-900"
                                         >
                                           {ACTIVITY_TYPES.map(type => (
                                             <option key={type.value} value={type.value}>
@@ -464,42 +464,42 @@ export default function ItineraryBuilder({ quoteId, onSave }: ItineraryBuilderPr
 
                                       {activity.activity_type === 'custom' && (
                                         <div>
-                                          <label className="block text-sm font-medium text-gray-700 mb-1">
+                                          <label className="block text-sm font-medium text-gray-900 mb-1">
                                             Custom Type Name
                                           </label>
                                           <input
                                             type="text"
                                             value={activity.custom_type || ''}
                                             onChange={(e) => updateActivity(dayIndex, activityIndex, { custom_type: e.target.value })}
-                                            className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-[#B8860B] focus:border-[#B8860B]"
+                                            className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-[#B8860B] focus:border-[#B8860B] text-gray-900"
                                             placeholder="e.g., Transfer, Accommodation"
                                           />
                                         </div>
                                       )}
 
                                       <div className={activity.activity_type === 'custom' ? '' : 'md:col-span-2'}>
-                                        <label className="block text-sm font-medium text-gray-700 mb-1">
+                                        <label className="block text-sm font-medium text-gray-900 mb-1">
                                           Activity Name
                                         </label>
                                         <input
                                           type="text"
                                           value={activity.name}
                                           onChange={(e) => updateActivity(dayIndex, activityIndex, { name: e.target.value })}
-                                          className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-[#B8860B] focus:border-[#B8860B]"
+                                          className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-[#B8860B] focus:border-[#B8860B] text-gray-900"
                                           placeholder="e.g., International Flight, City Tour"
                                         />
                                       </div>
                                     </div>
 
                                     <div className="mb-3">
-                                      <label className="block text-sm font-medium text-gray-700 mb-1">
+                                      <label className="block text-sm font-medium text-gray-900 mb-1">
                                         Description
                                       </label>
                                       <textarea
                                         value={activity.description}
                                         onChange={(e) => updateActivity(dayIndex, activityIndex, { description: e.target.value })}
                                         rows={2}
-                                        className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-[#B8860B] focus:border-[#B8860B]"
+                                        className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-[#B8860B] focus:border-[#B8860B] text-gray-900"
                                         placeholder="Describe this activity..."
                                       />
                                     </div>

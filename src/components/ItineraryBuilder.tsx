@@ -10,17 +10,24 @@ interface ItineraryBuilderProps {
   onSave?: () => void;
 }
 
-interface DayData extends Omit<ItineraryDay, 'id' | 'created_at' | 'updated_at'> {
+interface DayData {
   id?: string;
+  quote_id: string;
+  day_label: string;
+  start_date: string;
+  end_date?: string | null;
+  city: string;
+  description: string;
+  display_order: number;
   activities: ActivityData[];
-  images: ImageData[];
+  images: ItineraryImageData[];
 }
 
 interface ActivityData extends Omit<ItineraryActivity, 'id' | 'day_id' | 'created_at' | 'updated_at'> {
   id?: string;
 }
 
-interface ImageData extends Omit<ItineraryImage, 'id' | 'day_id' | 'created_at' | 'updated_at'> {
+interface ItineraryImageData extends Omit<ItineraryImage, 'id' | 'day_id' | 'created_at' | 'updated_at'> {
   id?: string;
   file?: File; // For new uploads
 }
@@ -199,7 +206,7 @@ export default function ItineraryBuilder({ quoteId, onSave }: ItineraryBuilderPr
   };
 
   const addImages = (dayIndex: number, files: FileList) => {
-    const newImages: ImageData[] = Array.from(files).map((file, index) => ({
+    const newImages: ItineraryImageData[] = Array.from(files).map((file, index) => ({
       image_url: '', // Will be set after upload
       alt_text: file.name,
       display_order: days[dayIndex].images.length + index,

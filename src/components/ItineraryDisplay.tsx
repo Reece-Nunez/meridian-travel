@@ -11,7 +11,17 @@ interface ItineraryDisplayProps {
   className?: string;
 }
 
-interface DayWithDetails extends ItineraryDay {
+interface DayWithDetails {
+  id: string;
+  quote_id: string;
+  day_label: string;
+  start_date: string;
+  end_date?: string | null;
+  city: string;
+  description: string;
+  display_order: number;
+  created_at: string;
+  updated_at: string;
   activities: ItineraryActivity[];
   images: ItineraryImage[];
 }

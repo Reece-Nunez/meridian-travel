@@ -47,28 +47,29 @@ export default function ItineraryBuilder({ quoteId, onSave }: ItineraryBuilderPr
     try {
       setLoading(true);
       
-      // Load existing itinerary data
-      const { data: daysData, error: daysError } = await supabase
-        .from('itinerary_days')
-        .select(`
-          *,
-          itinerary_activities(*),
-          itinerary_images(*)
-        `)
-        .eq('quote_id', quoteId)
-        .order('display_order');
-
-      if (daysError) {
-        console.error('Error loading itinerary:', daysError);
+      // Get admin email from session
+      const session = localStorage.getItem('admin_session');
+      const adminEmail = session ? JSON.parse(session).email : '';
+      
+      // Load existing itinerary data via API
+      const response = await fetch(`/api/admin/itinerary?quote_id=${quoteId}&admin_email=${encodeURIComponent(adminEmail)}`);
+      
+      if (!response.ok) {
+        console.error('Error loading itinerary:', response.status, response.statusText);
         return;
       }
 
+      const data = await response.json();
+      const daysData = data.itinerary || [];
+
+      console.log('ItineraryBuilder: Loaded itinerary data:', daysData);
+
       // Transform data for component state
-      const transformedDays: DayData[] = (daysData || []).map(day => ({
+      const transformedDays: DayData[] = daysData.map((day: any) => ({
         ...day,
         activities: (day.itinerary_activities || [])
-          .sort((a, b) => a.display_order - b.display_order)
-          .map(activity => ({
+          .sort((a: any, b: any) => a.display_order - b.display_order)
+          .map((activity: any) => ({
             activity_type: activity.activity_type,
             custom_type: activity.custom_type,
             name: activity.name,
@@ -77,8 +78,8 @@ export default function ItineraryBuilder({ quoteId, onSave }: ItineraryBuilderPr
             id: activity.id
           })),
         images: (day.itinerary_images || [])
-          .sort((a, b) => a.display_order - b.display_order)
-          .map(image => ({
+          .sort((a: any, b: any) => a.display_order - b.display_order)
+          .map((image: any) => ({
             image_url: image.image_url,
             alt_text: image.alt_text,
             display_order: image.display_order,
@@ -87,6 +88,7 @@ export default function ItineraryBuilder({ quoteId, onSave }: ItineraryBuilderPr
       }));
 
       setDays(transformedDays);
+      console.log('ItineraryBuilder: Set days state:', transformedDays);
     } catch (error) {
       console.error('Error loading itinerary:', error);
     } finally {

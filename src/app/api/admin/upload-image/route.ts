@@ -3,7 +3,8 @@ import { createSupabaseAdmin } from '@/lib/supabase';
 
 const AUTHORIZED_EMAILS = [
   'reecehnunez@gmail.com',
-  'admin@meridianluxurytravel.com'
+  'admin@meridianluxurytravel.com',
+  'chris@meridianluxury.travel'
 ];
 
 export async function POST(request: NextRequest) {

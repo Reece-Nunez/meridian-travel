@@ -6,6 +6,7 @@ import { useEffect, useState } from 'react';
 import { supabase } from '@/lib/supabase';
 import Link from 'next/link';
 import { CustomQuote } from '@/types/database';
+import ItineraryDisplay from '@/components/ItineraryDisplay';
 
 export default function QuoteDetails() {
   const { user, loading: authLoading } = useAuth();
@@ -220,6 +221,16 @@ export default function QuoteDetails() {
                   <div className="bg-blue-50 border border-blue-200 rounded-lg p-4">
                     <p className="text-sm text-blue-800">{quote.admin_notes}</p>
                   </div>
+                </div>
+              )}
+
+              {/* Itinerary Display */}
+              {quote.status === 'approved' && (
+                <div className="border-t pt-6">
+                  <ItineraryDisplay 
+                    quoteId={quote.id} 
+                    title={`${quote.destination} Itinerary`}
+                  />
                 </div>
               )}
             </div>

@@ -266,6 +266,108 @@ export interface Database {
           refund_reason?: string | null
         }
       }
+      itinerary_days: {
+        Row: {
+          id: string
+          quote_id: string
+          day_label: string
+          start_date: string
+          end_date: string | null
+          city: string
+          description: string
+          display_order: number
+          created_at: string
+          updated_at: string
+        }
+        Insert: {
+          id?: string
+          quote_id: string
+          day_label: string
+          start_date: string
+          end_date?: string | null
+          city: string
+          description: string
+          display_order?: number
+          created_at?: string
+          updated_at?: string
+        }
+        Update: {
+          id?: string
+          quote_id?: string
+          day_label?: string
+          start_date?: string
+          end_date?: string | null
+          city?: string
+          description?: string
+          display_order?: number
+          created_at?: string
+          updated_at?: string
+        }
+      }
+      itinerary_activities: {
+        Row: {
+          id: string
+          day_id: string
+          activity_type: 'flight' | 'tour' | 'excursion' | 'activity' | 'custom'
+          custom_type: string | null
+          name: string
+          description: string
+          display_order: number
+          created_at: string
+          updated_at: string
+        }
+        Insert: {
+          id?: string
+          day_id: string
+          activity_type: 'flight' | 'tour' | 'excursion' | 'activity' | 'custom'
+          custom_type?: string | null
+          name: string
+          description: string
+          display_order?: number
+          created_at?: string
+          updated_at?: string
+        }
+        Update: {
+          id?: string
+          day_id?: string
+          activity_type?: 'flight' | 'tour' | 'excursion' | 'activity' | 'custom'
+          custom_type?: string | null
+          name?: string
+          description?: string
+          display_order?: number
+          created_at?: string
+          updated_at?: string
+        }
+      }
+      itinerary_images: {
+        Row: {
+          id: string
+          day_id: string
+          image_url: string
+          alt_text: string | null
+          display_order: number
+          created_at: string
+          updated_at: string
+        }
+        Insert: {
+          id?: string
+          day_id: string
+          image_url: string
+          alt_text?: string | null
+          display_order?: number
+          created_at?: string
+          updated_at?: string
+        }
+        Update: {
+          id?: string
+          day_id?: string
+          image_url?: string
+          alt_text?: string | null
+          display_order?: number
+          created_at?: string
+          updated_at?: string
+        }
+      }
       content_sections: {
         Row: {
           id: string
@@ -364,3 +466,6 @@ export type Profile = Database['public']['Tables']['profiles']['Row']
 export type PaymentHistory = Database['public']['Tables']['payment_history']['Row']
 export type ContentSection = Database['public']['Tables']['content_sections']['Row']
 export type SiteSetting = Database['public']['Tables']['site_settings']['Row']
+export type ItineraryDay = Database['public']['Tables']['itinerary_days']['Row']
+export type ItineraryActivity = Database['public']['Tables']['itinerary_activities']['Row']
+export type ItineraryImage = Database['public']['Tables']['itinerary_images']['Row']

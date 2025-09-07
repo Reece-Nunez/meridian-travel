@@ -69,7 +69,11 @@
       "Read(/C:\\Users\\reece\\OneDrive\\Documents\\NunezDev\\meridian-travel\\src\\app\\dashboard/**)",
       "Read(/C:\\Users\\reece\\OneDrive\\Documents\\NunezDev\\meridian-travel\\src\\components/**)",
       "Read(/C:\\Users\\reece\\OneDrive\\Documents\\NunezDev\\meridian-travel\\src\\components/**)",
-      "Read(/C:\\Users\\reece\\OneDrive\\Documents\\NunezDev\\meridian-travel\\src\\app\\auth\\signup/**)"
+      "Read(/C:\\Users\\reece\\OneDrive\\Documents\\NunezDev\\meridian-travel\\src\\app\\auth\\signup/**)",
+      "Bash(git pull:*)",
+      "Bash(git stash:*)",
+      "Read(//c/Users/reece/Downloads/**)",
+      "Bash(git checkout:*)"
     ],
     "deny": [],
     "ask": []

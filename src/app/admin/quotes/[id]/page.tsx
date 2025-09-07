@@ -7,6 +7,7 @@ import { useRouter, useParams } from 'next/navigation';
 import { supabase } from '@/lib/supabase';
 import { CustomQuote } from '@/types/database';
 import { useSimpleAdminAuth } from '@/hooks/useSimpleAdminAuth';
+import ItineraryBuilder from '@/components/ItineraryBuilder';
 
 export default function QuoteDetail() {
   const { loading: authLoading, isAuthenticated } = useSimpleAdminAuth();
@@ -409,6 +410,21 @@ export default function QuoteDetail() {
               </button>
             </div>
           </form>
+        </motion.div>
+
+        {/* Itinerary Builder */}
+        <motion.div
+          className="bg-white rounded-lg shadow-sm p-6 mt-8"
+          initial={{ opacity: 0, y: 20 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ duration: 0.5, delay: 0.3 }}
+        >
+          <ItineraryBuilder 
+            quoteId={quoteId} 
+            onSave={() => {
+              console.log('Itinerary saved successfully');
+            }}
+          />
         </motion.div>
       </div>
     </div>

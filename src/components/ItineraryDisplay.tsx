@@ -17,11 +17,11 @@ interface DayWithDetails extends ItineraryDay {
 }
 
 const ACTIVITY_TYPE_CONFIGS = {
-  flight: { icon: '✈️', label: 'Flight', color: 'bg-green-600' },
-  tour: { icon: '🗺️', label: 'Tour', color: 'bg-green-600' },
-  excursion: { icon: '🏔️', label: 'Excursion', color: 'bg-green-600' },
-  activity: { icon: '⚡', label: 'Activity', color: 'bg-green-600' },
-  custom: { icon: '✨', label: 'Custom', color: 'bg-green-600' }
+  flight: { icon: '✈️', label: 'Flight', color: 'bg-[#8B4513]' },
+  tour: { icon: '🗺️', label: 'Tour', color: 'bg-[#B8860B]' },
+  excursion: { icon: '🏔️', label: 'Excursion', color: 'bg-[#DAA520]' },
+  activity: { icon: '⚡', label: 'Activity', color: 'bg-[#8B4513]' },
+  custom: { icon: '✨', label: 'Custom', color: 'bg-[#B8860B]' }
 } as const;
 
 export default function ItineraryDisplay({ quoteId, title, className = '' }: ItineraryDisplayProps) {

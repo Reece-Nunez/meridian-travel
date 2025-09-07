@@ -173,9 +173,9 @@ export default function QuoteDetails() {
           <h1 className="text-3xl font-bold text-[#8B4513]">Quote Details</h1>
         </div>
 
-        <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
+        <div className="grid grid-cols-1 lg:grid-cols-5 gap-8">
           {/* Quote Details */}
-          <div className="lg:col-span-2 space-y-6">
+          <div className="lg:col-span-3 space-y-6">
             <div className="bg-white shadow-sm rounded-lg p-6">
               <div className="flex justify-between items-start mb-6">
                 <div>
@@ -255,7 +255,7 @@ export default function QuoteDetails() {
           </div>
 
           {/* Payment Sidebar */}
-          <div className="lg:col-span-1">
+          <div className="lg:col-span-2">
             <div className="bg-white shadow-sm rounded-lg p-6 sticky top-8">
               <h3 className="text-lg font-semibold text-[#8B4513] mb-4">Booking Summary</h3>
               

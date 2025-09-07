@@ -106,9 +106,9 @@ export default function ItineraryDisplay({ quoteId, title, className = '' }: Iti
       const transformedDays: DayWithDetails[] = (itineraryData || []).map(day => ({
         ...day,
         activities: (day.itinerary_activities || [])
-          .sort((a, b) => a.display_order - b.display_order),
+          .sort((a: any, b: any) => a.display_order - b.display_order),
         images: (day.itinerary_images || [])
-          .sort((a, b) => a.display_order - b.display_order)
+          .sort((a: any, b: any) => a.display_order - b.display_order)
       }));
 
       setDays(transformedDays);

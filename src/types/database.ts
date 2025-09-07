@@ -443,12 +443,6 @@ export interface Database {
 }
 
 // Helper types
-export interface ItineraryDay {
-  day: number
-  title: string
-  activities: string[]
-  accommodation?: string | null
-}
 
 export interface ParticipantDetail {
   name: string

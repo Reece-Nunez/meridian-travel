@@ -355,7 +355,7 @@ function DashboardContent() {
                             </p>
                             {quote.quoted_price && (
                               <p className="text-sm text-green-600 font-medium mt-1">
-                                Quoted: {quote.quoted_currency} ${quote.quoted_price}
+                                Per Person: {quote.quoted_currency} ${quote.quoted_price}
                               </p>
                             )}
                             {quote.status === 'approved' && quote.quoted_price && (

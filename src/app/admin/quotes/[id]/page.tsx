@@ -346,7 +346,7 @@ export default function QuoteDetail() {
 
               <div>
                 <label htmlFor="quoted_price" className="block text-sm font-medium text-gray-700 mb-2">
-                  Quoted Price
+                  Price Per Person
                 </label>
                 <input
                   type="number"

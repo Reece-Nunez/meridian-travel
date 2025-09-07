@@ -71,7 +71,7 @@ export default function QuoteDetails() {
         },
         body: JSON.stringify({
           quoteId: quote.id,
-          amount: parseFloat(quote.quoted_price.toString()) * 100, // Convert to cents
+          amount: parseFloat(quote.quoted_price.toString()) * quote.participants * 100, // Convert to cents (total for all participants)
           currency: quote.quoted_currency?.toLowerCase() || 'usd',
         }),
       });
@@ -190,7 +190,7 @@ export default function QuoteDetails() {
               {quote.quoted_price && (
                 <div className="border-t pt-6 mb-6">
                   <div className="flex justify-between items-center">
-                    <span className="text-lg font-semibold text-gray-900">Total Quote Price:</span>
+                    <span className="text-lg font-semibold text-gray-900">Price Per Person:</span>
                     <span className="text-2xl font-bold text-[#8B4513]">
                       {new Intl.NumberFormat('en-US', {
                         style: 'currency',
@@ -275,13 +275,22 @@ export default function QuoteDetails() {
                 {quote.quoted_price && (
                   <>
                     <div className="border-t pt-3">
-                      <div className="flex justify-between text-lg font-semibold">
-                        <span className='text-gray-600'>Total:</span>
-                        <span className="text-[#8B4513]">
+                      <div className="flex justify-between mb-2">
+                        <span className="text-gray-600">Price Per Person:</span>
+                        <span className="font-medium">
                           {new Intl.NumberFormat('en-US', {
                             style: 'currency',
                             currency: quote.quoted_currency || 'USD',
                           }).format(parseFloat(quote.quoted_price.toString()))}
+                        </span>
+                      </div>
+                      <div className="flex justify-between text-lg font-semibold">
+                        <span className='text-gray-600'>Total ({quote.participants} {quote.participants === 1 ? 'person' : 'people'}):</span>
+                        <span className="text-[#8B4513]">
+                          {new Intl.NumberFormat('en-US', {
+                            style: 'currency',
+                            currency: quote.quoted_currency || 'USD',
+                          }).format(parseFloat(quote.quoted_price.toString()) * quote.participants)}
                         </span>
                       </div>
                     </div>

@@ -114,7 +114,7 @@ export async function POST(request: Request) {
                     <span style="color: #8B4513; font-weight: 600;">${quote.participants} people</span>
                   </div>
                   <div style="display: flex; justify-content: space-between; padding: 20px 0; background: rgba(218, 165, 32, 0.1); margin: 15px -15px -15px -15px; padding: 20px 15px; border-radius: 8px;">
-                    <span style="color: #8B4513; font-weight: 600; font-size: 18px;">Total Price:</span>
+                    <span style="color: #8B4513; font-weight: 600; font-size: 18px;">Price Per Person:</span>
                     <span style="color: #DAA520; font-size: 28px; font-weight: bold;">${formattedPrice}</span>
                   </div>
                 </div>

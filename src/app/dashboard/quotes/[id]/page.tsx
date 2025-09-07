@@ -261,22 +261,22 @@ export default function QuoteDetails() {
               
               <div className="space-y-3 mb-6">
                 <div className="flex justify-between">
-                  <span className="text-gray-600">Destination:</span>
+                  <span className="text-gray-900 font-medium">Destination:</span>
                   <span className="font-medium text-[#8B4513]">{quote.destination}</span>
                 </div>
                 <div className="flex justify-between">
-                  <span className="text-gray-600">Duration:</span>
+                  <span className="text-gray-900 font-medium">Duration:</span>
                   <span className="font-medium text-[#8B4513]">{quote.duration} days</span>
                 </div>
                 <div className="flex justify-between">
-                  <span className="text-gray-600">Participants:</span>
+                  <span className="text-gray-900 font-medium">Participants:</span>
                   <span className="font-medium text-[#8B4513]">{quote.participants}</span>
                 </div>
                 {quote.quoted_price && (
                   <>
                     <div className="border-t pt-3">
                       <div className="flex justify-between mb-2">
-                        <span className="text-gray-600">Price Per Person:</span>
+                        <span className="text-gray-900 font-medium">Price Per Person:</span>
                         <span className="font-medium">
                           {new Intl.NumberFormat('en-US', {
                             style: 'currency',
@@ -285,7 +285,7 @@ export default function QuoteDetails() {
                         </span>
                       </div>
                       <div className="flex justify-between text-lg font-semibold">
-                        <span className='text-gray-600'>Total ({quote.participants} {quote.participants === 1 ? 'person' : 'people'}):</span>
+                        <span className='text-gray-900'>Total ({quote.participants} {quote.participants === 1 ? 'person' : 'people'}):</span>
                         <span className="text-[#8B4513]">
                           {new Intl.NumberFormat('en-US', {
                             style: 'currency',

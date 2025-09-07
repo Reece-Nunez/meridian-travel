@@ -48,7 +48,7 @@ export interface Database {
           price_usd: number
           price_eur: number | null
           price_gbp: number | null
-          itinerary: ItineraryDay[] | null
+          itinerary: any[] | null
           images: string[] | null
           max_participants: number | null
           difficulty_level: 'easy' | 'moderate' | 'challenging' | null
@@ -67,7 +67,7 @@ export interface Database {
           price_usd: number
           price_eur?: number | null
           price_gbp?: number | null
-          itinerary?: ItineraryDay[] | null
+          itinerary?: any[] | null
           images?: string[] | null
           max_participants?: number | null
           difficulty_level?: 'easy' | 'moderate' | 'challenging' | null
@@ -86,7 +86,7 @@ export interface Database {
           price_usd?: number
           price_eur?: number | null
           price_gbp?: number | null
-          itinerary?: ItineraryDay[] | null
+          itinerary?: any[] | null
           images?: string[] | null
           max_participants?: number | null
           difficulty_level?: 'easy' | 'moderate' | 'challenging' | null

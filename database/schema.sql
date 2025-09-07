@@ -50,7 +50,7 @@ CREATE TABLE IF NOT EXISTS custom_quotes (
   special_requirements TEXT,
   contact_email TEXT NOT NULL,
   contact_phone TEXT,
-  status TEXT DEFAULT 'pending' CHECK (status IN ('pending', 'reviewing', 'quoted', 'approved', 'rejected')),
+  status TEXT DEFAULT 'pending' CHECK (status IN ('pending', 'reviewing', 'approved', 'rejected')),
   quoted_price DECIMAL(10,2),
   quoted_currency TEXT DEFAULT 'USD',
   admin_notes TEXT

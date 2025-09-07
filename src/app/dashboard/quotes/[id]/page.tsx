@@ -96,8 +96,6 @@ export default function QuoteDetails() {
         return `${baseClasses} bg-blue-100 text-blue-800`;
       case 'rejected':
         return `${baseClasses} bg-red-100 text-red-800`;
-      case 'quoted':
-        return `${baseClasses} bg-purple-100 text-purple-800`;
       default:
         return `${baseClasses} bg-gray-100 text-gray-800`;
     }

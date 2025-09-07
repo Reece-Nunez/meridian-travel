@@ -139,8 +139,6 @@ function DashboardContent() {
         return `${baseClasses} bg-yellow-100 text-yellow-800`;
       case 'cancelled':
         return `${baseClasses} bg-red-100 text-red-800`;
-      case 'quoted':
-        return `${baseClasses} bg-purple-100 text-purple-800`;
       case 'approved':
         return `${baseClasses} bg-green-100 text-green-800`;
       case 'reviewing':

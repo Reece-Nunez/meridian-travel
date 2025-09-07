@@ -170,23 +170,33 @@ export default function ItineraryBuilder({ quoteId, onSave }: ItineraryBuilderPr
   };
 
   const uploadImage = async (file: File): Promise<string> => {
-    const fileExt = file.name.split('.').pop();
-    const fileName = `${quoteId}/${Date.now()}.${fileExt}`;
-    
-    const { data, error } = await supabase.storage
-      .from('itinerary-images')
-      .upload(fileName, file);
+    try {
+      // Get admin email from session
+      const session = localStorage.getItem('admin_session');
+      const adminEmail = session ? JSON.parse(session).email : '';
+      
+      const formData = new FormData();
+      formData.append('file', file);
+      formData.append('adminEmail', adminEmail);
+      formData.append('quoteId', quoteId);
 
-    if (error) {
+      const response = await fetch('/api/admin/upload-image', {
+        method: 'POST',
+        body: formData,
+      });
+
+      if (!response.ok) {
+        const errorText = await response.text();
+        console.error('Upload response error:', errorText);
+        throw new Error(`Upload failed: ${response.status} ${errorText}`);
+      }
+
+      const data = await response.json();
+      return data.url;
+    } catch (error) {
       console.error('Error uploading image:', error);
       throw error;
     }
-
-    const { data: { publicUrl } } = supabase.storage
-      .from('itinerary-images')
-      .getPublicUrl(fileName);
-
-    return publicUrl;
   };
 
   const saveItinerary = async () => {

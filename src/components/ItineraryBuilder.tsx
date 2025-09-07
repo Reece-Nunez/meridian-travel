@@ -29,7 +29,7 @@ const ACTIVITY_TYPES = [
   { value: 'flight', label: 'Flight', icon: '✈️', color: 'bg-[#8B4513]' },
   { value: 'tour', label: 'Tour', icon: '🗺️', color: 'bg-[#B8860B]' },
   { value: 'excursion', label: 'Excursion', icon: '🏔️', color: 'bg-[#DAA520]' },
-  { value: 'activity', label: 'Activity', icon: '⚡', color: 'bg-[#8B4513]' },
+  { value: 'activity', label: 'Activity', icon: '🎯', color: 'bg-[#8B4513]' },
   { value: 'custom', label: 'Custom', icon: '✨', color: 'bg-[#B8860B]' }
 ] as const;
 

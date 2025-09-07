@@ -20,7 +20,7 @@ const ACTIVITY_TYPE_CONFIGS = {
   flight: { icon: '✈️', label: 'Flight', color: 'bg-[#8B4513]' },
   tour: { icon: '🗺️', label: 'Tour', color: 'bg-[#B8860B]' },
   excursion: { icon: '🏔️', label: 'Excursion', color: 'bg-[#DAA520]' },
-  activity: { icon: '⚡', label: 'Activity', color: 'bg-[#8B4513]' },
+  activity: { icon: '🎯', label: 'Activity', color: 'bg-[#8B4513]' },
   custom: { icon: '✨', label: 'Custom', color: 'bg-[#B8860B]' }
 } as const;
 

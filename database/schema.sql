@@ -96,11 +96,36 @@ CREATE TABLE IF NOT EXISTS payment_history (
   refund_reason TEXT
 );
 
+-- Create content_sections table (CMS content management)
+CREATE TABLE IF NOT EXISTS content_sections (
+  id UUID DEFAULT uuid_generate_v4() PRIMARY KEY,
+  created_at TIMESTAMP WITH TIME ZONE DEFAULT NOW(),
+  updated_at TIMESTAMP WITH TIME ZONE DEFAULT NOW(),
+  section_key TEXT NOT NULL UNIQUE,
+  title TEXT NOT NULL,
+  content TEXT,
+  section_type TEXT NOT NULL DEFAULT 'general',
+  is_active BOOLEAN DEFAULT true
+);
+
+-- Create site_settings table (general site settings)
+CREATE TABLE IF NOT EXISTS site_settings (
+  id UUID DEFAULT uuid_generate_v4() PRIMARY KEY,
+  created_at TIMESTAMP WITH TIME ZONE DEFAULT NOW(),
+  updated_at TIMESTAMP WITH TIME ZONE DEFAULT NOW(),
+  setting_key TEXT NOT NULL UNIQUE,
+  setting_value TEXT,
+  setting_type TEXT DEFAULT 'text' CHECK (setting_type IN ('text', 'email', 'phone', 'url', 'textarea')),
+  description TEXT
+);
+
 -- Row Level Security (RLS) policies
 ALTER TABLE profiles ENABLE ROW LEVEL SECURITY;
 ALTER TABLE custom_quotes ENABLE ROW LEVEL SECURITY;
 ALTER TABLE bookings ENABLE ROW LEVEL SECURITY;
 ALTER TABLE payment_history ENABLE ROW LEVEL SECURITY;
+ALTER TABLE content_sections ENABLE ROW LEVEL SECURITY;
+ALTER TABLE site_settings ENABLE ROW LEVEL SECURITY;
 
 -- Profiles policies
 CREATE POLICY "Users can view own profile" ON profiles FOR SELECT USING (auth.uid() = id);
@@ -121,6 +146,14 @@ USING (auth.uid() IN (SELECT user_id FROM bookings WHERE id = booking_id));
 -- Trip packages are publicly readable (no RLS needed as they're public)
 ALTER TABLE trip_packages ENABLE ROW LEVEL SECURITY;
 CREATE POLICY "Trip packages are publicly readable" ON trip_packages FOR SELECT USING (is_active = true);
+
+-- Content sections policies (publicly readable, admin manageable)
+CREATE POLICY "Content sections are publicly readable" ON content_sections FOR SELECT USING (is_active = true);
+CREATE POLICY "Content sections are manageable" ON content_sections FOR ALL USING (true);
+
+-- Site settings policies (publicly readable, admin manageable)  
+CREATE POLICY "Site settings are publicly readable" ON site_settings FOR SELECT USING (true);
+CREATE POLICY "Site settings are manageable" ON site_settings FOR ALL USING (true);
 
 -- Functions to generate booking reference
 CREATE OR REPLACE FUNCTION generate_booking_reference()
@@ -163,3 +196,5 @@ CREATE TRIGGER update_profiles_updated_at BEFORE UPDATE ON profiles FOR EACH ROW
 CREATE TRIGGER update_trip_packages_updated_at BEFORE UPDATE ON trip_packages FOR EACH ROW EXECUTE FUNCTION update_updated_at_column();
 CREATE TRIGGER update_custom_quotes_updated_at BEFORE UPDATE ON custom_quotes FOR EACH ROW EXECUTE FUNCTION update_updated_at_column();
 CREATE TRIGGER update_bookings_updated_at BEFORE UPDATE ON bookings FOR EACH ROW EXECUTE FUNCTION update_updated_at_column();
+CREATE TRIGGER update_content_sections_updated_at BEFORE UPDATE ON content_sections FOR EACH ROW EXECUTE FUNCTION update_updated_at_column();
+CREATE TRIGGER update_site_settings_updated_at BEFORE UPDATE ON site_settings FOR EACH ROW EXECUTE FUNCTION update_updated_at_column();

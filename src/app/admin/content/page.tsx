@@ -211,18 +211,32 @@ export default function AdminContent() {
   };
 
   const handleSectionChange = (sectionKey: string, sectionTitle: string) => {
+    console.log('handleSectionChange called:', { sectionKey, sectionTitle });
+    console.log('Available contentSections:', contentSections.map(cs => ({ id: cs.id, section_key: cs.section_key, title: cs.title })));
+    
     setSelectedSection(sectionKey);
     
     // Find existing content for this section
     const existingContent = contentSections.find(cs => cs.section_key === sectionKey);
+    console.log('Found existing content:', existingContent);
     
     if (existingContent) {
+      console.log('Setting form with existing content:', {
+        title: existingContent.title,
+        content: existingContent.content?.substring(0, 50) + '...',
+        is_active: existingContent.is_active
+      });
       setContentForm({
         title: existingContent.title,
         content: existingContent.content,
         is_active: existingContent.is_active
       });
     } else {
+      console.log('No existing content found, setting default:', {
+        title: sectionTitle,
+        content: '',
+        is_active: true
+      });
       setContentForm({
         title: sectionTitle,
         content: '',
@@ -387,6 +401,10 @@ export default function AdminContent() {
               {/* Content Form */}
               {selectedSection && (
                 <>
+                  {/* Debug info */}
+                  <div className="mb-4 p-3 bg-gray-100 rounded text-xs">
+                    <strong>Debug:</strong> Section: {selectedSection}, Title: "{contentForm.title}", Content length: {contentForm.content?.length || 0}
+                  </div>
                   <div className="mb-6">
                     <label className="block text-sm font-medium text-gray-700 mb-2">
                       Section Title <span className="text-red-500">*</span>

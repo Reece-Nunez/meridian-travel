@@ -26,6 +26,12 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   const [profile, setProfile] = useState<Profile | null>(null);
   const [loading, setLoading] = useState(true);
 
+  // Helper function to check if we're using a dummy Supabase client
+  const isDummyClient = () => {
+    const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL;
+    return !supabaseUrl || supabaseUrl === 'https://dummy.supabase.co';
+  };
+
   const fetchProfile = async (userId: string) => {
     try {
       const { data, error } = await supabase
@@ -54,11 +60,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   };
 
   useEffect(() => {
-    // Check if using dummy Supabase client (when env vars are missing)
-    const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL;
-    const isDummyClient = !supabaseUrl || supabaseUrl === 'https://dummy.supabase.co';
-    
-    if (isDummyClient) {
+    if (isDummyClient()) {
       console.warn('Using dummy Supabase client - authentication disabled');
       setLoading(false);
       return;
@@ -139,10 +141,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   }, []);
 
   const signUp = async (email: string, password: string) => {
-    // Check if using dummy client
-    const isDummyClient = supabase.supabaseUrl === 'https://dummy.supabase.co';
-    
-    if (isDummyClient) {
+    if (isDummyClient()) {
       return { data: null, error: { message: 'Authentication is disabled - Supabase environment variables missing' } as AuthError };
     }
 
@@ -155,10 +154,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   };
 
   const signIn = async (email: string, password: string) => {
-    // Check if using dummy client
-    const isDummyClient = supabase.supabaseUrl === 'https://dummy.supabase.co';
-    
-    if (isDummyClient) {
+    if (isDummyClient()) {
       return { data: null, error: { message: 'Authentication is disabled - Supabase environment variables missing' } as AuthError };
     }
 
@@ -174,10 +170,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     try {
       console.log('AuthContext: Starting signOut process...');
       
-      // Check if using dummy client
-      const isDummyClient = supabase.supabaseUrl === 'https://dummy.supabase.co';
-      
-      if (isDummyClient) {
+      if (isDummyClient()) {
         console.warn('AuthContext: Using dummy client - skipping Supabase signOut');
         // Just clear local state for dummy client
         setUser(null);

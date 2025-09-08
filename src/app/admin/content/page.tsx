@@ -152,34 +152,52 @@ export default function AdminContent() {
   };
 
   useEffect(() => {
-    if (isAuthenticated) {
+    console.log('useEffect triggered - isAuthenticated:', isAuthenticated, 'authLoading:', authLoading);
+    
+    if (isAuthenticated && !authLoading) {
       fetchContentSections();
+    } else if (!authLoading && !isAuthenticated) {
+      // If not authenticated and not loading, set loading to false
+      setLoading(false);
     }
-  }, [isAuthenticated]);
+  }, [isAuthenticated, authLoading]);
 
   const fetchContentSections = async () => {
     try {
+      console.log('Starting to fetch content sections...');
       setLoading(true);
-      console.log('Fetching content sections...');
       
-      const { data, error } = await supabase
+      // Add a timeout to prevent infinite loading
+      const timeoutPromise = new Promise((_, reject) => 
+        setTimeout(() => reject(new Error('Request timeout')), 10000)
+      );
+      
+      const supabasePromise = supabase
         .from('content_sections')
         .select('*')
         .order('created_at', { ascending: false });
+      
+      const { data, error } = await Promise.race([supabasePromise, timeoutPromise]) as any;
+
+      console.log('Supabase response:', { data, error, dataLength: data?.length });
 
       if (error) {
-        console.error('Supabase error:', error);
+        console.error('Supabase error details:', error);
         throw error;
       }
       
-      console.log('Fetched content sections:', data?.length || 0, 'sections');
+      console.log('Successfully fetched', data?.length || 0, 'content sections');
       setContentSections(data || []);
     } catch (err) {
-      console.error('Error fetching content:', err);
-      setError('Failed to load content sections');
-      // Set empty array to show "no content" message instead of loading
+      console.error('Catch block - Error fetching content:', err);
+      if (err.message === 'Request timeout') {
+        setError('Request timed out - please try refreshing');
+      } else {
+        setError('Failed to load content sections');
+      }
       setContentSections([]);
     } finally {
+      console.log('Setting loading to false');
       setLoading(false);
     }
   };
@@ -447,15 +465,38 @@ export default function AdminContent() {
           {/* Existing Content Sections */}
           <div className="lg:col-span-1">
             <div className="bg-white rounded-lg shadow-sm border border-gray-200 p-6">
-              <h3 className="text-lg font-semibold text-[#8B4513] mb-4">Existing Content Sections</h3>
+              <div className="flex justify-between items-center mb-4">
+                <h3 className="text-lg font-semibold text-[#8B4513]">Existing Content Sections</h3>
+                <button
+                  onClick={() => {
+                    console.log('Manual refresh clicked');
+                    fetchContentSections();
+                  }}
+                  className="text-sm text-[#B8860B] hover:text-[#DAA520] font-medium"
+                >
+                  Refresh
+                </button>
+              </div>
               
               {loading ? (
                 <div className="text-center py-8">
                   <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-[#8B4513] mx-auto"></div>
+                  <p className="text-sm text-gray-500 mt-2">Loading content sections...</p>
+                </div>
+              ) : error ? (
+                <div className="text-center py-8">
+                  <div className="text-red-600 mb-2">{error}</div>
+                  <button
+                    onClick={fetchContentSections}
+                    className="text-sm text-[#B8860B] hover:text-[#DAA520] font-medium"
+                  >
+                    Try Again
+                  </button>
                 </div>
               ) : contentSections.length === 0 ? (
                 <div className="text-center py-8 text-gray-500">
                   <p>No content sections found.</p>
+                  <p className="text-xs mt-2">Create some content using the form on the left.</p>
                 </div>
               ) : (
                 <div className="space-y-3 max-h-96 overflow-y-auto">

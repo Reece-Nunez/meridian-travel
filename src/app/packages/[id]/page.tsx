@@ -53,26 +53,7 @@ export default function PackageDetail() {
     }
   };
 
-  const getDifficultyColor = (level: string | null) => {
-    switch (level) {
-      case 'easy':
-        return 'bg-green-100 text-green-800';
-      case 'moderate':
-        return 'bg-yellow-100 text-yellow-800';
-      case 'challenging':
-        return 'bg-red-100 text-red-800';
-      default:
-        return 'bg-gray-100 text-gray-800';
-    }
-  };
 
-  const formatPrice = (price: number) => {
-    return new Intl.NumberFormat('en-US', {
-      style: 'currency',
-      currency: 'USD',
-      minimumFractionDigits: 0,
-    }).format(price);
-  };
 
   const handleBookNow = () => {
     if (!user) {
@@ -149,13 +130,8 @@ export default function PackageDetail() {
           </Link>
         </div>
 
-        {/* Title and Price */}
+        {/* Title */}
         <div className="absolute bottom-8 left-8">
-          <div className="flex items-center mb-2">
-            <span className={`px-3 py-1 text-sm font-medium rounded-full ${getDifficultyColor(pkg.difficulty_level)}`}>
-              {pkg.difficulty_level || 'Standard'}
-            </span>
-          </div>
           <h1 className="text-4xl font-bold text-white mb-2">{pkg.title}</h1>
           <div className="flex items-center text-white text-lg">
             <svg className="w-5 h-5 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -171,12 +147,8 @@ export default function PackageDetail() {
           </div>
         </div>
 
-        {/* Price and Book Button */}
+        {/* Book Button */}
         <div className="absolute bottom-8 right-8 text-right">
-          <div className="text-3xl font-bold text-white mb-2">
-            {formatPrice(pkg.price_usd)}
-          </div>
-          <div className="text-white/80 text-sm mb-4">per person</div>
           <button
             onClick={handleBookNow}
             className="bg-[#B8860B] hover:bg-[#DAA520] text-white px-6 py-3 rounded-md text-lg font-medium transition-colors duration-200"
@@ -259,22 +231,6 @@ export default function PackageDetail() {
                 <div className="flex justify-between">
                   <span className="text-gray-600">Max Participants:</span>
                   <span className="font-medium">{pkg.max_participants} people</span>
-                </div>
-                <div className="flex justify-between">
-                  <span className="text-gray-600">Difficulty:</span>
-                  <span className={`px-2 py-1 text-xs font-medium rounded-full ${getDifficultyColor(pkg.difficulty_level)}`}>
-                    {pkg.difficulty_level || 'Standard'}
-                  </span>
-                </div>
-                <div className="border-t pt-3 mt-4">
-                  <div className="flex justify-between items-end">
-                    <span className="text-gray-600">Price per person:</span>
-                    <div className="text-right">
-                      <div className="text-2xl font-bold text-[#B8860B]">
-                        {formatPrice(pkg.price_usd)}
-                      </div>
-                    </div>
-                  </div>
                 </div>
               </div>
               <button

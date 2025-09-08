@@ -10,8 +10,6 @@ export default function Packages() {
   const [packages, setPackages] = useState<TripPackage[]>([]);
   const [loading, setLoading] = useState(true);
   const [selectedDestination, setSelectedDestination] = useState<string>('all');
-  const [selectedDifficulty, setSelectedDifficulty] = useState<string>('all');
-  const [priceRange, setPriceRange] = useState<string>('all');
 
   useEffect(() => {
     fetchPackages();
@@ -36,47 +34,11 @@ export default function Packages() {
 
   const filteredPackages = packages.filter(pkg => {
     const destinationMatch = selectedDestination === 'all' || pkg.destination === selectedDestination;
-    const difficultyMatch = selectedDifficulty === 'all' || pkg.difficulty_level === selectedDifficulty;
     
-    let priceMatch = true;
-    if (priceRange !== 'all') {
-      const price = pkg.price_usd;
-      switch (priceRange) {
-        case 'under-2000':
-          priceMatch = price < 2000;
-          break;
-        case '2000-3500':
-          priceMatch = price >= 2000 && price <= 3500;
-          break;
-        case 'over-3500':
-          priceMatch = price > 3500;
-          break;
-      }
-    }
-
-    return destinationMatch && difficultyMatch && priceMatch;
+    return destinationMatch;
   });
 
-  const getDifficultyColor = (level: string | null) => {
-    switch (level) {
-      case 'easy':
-        return 'bg-green-100 text-green-800';
-      case 'moderate':
-        return 'bg-yellow-100 text-yellow-800';
-      case 'challenging':
-        return 'bg-red-100 text-red-800';
-      default:
-        return 'bg-gray-100 text-gray-800';
-    }
-  };
 
-  const formatPrice = (price: number) => {
-    return new Intl.NumberFormat('en-US', {
-      style: 'currency',
-      currency: 'USD',
-      minimumFractionDigits: 0,
-    }).format(price);
-  };
 
   if (loading) {
     return (
@@ -129,7 +91,7 @@ export default function Packages() {
         {/* Filters */}
         <div className="bg-white rounded-lg shadow-sm p-6 mb-8">
           <h2 className="text-lg font-semibold text-[#8B4513] mb-4">Filter Packages</h2>
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+          <div className="grid grid-cols-1 md:grid-cols-1 gap-4">
             <div>
               <label className="block text-sm font-medium text-gray-700 mb-2">Destination</label>
               <select
@@ -142,32 +104,6 @@ export default function Packages() {
                 <option value="Argentina">Argentina</option>
                 <option value="Chile">Chile</option>
                 <option value="Brazil">Brazil</option>
-              </select>
-            </div>
-            <div>
-              <label className="block text-sm font-medium text-gray-700 mb-2">Difficulty</label>
-              <select
-                value={selectedDifficulty}
-                onChange={(e) => setSelectedDifficulty(e.target.value)}
-                className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-[#B8860B] focus:border-[#B8860B]"
-              >
-                <option value="all">All Levels</option>
-                <option value="easy">Easy</option>
-                <option value="moderate">Moderate</option>
-                <option value="challenging">Challenging</option>
-              </select>
-            </div>
-            <div>
-              <label className="block text-sm font-medium text-gray-700 mb-2">Price Range</label>
-              <select
-                value={priceRange}
-                onChange={(e) => setPriceRange(e.target.value)}
-                className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-[#B8860B] focus:border-[#B8860B]"
-              >
-                <option value="all">All Prices</option>
-                <option value="under-2000">Under $2,000</option>
-                <option value="2000-3500">$2,000 - $3,500</option>
-                <option value="over-3500">Over $3,500</option>
               </select>
             </div>
           </div>
@@ -193,8 +129,6 @@ export default function Packages() {
             <button
               onClick={() => {
                 setSelectedDestination('all');
-                setSelectedDifficulty('all');
-                setPriceRange('all');
               }}
               className="text-[#B8860B] hover:text-[#DAA520] font-medium"
             >
@@ -226,22 +160,11 @@ export default function Packages() {
                       <span className="text-white text-lg font-semibold">{pkg.destination}</span>
                     </div>
                   )}
-                  <div className="absolute top-4 right-4">
-                    <span className={`px-2 py-1 text-xs font-medium rounded-full ${getDifficultyColor(pkg.difficulty_level)}`}>
-                      {pkg.difficulty_level || 'Standard'}
-                    </span>
-                  </div>
                 </div>
                 
                 <div className="p-6">
                   <div className="flex justify-between items-start mb-2">
                     <h3 className="text-xl font-bold text-[#8B4513]">{pkg.title}</h3>
-                    <div className="text-right">
-                      <div className="text-2xl font-bold text-[#B8860B]">
-                        {formatPrice(pkg.price_usd)}
-                      </div>
-                      <div className="text-sm text-gray-500">per person</div>
-                    </div>
                   </div>
                   
                   <div className="flex items-center text-sm text-gray-800 mb-3">

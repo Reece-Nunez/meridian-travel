@@ -55,7 +55,8 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
 
   useEffect(() => {
     // Check if using dummy Supabase client (when env vars are missing)
-    const isDummyClient = supabase.supabaseUrl === 'https://dummy.supabase.co';
+    const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL;
+    const isDummyClient = !supabaseUrl || supabaseUrl === 'https://dummy.supabase.co';
     
     if (isDummyClient) {
       console.warn('Using dummy Supabase client - authentication disabled');

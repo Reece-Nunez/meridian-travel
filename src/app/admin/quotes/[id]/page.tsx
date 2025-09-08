@@ -263,7 +263,7 @@ export default function QuoteDetail() {
 
               {quote.budget_range && (
                 <div>
-                  <label className="block text-sm font-medium text-gray-700">Budget Range</label>
+                  <label className="block text-sm font-medium text-gray-700">Accommodations</label>
                   <p className="mt-1 text-sm text-gray-900">{quote.budget_range}</p>
                 </div>
               )}

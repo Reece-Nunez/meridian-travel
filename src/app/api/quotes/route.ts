@@ -46,6 +46,7 @@ export async function POST(request: Request) {
       exactEndDate,
       adults,
       children,
+      childrenOver12,
       rooms,
       budget,
       specialRequirements,
@@ -106,7 +107,10 @@ export async function POST(request: Request) {
     // Add group details
     combinedRequirements += `Group Details: ${adults} adults`;
     if (parseInt(children) > 0) {
-      combinedRequirements += `, ${children} children`;
+      combinedRequirements += `, ${children} children (under 12)`;
+    }
+    if (parseInt(childrenOver12) > 0) {
+      combinedRequirements += `, ${childrenOver12} children (12 and older)`;
     }
     combinedRequirements += `, ${rooms} room${parseInt(rooms) > 1 ? 's' : ''}\n\n`;
     
@@ -124,7 +128,7 @@ export async function POST(request: Request) {
     const quoteData = {
       destination: destination?.toString() || '',
       duration: Number.isInteger(duration) ? duration : 7,
-      participants: parseInt(adults || '0') + parseInt(children || '0'),
+      participants: parseInt(adults || '0') + parseInt(children || '0') + parseInt(childrenOver12 || '0'),
       budget_range: budget?.toString() || '',
       travel_dates_start: travel_dates_start || null,
       travel_dates_end: travel_dates_end || null,

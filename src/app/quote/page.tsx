@@ -18,6 +18,7 @@ export default function QuoteRequest() {
     exactEndDate: '',
     adults: '2',
     children: '0',
+    childrenOver12: '0',
     rooms: '1',
     budget: '',
     specialRequirements: '',
@@ -41,6 +42,7 @@ export default function QuoteRequest() {
     exactEndDate: '',
     adults: '2',
     children: '0',
+    childrenOver12: '0',
     rooms: '1',
     budget: '',
     specialRequirements: '',
@@ -400,63 +402,82 @@ export default function QuoteRequest() {
             </div>
 
             {/* Group Size */}
-            <div className="grid grid-cols-1 sm:grid-cols-3 gap-6 mb-6">
-              <div>
-                <label htmlFor="adults" className="block text-sm font-medium text-gray-700 mb-2">
-                  Adults *
-                </label>
-                <select
-                  id="adults"
-                  name="adults"
-                  required
-                  value={formData.adults}
-                  onChange={handleInputChange}
-                  className="w-full text-black px-4 py-3 border border-gray-300 rounded-md focus:ring-2 focus:ring-[#B8860B] focus:border-transparent"
-                >
-                  {[...Array(10)].map((_, i) => (
-                    <option key={i} value={i + 1}>{i + 1}</option>
-                  ))}
-                </select>
+            <div className="mb-6">
+              {/* Adults and Rooms - Top Row */}
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-6 mb-6">
+                <div>
+                  <label htmlFor="adults" className="block text-sm font-medium text-gray-700 mb-2">
+                    Adults *
+                  </label>
+                  <input
+                    type="number"
+                    id="adults"
+                    name="adults"
+                    required
+                    min="1"
+                    value={formData.adults}
+                    onChange={handleInputChange}
+                    className="w-full text-black px-4 py-3 border border-gray-300 rounded-md focus:ring-2 focus:ring-[#B8860B] focus:border-transparent"
+                    placeholder="Number of adults"
+                  />
+                </div>
+                <div>
+                  <label htmlFor="rooms" className="block text-sm font-medium text-gray-700 mb-2">
+                    Rooms Needed *
+                  </label>
+                  <input
+                    type="number"
+                    id="rooms"
+                    name="rooms"
+                    required
+                    min="1"
+                    value={formData.rooms}
+                    onChange={handleInputChange}
+                    className="w-full text-black px-4 py-3 border border-gray-300 rounded-md focus:ring-2 focus:ring-[#B8860B] focus:border-transparent"
+                    placeholder="Number of rooms"
+                  />
+                </div>
               </div>
-              <div>
-                <label htmlFor="children" className="block text-sm font-medium text-gray-700 mb-2">
-                  Children
-                </label>
-                <select
-                  id="children"
-                  name="children"
-                  value={formData.children}
-                  onChange={handleInputChange}
-                  className="w-full text-black px-4 py-3 border border-gray-300 rounded-md focus:ring-2 focus:ring-[#B8860B] focus:border-transparent"
-                >
-                  {[...Array(6)].map((_, i) => (
-                    <option key={i} value={i}>{i}</option>
-                  ))}
-                </select>
-              </div>
-              <div>
-                <label htmlFor="rooms" className="block text-sm font-medium text-gray-700 mb-2">
-                  Rooms Needed *
-                </label>
-                <select
-                  id="rooms"
-                  name="rooms"
-                  required
-                  value={formData.rooms}
-                  onChange={handleInputChange}
-                  className="w-full text-black px-4 py-3 border border-gray-300 rounded-md focus:ring-2 focus:ring-[#B8860B] focus:border-transparent"
-                >
-                  {[...Array(5)].map((_, i) => (
-                    <option key={i} value={i + 1}>{i + 1}</option>
-                  ))}
-                </select>
+              
+              {/* Children - Bottom Row */}
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-6">
+                <div>
+                  <label htmlFor="children" className="block text-sm font-medium text-gray-700 mb-2">
+                    Children (under 12 at the time of travel)
+                  </label>
+                  <input
+                    type="number"
+                    id="children"
+                    name="children"
+                    min="0"
+                    value={formData.children}
+                    onChange={handleInputChange}
+                    className="w-full text-black px-4 py-3 border border-gray-300 rounded-md focus:ring-2 focus:ring-[#B8860B] focus:border-transparent"
+                    placeholder="Number of children"
+                  />
+                </div>
+                <div>
+                  <label htmlFor="childrenOver12" className="block text-sm font-medium text-gray-700 mb-2">
+                    Children (12 and older at the time of travel)
+                  </label>
+                  <input
+                    type="number"
+                    id="childrenOver12"
+                    name="childrenOver12"
+                    min="0"
+                    value={formData.childrenOver12}
+                    onChange={handleInputChange}
+                    className="w-full text-black px-4 py-3 border border-gray-300 rounded-md focus:ring-2 focus:ring-[#B8860B] focus:border-transparent"
+                    placeholder="Number of children 12+"
+                  />
+                </div>
               </div>
             </div>
 
             {/* Budget */}
             <div className="mb-6">
               <label htmlFor="budget" className="block text-sm font-medium text-gray-700 mb-2">
-                Budget per person (USD) *
+                Accommodations *
               </label>
               <select
                 id="budget"
@@ -466,12 +487,11 @@ export default function QuoteRequest() {
                 onChange={handleInputChange}
                 className="w-full text-black px-4 py-3 border border-gray-300 rounded-md focus:ring-2 focus:ring-blue-900 focus:border-transparent"
               >
-                <option value="">Select budget range</option>
-                <option value="1000-2000">$1,000 - $2,000</option>
-                <option value="2000-3000">$2,000 - $3,000</option>
-                <option value="3000-4000">$3,000 - $4,000</option>
-                <option value="4000-5000">$4,000 - $5,000</option>
-                <option value="5000+">$5,000+</option>
+                <option value="">Select accommodation level</option>
+                <option value="5-star">Hand-Picked Luxury (5-star)</option>
+                <option value="4-star">Superior Comfort (4-star)</option>
+                <option value="3-star">Value Oriented in Great Location (3-star)</option>
+                <option value="mixed">A Smart Mix by Destination</option>
               </select>
             </div>
           </motion.div>

@@ -302,7 +302,7 @@ export default function AdminQuotes() {
                           <div>{quote.duration} days</div>
                           <div>{quote.participants} travelers</div>
                           {quote.budget_range && (
-                            <div className="text-xs text-gray-800">Budget: {quote.budget_range}</div>
+                            <div className="text-xs text-gray-800">Accommodations: {quote.budget_range}</div>
                           )}
                         </div>
                       </td>

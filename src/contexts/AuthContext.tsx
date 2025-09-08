@@ -54,8 +54,23 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   };
 
   useEffect(() => {
+    // Check if using dummy Supabase client (when env vars are missing)
+    const isDummyClient = supabase.supabaseUrl === 'https://dummy.supabase.co';
+    
+    if (isDummyClient) {
+      console.warn('Using dummy Supabase client - authentication disabled');
+      setLoading(false);
+      return;
+    }
+
     // Get initial session
-    supabase.auth.getSession().then(({ data: { session } }) => {
+    supabase.auth.getSession().then(({ data: { session }, error }) => {
+      if (error) {
+        console.error('Error getting session:', error);
+        setLoading(false);
+        return;
+      }
+      
       setSession(session);
       setUser(session?.user ?? null);
       
@@ -63,6 +78,9 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
         fetchProfile(session.user.id).then(setProfile);
       }
       
+      setLoading(false);
+    }).catch((error) => {
+      console.error('Session initialization error:', error);
       setLoading(false);
     });
 
@@ -83,6 +101,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
           
           setLoading(false);
         } else if (event === 'SIGNED_OUT') {
+          console.log('Processing SIGNED_OUT event');
           setSession(null);
           setUser(null);
           setProfile(null);
@@ -119,6 +138,13 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   }, []);
 
   const signUp = async (email: string, password: string) => {
+    // Check if using dummy client
+    const isDummyClient = supabase.supabaseUrl === 'https://dummy.supabase.co';
+    
+    if (isDummyClient) {
+      return { data: null, error: { message: 'Authentication is disabled - Supabase environment variables missing' } as AuthError };
+    }
+
     const { data, error } = await supabase.auth.signUp({
       email,
       password,
@@ -128,6 +154,13 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   };
 
   const signIn = async (email: string, password: string) => {
+    // Check if using dummy client
+    const isDummyClient = supabase.supabaseUrl === 'https://dummy.supabase.co';
+    
+    if (isDummyClient) {
+      return { data: null, error: { message: 'Authentication is disabled - Supabase environment variables missing' } as AuthError };
+    }
+
     const { data, error } = await supabase.auth.signInWithPassword({
       email,
       password,
@@ -138,6 +171,21 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
 
   const signOut = async () => {
     try {
+      console.log('AuthContext: Starting signOut process...');
+      
+      // Check if using dummy client
+      const isDummyClient = supabase.supabaseUrl === 'https://dummy.supabase.co';
+      
+      if (isDummyClient) {
+        console.warn('AuthContext: Using dummy client - skipping Supabase signOut');
+        // Just clear local state for dummy client
+        setUser(null);
+        setSession(null);
+        setProfile(null);
+        setLoading(false);
+        return { error: null };
+      }
+
       const { error } = await supabase.auth.signOut();
       
       if (error) {
@@ -145,11 +193,15 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
         return { error };
       }
       
+      console.log('AuthContext: Supabase signOut successful, clearing state...');
+      
       // Clear state immediately on successful signOut
       setUser(null);
       setSession(null);
       setProfile(null);
       setLoading(false);
+      
+      console.log('AuthContext: Local state cleared');
       
       return { error: null };
     } catch (catchError) {

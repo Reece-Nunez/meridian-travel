@@ -152,22 +152,33 @@ export default function AdminContent() {
   };
 
   useEffect(() => {
-    fetchContentSections();
-  }, []);
+    if (isAuthenticated) {
+      fetchContentSections();
+    }
+  }, [isAuthenticated]);
 
   const fetchContentSections = async () => {
     try {
       setLoading(true);
+      console.log('Fetching content sections...');
+      
       const { data, error } = await supabase
         .from('content_sections')
         .select('*')
         .order('created_at', { ascending: false });
 
-      if (error) throw error;
+      if (error) {
+        console.error('Supabase error:', error);
+        throw error;
+      }
+      
+      console.log('Fetched content sections:', data?.length || 0, 'sections');
       setContentSections(data || []);
     } catch (err) {
       console.error('Error fetching content:', err);
       setError('Failed to load content sections');
+      // Set empty array to show "no content" message instead of loading
+      setContentSections([]);
     } finally {
       setLoading(false);
     }
@@ -323,7 +334,7 @@ export default function AdminContent() {
                 <select
                   value={selectedPage}
                   onChange={(e) => handlePageChange(e.target.value)}
-                  className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-[#B8860B] focus:border-[#B8860B]"
+                  className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-[#B8860B] focus:border-[#B8860B] text-black"
                 >
                   <option value="">Choose a page to edit...</option>
                   {Object.keys(PAGE_SECTIONS).map(page => (
@@ -345,7 +356,7 @@ export default function AdminContent() {
                       const sectionTitle = e.target.options[e.target.selectedIndex].text;
                       handleSectionChange(sectionKey, sectionTitle);
                     }}
-                    className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-[#B8860B] focus:border-[#B8860B]"
+                    className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-[#B8860B] focus:border-[#B8860B] text-black"
                   >
                     <option value="">Choose a section to edit...</option>
                     {Object.entries(availableSections).map(([title, key]) => (
@@ -366,7 +377,7 @@ export default function AdminContent() {
                       type="text"
                       value={contentForm.title}
                       onChange={(e) => setContentForm({ ...contentForm, title: e.target.value })}
-                      className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-[#B8860B] focus:border-[#B8860B]"
+                      className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-[#B8860B] focus:border-[#B8860B] text-black"
                       placeholder="Enter section title..."
                     />
                   </div>
@@ -379,7 +390,7 @@ export default function AdminContent() {
                       value={contentForm.content}
                       onChange={(e) => setContentForm({ ...contentForm, content: e.target.value })}
                       rows={8}
-                      className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-[#B8860B] focus:border-[#B8860B]"
+                      className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-[#B8860B] focus:border-[#B8860B] text-black"
                       placeholder="Enter your content here..."
                     />
                   </div>
@@ -392,7 +403,7 @@ export default function AdminContent() {
                         onChange={(e) => setContentForm({ ...contentForm, is_active: e.target.checked })}
                         className="rounded border-gray-300 text-[#B8860B] focus:ring-[#B8860B]"
                       />
-                      <span className="ml-2 text-sm text-gray-700">Active (visible on website)</span>
+                      <span className="ml-2 text-sm text-black">Active (visible on website)</span>
                     </label>
                   </div>
 

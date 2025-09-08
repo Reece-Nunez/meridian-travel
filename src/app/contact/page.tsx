@@ -2,8 +2,149 @@
 
 import Link from 'next/link';
 import { motion } from 'framer-motion';
+import { useState, useEffect } from 'react';
+import { getContentByKey } from '@/lib/content';
 
 export default function Contact() {
+  const [content, setContent] = useState({
+    pageTitle: 'Contact Us',
+    pageSubtitle: 'Ready to begin your Peru adventure? Our travel specialists are here to help you plan the perfect journey.',
+    sectionTitle: 'Get in Touch',
+    phone: '+1 (555) 012-3456',
+    phoneHours: 'Monday - Friday: 9:00 AM - 6:00 PM EST\nSaturday: 10:00 AM - 4:00 PM EST',
+    email: 'info@meridiantravel.com',
+    emailResponse: 'We respond to all inquiries within 24 hours',
+    address: '123 Travel Avenue\nAdventure City, AC 12345\nUnited States',
+    emergencyPhone: '+1 (555) 019-9999',
+    emergencyText: '24/7 emergency support for travelers',
+    quickActionTitle: 'Ready to Start Planning?',
+    quickActionContent: 'The fastest way to get your custom Peru itinerary is to request a quote online. Our specialists will contact you within 24 hours.',
+    quickActionButton: 'Request Your Quote',
+    faqTitle: 'Frequently Asked Questions',
+    faq1Question: 'How far in advance should I book my Peru trip?',
+    faq1Answer: 'We recommend booking at least 3-6 months in advance, especially for travel during peak season (May-September). Popular experiences like the Inca Trail require permits that sell out quickly, so earlier booking ensures better availability.',
+    faq2Question: 'What\\'s included in your Peru travel packages?',
+    faq2Answer: 'Our packages typically include accommodations, transportation, guided tours, entrance fees, and most meals. Each itinerary is custom-built, so inclusions vary based on your preferences and budget. We\\'ll provide a detailed breakdown when we send your quote.',
+    faq3Question: 'Do you provide travel insurance recommendations?',
+    faq3Answer: 'Yes, we strongly recommend travel insurance for all Peru trips. We can provide recommendations for reputable insurance providers that offer coverage for adventure activities and high-altitude destinations.',
+    faq4Question: 'What if I need to change my travel dates?',
+    faq4Answer: 'We understand that plans can change. Depending on how far in advance you notify us and the specific services booked, we\\'ll work with our partners to minimize any change fees. Our team will guide you through the process.',
+    faq5Question: 'Do you offer group discounts?',
+    faq5Answer: 'Yes! We offer competitive pricing for groups of 8 or more travelers. Group travel also allows for more customization options and can include private guides and exclusive experiences.',
+    faq6Question: 'What support do you provide during my trip?',
+    faq6Answer: 'You\\'ll have access to our 24/7 emergency support line throughout your journey. We also provide detailed pre-departure information and can assist with any issues that arise during your trip.',
+    ctaTitle: 'Still Have Questions?',
+    ctaSubtitle: 'Our Peru travel specialists are here to help. Don\\'t hesitate to reach out—we love talking about Peru adventures!',
+    ctaButton1: 'Call Us Now',
+    ctaButton2: 'Send an Email'
+  });
+
+  useEffect(() => {
+    const fetchContent = async () => {
+      try {
+        const [
+          pageTitle,
+          pageSubtitle,
+          sectionTitle,
+          phone,
+          phoneHours,
+          email,
+          emailResponse,
+          address,
+          emergencyPhone,
+          emergencyText,
+          quickActionTitle,
+          quickActionContent,
+          quickActionButton,
+          faqTitle,
+          faq1Question,
+          faq1Answer,
+          faq2Question,
+          faq2Answer,
+          faq3Question,
+          faq3Answer,
+          faq4Question,
+          faq4Answer,
+          faq5Question,
+          faq5Answer,
+          faq6Question,
+          faq6Answer,
+          ctaTitle,
+          ctaSubtitle,
+          ctaButton1,
+          ctaButton2
+        ] = await Promise.all([
+          getContentByKey('contact_page_title'),
+          getContentByKey('contact_page_subtitle'),
+          getContentByKey('contact_section_title'),
+          getContentByKey('contact_phone'),
+          getContentByKey('contact_phone_hours'),
+          getContentByKey('contact_email'),
+          getContentByKey('contact_email_response'),
+          getContentByKey('contact_address'),
+          getContentByKey('contact_emergency_phone'),
+          getContentByKey('contact_emergency_text'),
+          getContentByKey('contact_quick_action_title'),
+          getContentByKey('contact_quick_action_content'),
+          getContentByKey('contact_quick_action_button'),
+          getContentByKey('contact_faq_title'),
+          getContentByKey('contact_faq_1_question'),
+          getContentByKey('contact_faq_1_answer'),
+          getContentByKey('contact_faq_2_question'),
+          getContentByKey('contact_faq_2_answer'),
+          getContentByKey('contact_faq_3_question'),
+          getContentByKey('contact_faq_3_answer'),
+          getContentByKey('contact_faq_4_question'),
+          getContentByKey('contact_faq_4_answer'),
+          getContentByKey('contact_faq_5_question'),
+          getContentByKey('contact_faq_5_answer'),
+          getContentByKey('contact_faq_6_question'),
+          getContentByKey('contact_faq_6_answer'),
+          getContentByKey('contact_cta_title'),
+          getContentByKey('contact_cta_subtitle'),
+          getContentByKey('contact_cta_button_1'),
+          getContentByKey('contact_cta_button_2')
+        ]);
+
+        setContent({
+          pageTitle: pageTitle || content.pageTitle,
+          pageSubtitle: pageSubtitle || content.pageSubtitle,
+          sectionTitle: sectionTitle || content.sectionTitle,
+          phone: phone || content.phone,
+          phoneHours: phoneHours || content.phoneHours,
+          email: email || content.email,
+          emailResponse: emailResponse || content.emailResponse,
+          address: address || content.address,
+          emergencyPhone: emergencyPhone || content.emergencyPhone,
+          emergencyText: emergencyText || content.emergencyText,
+          quickActionTitle: quickActionTitle || content.quickActionTitle,
+          quickActionContent: quickActionContent || content.quickActionContent,
+          quickActionButton: quickActionButton || content.quickActionButton,
+          faqTitle: faqTitle || content.faqTitle,
+          faq1Question: faq1Question || content.faq1Question,
+          faq1Answer: faq1Answer || content.faq1Answer,
+          faq2Question: faq2Question || content.faq2Question,
+          faq2Answer: faq2Answer || content.faq2Answer,
+          faq3Question: faq3Question || content.faq3Question,
+          faq3Answer: faq3Answer || content.faq3Answer,
+          faq4Question: faq4Question || content.faq4Question,
+          faq4Answer: faq4Answer || content.faq4Answer,
+          faq5Question: faq5Question || content.faq5Question,
+          faq5Answer: faq5Answer || content.faq5Answer,
+          faq6Question: faq6Question || content.faq6Question,
+          faq6Answer: faq6Answer || content.faq6Answer,
+          ctaTitle: ctaTitle || content.ctaTitle,
+          ctaSubtitle: ctaSubtitle || content.ctaSubtitle,
+          ctaButton1: ctaButton1 || content.ctaButton1,
+          ctaButton2: ctaButton2 || content.ctaButton2
+        });
+      } catch (error) {
+        console.log('Using fallback content for contact page');
+      }
+    };
+
+    fetchContent();
+  }, []);
   return (
     <div className="min-h-screen bg-white">
       {/* Header Section */}
@@ -23,11 +164,10 @@ export default function Contact() {
         <div className="relative z-10 px-4 sm:px-6 lg:px-8 max-w-7xl mx-auto">
           <div className="text-center text-white">
             <h1 className="text-4xl sm:text-5xl font-bold mb-4">
-              Contact Us
+              {content.pageTitle}
             </h1>
             <p className="text-xl sm:text-2xl mb-8 max-w-3xl mx-auto">
-              Ready to begin your Peru adventure? Our travel specialists are here to help 
-              you plan the perfect journey.
+              {content.pageSubtitle}
             </p>
           </div>
         </div>
@@ -43,7 +183,7 @@ export default function Contact() {
             transition={{ duration: 0.6, delay: 0.2 }}
           >
             <h2 className="text-3xl font-bold text-[#8B4513] mb-8">
-              Get in Touch
+              {content.sectionTitle}
             </h2>
             
             <div className="space-y-8">
@@ -58,13 +198,17 @@ export default function Contact() {
                     Phone
                   </h3>
                   <p className="text-gray-600 mb-2">
-                    <a href="tel:+1-555-0123" className="hover:text-[#B8860B] transition-colors">
-                      +1 (555) 012-3456
+                    <a href={`tel:${content.phone.replace(/[^+\d]/g, '')}`} className="hover:text-[#B8860B] transition-colors">
+                      {content.phone}
                     </a>
                   </p>
                   <p className="text-sm text-gray-500">
-                    Monday - Friday: 9:00 AM - 6:00 PM EST<br />
-                    Saturday: 10:00 AM - 4:00 PM EST
+                    {content.phoneHours.split('\n').map((line, idx) => (
+                      <span key={idx}>
+                        {line}
+                        {idx < content.phoneHours.split('\n').length - 1 && <br />}
+                      </span>
+                    ))}
                   </p>
                 </div>
               </div>
@@ -80,12 +224,12 @@ export default function Contact() {
                     Email
                   </h3>
                   <p className="text-gray-600 mb-2">
-                    <a href="mailto:info@meridiantravel.com" className="hover:text-[#B8860B] transition-colors">
-                      info@meridiantravel.com
+                    <a href={`mailto:${content.email}`} className="hover:text-[#B8860B] transition-colors">
+                      {content.email}
                     </a>
                   </p>
                   <p className="text-sm text-gray-500">
-                    We respond to all inquiries within 24 hours
+                    {content.emailResponse}
                   </p>
                 </div>
               </div>
@@ -102,9 +246,12 @@ export default function Contact() {
                     Office
                   </h3>
                   <p className="text-gray-600">
-                    123 Travel Avenue<br />
-                    Adventure City, AC 12345<br />
-                    United States
+                    {content.address.split('\n').map((line, idx) => (
+                      <span key={idx}>
+                        {line}
+                        {idx < content.address.split('\n').length - 1 && <br />}
+                      </span>
+                    ))}
                   </p>
                 </div>
               </div>
@@ -120,12 +267,12 @@ export default function Contact() {
                     Emergency Support
                   </h3>
                   <p className="text-gray-600 mb-2">
-                    <a href="tel:+1-555-0199" className="hover:text-[#B8860B] transition-colors">
-                      +1 (555) 019-9999
+                    <a href={`tel:${content.emergencyPhone.replace(/[^+\d]/g, '')}`} className="hover:text-[#B8860B] transition-colors">
+                      {content.emergencyPhone}
                     </a>
                   </p>
                   <p className="text-sm text-gray-500">
-                    24/7 emergency support for travelers
+                    {content.emergencyText}
                   </p>
                 </div>
               </div>
@@ -134,17 +281,16 @@ export default function Contact() {
             {/* Quick Actions */}
             <div className="mt-12 p-6 bg-[#F5F5DC] rounded-lg">
               <h3 className="text-lg font-semibold text-[#8B4513] mb-4">
-                Ready to Start Planning?
+                {content.quickActionTitle}
               </h3>
               <p className="text-gray-600 mb-6">
-                The fastest way to get your custom Peru itinerary is to request a quote online. 
-                Our specialists will contact you within 24 hours.
+                {content.quickActionContent}
               </p>
               <Link
                 href="/quote"
                 className="bg-[#B8860B] hover:bg-[#DAA520] text-[#F5F5DC] px-6 py-3 rounded-md font-medium transition-colors duration-200"
               >
-                Request Your Quote
+                {content.quickActionButton}
               </Link>
             </div>
           </motion.div>
@@ -156,74 +302,61 @@ export default function Contact() {
             transition={{ duration: 0.6, delay: 0.4 }}
           >
             <h2 className="text-3xl font-bold text-[#8B4513] mb-8">
-              Frequently Asked Questions
+              {content.faqTitle}
             </h2>
             
             <div className="space-y-6">
               <div className="border-b border-gray-200 pb-6">
                 <h3 className="text-lg font-semibold text-[#8B4513] mb-2">
-                  How far in advance should I book my Peru trip?
+                  {content.faq1Question}
                 </h3>
                 <p className="text-gray-600">
-                  We recommend booking at least 3-6 months in advance, especially for travel during 
-                  peak season (May-September). Popular experiences like the Inca Trail require permits 
-                  that sell out quickly, so earlier booking ensures better availability.
+                  {content.faq1Answer}
                 </p>
               </div>
 
               <div className="border-b border-gray-200 pb-6">
                 <h3 className="text-lg font-semibold text-[#8B4513] mb-2">
-                  What's included in your Peru travel packages?
+                  {content.faq2Question}
                 </h3>
                 <p className="text-gray-600">
-                  Our packages typically include accommodations, transportation, guided tours, 
-                  entrance fees, and most meals. Each itinerary is custom-built, so inclusions 
-                  vary based on your preferences and budget. We'll provide a detailed breakdown 
-                  when we send your quote.
+                  {content.faq2Answer}
                 </p>
               </div>
 
               <div className="border-b border-gray-200 pb-6">
                 <h3 className="text-lg font-semibold text-[#8B4513] mb-2">
-                  Do you provide travel insurance recommendations?
+                  {content.faq3Question}
                 </h3>
                 <p className="text-gray-600">
-                  Yes, we strongly recommend travel insurance for all Peru trips. We can provide 
-                  recommendations for reputable insurance providers that offer coverage for 
-                  adventure activities and high-altitude destinations.
+                  {content.faq3Answer}
                 </p>
               </div>
 
               <div className="border-b border-gray-200 pb-6">
                 <h3 className="text-lg font-semibold text-[#8B4513] mb-2">
-                  What if I need to change my travel dates?
+                  {content.faq4Question}
                 </h3>
                 <p className="text-gray-600">
-                  We understand that plans can change. Depending on how far in advance you notify us 
-                  and the specific services booked, we'll work with our partners to minimize any 
-                  change fees. Our team will guide you through the process.
+                  {content.faq4Answer}
                 </p>
               </div>
 
               <div className="border-b border-gray-200 pb-6">
                 <h3 className="text-lg font-semibold text-[#8B4513] mb-2">
-                  Do you offer group discounts?
+                  {content.faq5Question}
                 </h3>
                 <p className="text-gray-600">
-                  Yes! We offer competitive pricing for groups of 8 or more travelers. Group travel 
-                  also allows for more customization options and can include private guides and 
-                  exclusive experiences.
+                  {content.faq5Answer}
                 </p>
               </div>
 
               <div className="pb-6">
                 <h3 className="text-lg font-semibold text-[#8B4513] mb-2">
-                  What support do you provide during my trip?
+                  {content.faq6Question}
                 </h3>
                 <p className="text-gray-600">
-                  You'll have access to our 24/7 emergency support line throughout your journey. 
-                  We also provide detailed pre-departure information and can assist with any 
-                  issues that arise during your trip.
+                  {content.faq6Answer}
                 </p>
               </div>
             </div>
@@ -235,24 +368,23 @@ export default function Contact() {
       <div className="bg-[#F5F5DC] py-16">
         <div className="px-4 sm:px-6 lg:px-8 max-w-4xl mx-auto text-center">
           <h2 className="text-3xl font-bold text-[#8B4513] mb-4">
-            Still Have Questions?
+            {content.ctaTitle}
           </h2>
           <p className="text-xl text-gray-600 mb-8">
-            Our Peru travel specialists are here to help. Don't hesitate to reach out—we love 
-            talking about Peru adventures!
+            {content.ctaSubtitle}
           </p>
           <div className="flex flex-col sm:flex-row gap-4 justify-center">
             <a
-              href="tel:+1-555-0123"
+              href={`tel:${content.phone.replace(/[^+\d]/g, '')}`}
               className="bg-[#B8860B] hover:bg-[#DAA520] text-[#F5F5DC] px-8 py-4 rounded-md text-lg font-medium transition-colors duration-200"
             >
-              Call Us Now
+              {content.ctaButton1}
             </a>
             <a
-              href="mailto:info@meridiantravel.com"
+              href={`mailto:${content.email}`}
               className="border-2 border-[#8B4513] text-[#8B4513] hover:bg-white px-8 py-4 rounded-md text-lg font-medium transition-colors duration-200"
             >
-              Send an Email
+              {content.ctaButton2}
             </a>
           </div>
         </div>

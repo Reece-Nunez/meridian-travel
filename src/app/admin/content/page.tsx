@@ -12,45 +12,127 @@ interface ContentSection {
   section_key: string;
   title: string;
   content: string;
-  section_type: 'hero' | 'about' | 'services' | 'contact' | 'footer';
+  section_type: string;
   is_active: boolean;
   created_at: string;
   updated_at: string;
 }
 
-interface SiteSettings {
-  id: string;
-  setting_key: string;
-  setting_value: string;
-  setting_type: 'text' | 'email' | 'phone' | 'url' | 'textarea';
-  description: string;
-  updated_at: string;
-}
+// Define the page structure and editable sections
+const PAGE_SECTIONS = {
+  'Home': {
+    key: 'home',
+    sections: {
+      'Hero Title': 'hero_title',
+      'Hero Subtitle': 'hero_subtitle', 
+      'Hero CTA Button': 'hero_cta',
+      'Hero Secondary CTA': 'hero_cta_secondary',
+      'About Title': 'about_title',
+      'About Content': 'about_content',
+      'Feature 1 Title': 'feature_1_title',
+      'Feature 1 Content': 'feature_1_content',
+      'Feature 2 Title': 'feature_2_title',
+      'Feature 2 Content': 'feature_2_content',
+      'Feature 3 Title': 'feature_3_title',
+      'Feature 3 Content': 'feature_3_content',
+      'Featured Destinations Title': 'featured_destinations_title',
+      'Featured Destinations Subtitle': 'featured_destinations_subtitle',
+      'Destination 1 Title': 'destination_1_title',
+      'Destination 1 Content': 'destination_1_content',
+      'Destination 2 Title': 'destination_2_title', 
+      'Destination 2 Content': 'destination_2_content',
+      'Destination 3 Title': 'destination_3_title',
+      'Destination 3 Content': 'destination_3_content',
+      'CTA Title': 'cta_title',
+      'CTA Subtitle': 'cta_subtitle',
+      'CTA Button': 'cta_button'
+    }
+  },
+  'About Us': {
+    key: 'about',
+    sections: {
+      'Page Title': 'about_page_title',
+      'Main Content': 'about_content',
+      'Story Title': 'about_story_title', 
+      'Story Content': 'about_story_content',
+      'Services Title': 'about_services_title',
+      'Services Content': 'about_services_content',
+      'Service 1 Title': 'about_service_1_title',
+      'Service 1 Content': 'about_service_1_content',
+      'Service 2 Title': 'about_service_2_title',
+      'Service 2 Content': 'about_service_2_content',
+      'Service 3 Title': 'about_service_3_title',
+      'Service 3 Content': 'about_service_3_content',
+      'Service 4 Title': 'about_service_4_title',
+      'Service 4 Content': 'about_service_4_content'
+    }
+  },
+  'Contact': {
+    key: 'contact',
+    sections: {
+      'Page Title': 'contact_page_title',
+      'Page Subtitle': 'contact_page_subtitle',
+      'Section Title': 'contact_section_title',
+      'Phone Number': 'contact_phone',
+      'Phone Hours': 'contact_phone_hours',
+      'Email Address': 'contact_email',
+      'Email Response Time': 'contact_email_response',
+      'Office Address': 'contact_address',
+      'Emergency Phone': 'contact_emergency_phone',
+      'Emergency Text': 'contact_emergency_text',
+      'Quick Action Title': 'contact_quick_action_title',
+      'Quick Action Content': 'contact_quick_action_content',
+      'Quick Action Button': 'contact_quick_action_button',
+      'FAQ Title': 'contact_faq_title',
+      'FAQ 1 Question': 'contact_faq_1_question',
+      'FAQ 1 Answer': 'contact_faq_1_answer',
+      'FAQ 2 Question': 'contact_faq_2_question',
+      'FAQ 2 Answer': 'contact_faq_2_answer',
+      'FAQ 3 Question': 'contact_faq_3_question',
+      'FAQ 3 Answer': 'contact_faq_3_answer',
+      'FAQ 4 Question': 'contact_faq_4_question',
+      'FAQ 4 Answer': 'contact_faq_4_answer',
+      'FAQ 5 Question': 'contact_faq_5_question',
+      'FAQ 5 Answer': 'contact_faq_5_answer',
+      'FAQ 6 Question': 'contact_faq_6_question',
+      'FAQ 6 Answer': 'contact_faq_6_answer',
+      'CTA Title': 'contact_cta_title',
+      'CTA Subtitle': 'contact_cta_subtitle',
+      'CTA Button 1': 'contact_cta_button_1',
+      'CTA Button 2': 'contact_cta_button_2'
+    }
+  },
+  'Destinations': {
+    key: 'destinations',
+    sections: {
+      'Page Title': 'destinations_page_title',
+      'Page Subtitle': 'destinations_page_subtitle',
+      'Available Title': 'destinations_available_title',
+      'Available Subtitle': 'destinations_available_subtitle',
+      'Coming Soon Title': 'destinations_coming_title',
+      'Coming Soon Subtitle': 'destinations_coming_subtitle',
+      'CTA Title': 'destinations_cta_title',
+      'CTA Subtitle': 'destinations_cta_subtitle'
+    }
+  }
+};
 
 export default function AdminContent() {
   const { loading: authLoading, isAuthenticated, logout } = useSimpleAdminAuth();
   const [contentSections, setContentSections] = useState<ContentSection[]>([]);
-  const [siteSettings, setSiteSettings] = useState<SiteSettings[]>([]);
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
   const [error, setError] = useState<string | null>(null);
-  const [activeTab, setActiveTab] = useState<'content' | 'settings'>('content');
-  const [editingSection, setEditingSection] = useState<string | null>(null);
-
+  const [success, setSuccess] = useState<string | null>(null);
+  
   // Form states
-  const [contentForm, setContentForm] = useState<{
-    title: string;
-    content: string;
-    section_type: 'hero' | 'about' | 'services' | 'contact' | 'footer';
-    is_active: boolean;
-  }>({
+  const [selectedPage, setSelectedPage] = useState<string>('');
+  const [selectedSection, setSelectedSection] = useState<string>('');
+  const [contentForm, setContentForm] = useState({
     title: '',
     content: '',
-    section_type: 'hero',
     is_active: true
   });
-
-  const [settingsForm, setSettingsForm] = useState<{[key: string]: string}>({});
 
   const getUsername = () => {
     try {
@@ -70,373 +152,113 @@ export default function AdminContent() {
   };
 
   useEffect(() => {
-    if (isAuthenticated) {
-      initializeTables();
-    }
-  }, [isAuthenticated]);
+    fetchContentSections();
+  }, []);
 
-  const initializeTables = async () => {
+  const fetchContentSections = async () => {
     try {
       setLoading(true);
-      
-      // Check if tables exist and create them if they don't
-      await createTablesIfNotExist();
-      await fetchContent();
-      await fetchSettings();
+      const { data, error } = await supabase
+        .from('content_sections')
+        .select('*')
+        .order('created_at', { ascending: false });
+
+      if (error) throw error;
+      setContentSections(data || []);
     } catch (err) {
-      console.error('Error initializing content management:', err);
-      setError('Failed to initialize content management');
+      console.error('Error fetching content:', err);
+      setError('Failed to load content sections');
     } finally {
       setLoading(false);
     }
   };
 
-  const createTablesIfNotExist = async () => {
-    try {
-      // Try to query the tables first to see if they exist
-      const { error: contentError } = await supabase
-        .from('content_sections')
-        .select('id')
-        .limit(1);
-
-      if (contentError && contentError.message.includes('relation "content_sections" does not exist')) {
-        // Create content_sections table
-        await supabase.rpc('create_content_table');
-      }
-
-      const { error: settingsError } = await supabase
-        .from('site_settings')
-        .select('id')
-        .limit(1);
-
-      if (settingsError && settingsError.message.includes('relation "site_settings" does not exist')) {
-        // Create site_settings table
-        await supabase.rpc('create_settings_table');
-      }
-
-      // Insert default content if tables are empty
-      await insertDefaultContent();
-    } catch (error) {
-      console.log('Tables may already exist or will be created manually');
-      // Continue with manual content management using existing structure
-    }
+  const handlePageChange = (page: string) => {
+    setSelectedPage(page);
+    setSelectedSection('');
+    setContentForm({ title: '', content: '', is_active: true });
+    setError(null);
+    setSuccess(null);
   };
 
-  const insertDefaultContent = async () => {
-    try {
-      // Check if content already exists
-      const { data: existingContent } = await supabase
-        .from('content_sections')
-        .select('id')
-        .limit(1);
-
-      if (!existingContent || existingContent.length === 0) {
-        // Insert default content sections
-        const defaultSections = [
-          {
-            section_key: 'hero_title',
-            title: 'Hero Title',
-            content: 'Discover Extraordinary Adventures',
-            section_type: 'hero',
-            is_active: true
-          },
-          {
-            section_key: 'hero_subtitle',
-            title: 'Hero Subtitle',
-            content: 'Embark on carefully curated luxury travel experiences that create lasting memories.',
-            section_type: 'hero',
-            is_active: true
-          },
-          {
-            section_key: 'about_title',
-            title: 'About Us Title',
-            content: 'About Meridian Luxury Travel',
-            section_type: 'about',
-            is_active: true
-          },
-          {
-            section_key: 'about_content',
-            title: 'About Us Content',
-            content: 'We specialize in creating bespoke travel experiences that exceed expectations. Our team of travel experts carefully crafts each journey to ensure unforgettable adventures.',
-            section_type: 'about',
-            is_active: true
-          }
-        ];
-
-        await supabase.from('content_sections').insert(defaultSections);
-      }
-
-      // Check if settings already exist
-      const { data: existingSettings } = await supabase
-        .from('site_settings')
-        .select('id')
-        .limit(1);
-
-      if (!existingSettings || existingSettings.length === 0) {
-        // Insert default settings
-        const defaultSettings = [
-          {
-            setting_key: 'company_name',
-            setting_value: 'Meridian Luxury Travel',
-            setting_type: 'text',
-            description: 'Company Name'
-          },
-          {
-            setting_key: 'contact_email',
-            setting_value: 'chris@meridianluxury.travel',
-            setting_type: 'email',
-            description: 'Main Contact Email'
-          },
-          {
-            setting_key: 'contact_phone',
-            setting_value: '+1 (555) 123-4567',
-            setting_type: 'phone',
-            description: 'Main Contact Phone'
-          },
-          {
-            setting_key: 'website_url',
-            setting_value: 'https://www.meridianluxury.travel',
-            setting_type: 'url',
-            description: 'Website URL'
-          },
-          {
-            setting_key: 'company_address',
-            setting_value: '123 Travel Way, Adventure City, AC 12345',
-            setting_type: 'textarea',
-            description: 'Company Address'
-          }
-        ];
-
-        await supabase.from('site_settings').insert(defaultSettings);
-      }
-    } catch (error) {
-      // If tables don't exist, we'll work with local state only
-      console.log('Working with local content management');
-      setContentSections([
-        {
-          id: '1',
-          section_key: 'hero_title',
-          title: 'Hero Title',
-          content: 'Discover Extraordinary Adventures',
-          section_type: 'hero',
-          is_active: true,
-          created_at: new Date().toISOString(),
-          updated_at: new Date().toISOString()
-        },
-        {
-          id: '2',
-          section_key: 'hero_subtitle',
-          title: 'Hero Subtitle',
-          content: 'Embark on carefully curated luxury travel experiences that create lasting memories.',
-          section_type: 'hero',
-          is_active: true,
-          created_at: new Date().toISOString(),
-          updated_at: new Date().toISOString()
-        }
-      ]);
-
-      setSiteSettings([
-        {
-          id: '1',
-          setting_key: 'company_name',
-          setting_value: 'Meridian Luxury Travel',
-          setting_type: 'text',
-          description: 'Company Name',
-          updated_at: new Date().toISOString()
-        },
-        {
-          id: '2',
-          setting_key: 'contact_email',
-          setting_value: 'chris@meridianluxury.travel',
-          setting_type: 'email',
-          description: 'Main Contact Email',
-          updated_at: new Date().toISOString()
-        }
-      ]);
-    }
-  };
-
-  const fetchContent = async () => {
-    try {
-      const { data, error } = await supabase
-        .from('content_sections')
-        .select('*')
-        .order('section_type', { ascending: true });
-
-      if (error && !error.message.includes('relation "content_sections" does not exist')) {
-        throw error;
-      }
-
-      if (data) {
-        setContentSections(data);
-      }
-    } catch (err) {
-      console.log('Content sections table may not exist yet');
-    }
-  };
-
-  const fetchSettings = async () => {
-    try {
-      const { data, error } = await supabase
-        .from('site_settings')
-        .select('*')
-        .order('setting_key', { ascending: true });
-
-      if (error && !error.message.includes('relation "site_settings" does not exist')) {
-        throw error;
-      }
-
-      if (data) {
-        setSiteSettings(data);
-        // Initialize form with current values
-        const formData: {[key: string]: string} = {};
-        data.forEach(setting => {
-          formData[setting.setting_key] = setting.setting_value;
-        });
-        setSettingsForm(formData);
-      }
-    } catch (err) {
-      console.log('Site settings table may not exist yet');
-    }
-  };
-
-  const handleContentSubmit = async (e: React.FormEvent) => {
-    e.preventDefault();
-    setSaving(true);
-
-    try {
-      const contentData = {
-        section_key: `${contentForm.section_type}_${Date.now()}`,
-        title: contentForm.title,
-        content: contentForm.content,
-        section_type: contentForm.section_type,
-        is_active: contentForm.is_active,
-        updated_at: new Date().toISOString()
-      };
-
-      if (editingSection) {
-        // Update existing
-        const { error } = await supabase
-          .from('content_sections')
-          .update(contentData)
-          .eq('id', editingSection);
-
-        if (error) throw error;
-
-        setContentSections(prev => prev.map(section => 
-          section.id === editingSection 
-            ? { ...section, ...contentData }
-            : section
-        ));
-      } else {
-        // Create new
-        const { data, error } = await supabase
-          .from('content_sections')
-          .insert([contentData])
-          .select()
-          .single();
-
-        if (error) throw error;
-
-        if (data) {
-          setContentSections(prev => [...prev, data]);
-        }
-      }
-
-      // Reset form
+  const handleSectionChange = (sectionKey: string, sectionTitle: string) => {
+    setSelectedSection(sectionKey);
+    
+    // Find existing content for this section
+    const existingContent = contentSections.find(cs => cs.section_key === sectionKey);
+    
+    if (existingContent) {
       setContentForm({
-        title: '',
+        title: existingContent.title,
+        content: existingContent.content,
+        is_active: existingContent.is_active
+      });
+    } else {
+      setContentForm({
+        title: sectionTitle,
         content: '',
-        section_type: 'hero',
         is_active: true
       });
-      setEditingSection(null);
-      
-      // Clear cache so changes appear immediately on the website
-      clearContentCache();
-      alert('Content updated successfully!');
-    } catch (error) {
-      console.error('Error saving content:', error);
-      alert('Failed to save content. Please try again.');
-    } finally {
-      setSaving(false);
     }
+    
+    setError(null);
+    setSuccess(null);
   };
 
-  const handleSettingsSubmit = async (e: React.FormEvent) => {
-    e.preventDefault();
-    setSaving(true);
+  const handleSaveContent = async () => {
+    if (!selectedSection || !contentForm.title.trim()) {
+      setError('Please fill in all required fields');
+      return;
+    }
 
     try {
-      // Update each setting
-      for (const [key, value] of Object.entries(settingsForm)) {
+      setSaving(true);
+      setError(null);
+
+      const existingContent = contentSections.find(cs => cs.section_key === selectedSection);
+      const pageKey = PAGE_SECTIONS[selectedPage as keyof typeof PAGE_SECTIONS]?.key || 'general';
+
+      if (existingContent) {
+        // Update existing content
         const { error } = await supabase
-          .from('site_settings')
-          .update({ 
-            setting_value: value,
+          .from('content_sections')
+          .update({
+            title: contentForm.title,
+            content: contentForm.content,
+            is_active: contentForm.is_active,
             updated_at: new Date().toISOString()
           })
-          .eq('setting_key', key);
+          .eq('id', existingContent.id);
+
+        if (error) throw error;
+      } else {
+        // Create new content
+        const { error } = await supabase
+          .from('content_sections')
+          .insert({
+            section_key: selectedSection,
+            title: contentForm.title,
+            content: contentForm.content,
+            section_type: pageKey,
+            is_active: contentForm.is_active
+          });
 
         if (error) throw error;
       }
 
-      // Update local state
-      setSiteSettings(prev => prev.map(setting => ({
-        ...setting,
-        setting_value: settingsForm[setting.setting_key] || setting.setting_value,
-        updated_at: new Date().toISOString()
-      })));
-
-      // Clear cache so changes appear immediately on the website
+      // Clear cache and refresh
       clearContentCache();
-      alert('Settings updated successfully!');
-    } catch (error) {
-      console.error('Error saving settings:', error);
-      alert('Failed to save settings. Please try again.');
+      await fetchContentSections();
+      
+      setSuccess('Content updated successfully!');
+      setTimeout(() => setSuccess(null), 3000);
+      
+    } catch (err) {
+      console.error('Error saving content:', err);
+      setError('Failed to save content');
     } finally {
       setSaving(false);
     }
-  };
-
-  const startEditingContent = (section: ContentSection) => {
-    setEditingSection(section.id);
-    setContentForm({
-      title: section.title,
-      content: section.content,
-      section_type: section.section_type,
-      is_active: section.is_active
-    });
-  };
-
-  const deleteContent = async (id: string) => {
-    if (!confirm('Are you sure you want to delete this content section?')) return;
-
-    try {
-      const { error } = await supabase
-        .from('content_sections')
-        .delete()
-        .eq('id', id);
-
-      if (error) throw error;
-
-      setContentSections(prev => prev.filter(section => section.id !== id));
-      alert('Content deleted successfully!');
-    } catch (error) {
-      console.error('Error deleting content:', error);
-      alert('Failed to delete content.');
-    }
-  };
-
-  const getSectionTypeColor = (type: string) => {
-    const colors = {
-      hero: 'bg-purple-100 text-purple-800',
-      about: 'bg-blue-100 text-blue-800',
-      services: 'bg-green-100 text-green-800',
-      contact: 'bg-orange-100 text-orange-800',
-      footer: 'bg-gray-100 text-gray-800'
-    };
-    return colors[type as keyof typeof colors] || 'bg-gray-100 text-gray-800';
   };
 
   if (authLoading) {
@@ -444,7 +266,7 @@ export default function AdminContent() {
       <div className="min-h-screen bg-gray-50 flex items-center justify-center">
         <div className="text-center">
           <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-[#8B4513] mx-auto mb-4"></div>
-          <p className="text-gray-800">Loading...</p>
+          <p className="text-gray-600">Loading...</p>
         </div>
       </div>
     );
@@ -454,16 +276,7 @@ export default function AdminContent() {
     return null;
   }
 
-  if (loading) {
-    return (
-      <div className="min-h-screen bg-gray-50 flex items-center justify-center">
-        <div className="text-center">
-          <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-[#8B4513] mx-auto mb-4"></div>
-          <p className="text-gray-800">Loading content management...</p>
-        </div>
-      </div>
-    );
-  }
+  const availableSections = selectedPage ? PAGE_SECTIONS[selectedPage as keyof typeof PAGE_SECTIONS]?.sections || {} : {};
 
   return (
     <div className="min-h-screen bg-gray-50">
@@ -480,7 +293,7 @@ export default function AdminContent() {
                   <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 19l-7-7 7-7" />
                 </svg>
               </Link>
-              <h1 className="text-2xl font-bold text-[#8B4513]">Content Management</h1>
+              <h1 className="text-2xl font-bold text-[#8B4513]">Website Content Manager</h1>
             </div>
             <div className="flex items-center space-x-4">
               <span className="text-sm text-gray-700">Welcome, {getUsername()}</span>
@@ -496,268 +309,183 @@ export default function AdminContent() {
       </div>
 
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
-        {error && (
-          <div className="bg-red-50 border border-red-200 text-red-600 px-4 py-3 rounded-md mb-6">
-            {error}
-          </div>
-        )}
+        <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
+          {/* Content Editor */}
+          <div className="lg:col-span-2">
+            <div className="bg-white rounded-lg shadow-sm border border-gray-200 p-6">
+              <h2 className="text-xl font-semibold text-[#8B4513] mb-6">Edit Content Section</h2>
+              
+              {/* Page Selection */}
+              <div className="mb-6">
+                <label className="block text-sm font-medium text-gray-700 mb-2">
+                  Select Page <span className="text-red-500">*</span>
+                </label>
+                <select
+                  value={selectedPage}
+                  onChange={(e) => handlePageChange(e.target.value)}
+                  className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-[#B8860B] focus:border-[#B8860B]"
+                >
+                  <option value="">Choose a page to edit...</option>
+                  {Object.keys(PAGE_SECTIONS).map(page => (
+                    <option key={page} value={page}>{page}</option>
+                  ))}
+                </select>
+              </div>
 
-        {/* Tab Navigation */}
-        <div className="bg-white rounded-lg shadow-sm mb-8">
-          <div className="border-b border-gray-200">
-            <nav className="-mb-px flex space-x-8 px-6">
-              <button
-                onClick={() => setActiveTab('content')}
-                className={`py-4 px-1 border-b-2 font-medium text-sm ${
-                  activeTab === 'content'
-                    ? 'border-[#B8860B] text-[#B8860B]'
-                    : 'border-transparent text-gray-700 hover:text-[#8B4513] hover:border-gray-300'
-                }`}
-              >
-                Website Content
-              </button>
-              <button
-                onClick={() => setActiveTab('settings')}
-                className={`py-4 px-1 border-b-2 font-medium text-sm ${
-                  activeTab === 'settings'
-                    ? 'border-[#B8860B] text-[#B8860B]'
-                    : 'border-transparent text-gray-700 hover:text-[#8B4513] hover:border-gray-300'
-                }`}
-              >
-                Site Settings
-              </button>
-            </nav>
-          </div>
+              {/* Section Selection */}
+              {selectedPage && (
+                <div className="mb-6">
+                  <label className="block text-sm font-medium text-gray-700 mb-2">
+                    Select Section <span className="text-red-500">*</span>
+                  </label>
+                  <select
+                    value={selectedSection}
+                    onChange={(e) => {
+                      const sectionKey = e.target.value;
+                      const sectionTitle = e.target.options[e.target.selectedIndex].text;
+                      handleSectionChange(sectionKey, sectionTitle);
+                    }}
+                    className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-[#B8860B] focus:border-[#B8860B]"
+                  >
+                    <option value="">Choose a section to edit...</option>
+                    {Object.entries(availableSections).map(([title, key]) => (
+                      <option key={key} value={key}>{title}</option>
+                    ))}
+                  </select>
+                </div>
+              )}
 
-          {/* Content Tab */}
-          {activeTab === 'content' && (
-            <div className="p-6">
-              <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
-                {/* Content Form */}
-                <div>
-                  <h3 className="text-lg font-medium text-gray-900 mb-6">
-                    {editingSection ? 'Edit Content Section' : 'Add New Content Section'}
-                  </h3>
-                  
-                  <form onSubmit={handleContentSubmit} className="space-y-6">
-                    <div>
-                      <label htmlFor="title" className="block text-sm font-medium text-gray-700 mb-2">
-                        Section Title *
-                      </label>
-                      <input
-                        type="text"
-                        id="title"
-                        required
-                        value={contentForm.title}
-                        onChange={(e) => setContentForm(prev => ({ ...prev, title: e.target.value }))}
-                        className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-[#B8860B] focus:border-[#B8860B] text-gray-900"
-                        placeholder="e.g., Hero Title, About Us"
-                      />
-                    </div>
+              {/* Content Form */}
+              {selectedSection && (
+                <>
+                  <div className="mb-6">
+                    <label className="block text-sm font-medium text-gray-700 mb-2">
+                      Section Title <span className="text-red-500">*</span>
+                    </label>
+                    <input
+                      type="text"
+                      value={contentForm.title}
+                      onChange={(e) => setContentForm({ ...contentForm, title: e.target.value })}
+                      className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-[#B8860B] focus:border-[#B8860B]"
+                      placeholder="Enter section title..."
+                    />
+                  </div>
 
-                    <div>
-                      <label htmlFor="section_type" className="block text-sm font-medium text-gray-700 mb-2">
-                        Section Type *
-                      </label>
-                      <select
-                        id="section_type"
-                        required
-                        value={contentForm.section_type}
-                        onChange={(e) => setContentForm(prev => ({ ...prev, section_type: e.target.value as any }))}
-                        className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-[#B8860B] focus:border-[#B8860B] text-gray-900"
-                      >
-                        <option value="hero">Hero Section</option>
-                        <option value="about">About Us</option>
-                        <option value="services">Services</option>
-                        <option value="contact">Contact</option>
-                        <option value="footer">Footer</option>
-                      </select>
-                    </div>
+                  <div className="mb-6">
+                    <label className="block text-sm font-medium text-gray-700 mb-2">
+                      Content <span className="text-red-500">*</span>
+                    </label>
+                    <textarea
+                      value={contentForm.content}
+                      onChange={(e) => setContentForm({ ...contentForm, content: e.target.value })}
+                      rows={8}
+                      className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-[#B8860B] focus:border-[#B8860B]"
+                      placeholder="Enter your content here..."
+                    />
+                  </div>
 
-                    <div>
-                      <label htmlFor="content" className="block text-sm font-medium text-gray-700 mb-2">
-                        Content *
-                      </label>
-                      <textarea
-                        id="content"
-                        required
-                        rows={6}
-                        value={contentForm.content}
-                        onChange={(e) => setContentForm(prev => ({ ...prev, content: e.target.value }))}
-                        className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-[#B8860B] focus:border-[#B8860B] text-gray-900"
-                        placeholder="Enter the content for this section..."
-                      />
-                    </div>
-
-                    <div className="flex items-center">
+                  <div className="mb-6">
+                    <label className="flex items-center">
                       <input
                         type="checkbox"
-                        id="is_active"
                         checked={contentForm.is_active}
-                        onChange={(e) => setContentForm(prev => ({ ...prev, is_active: e.target.checked }))}
-                        className="h-4 w-4 text-[#B8860B] focus:ring-[#B8860B] border-gray-300 rounded"
+                        onChange={(e) => setContentForm({ ...contentForm, is_active: e.target.checked })}
+                        className="rounded border-gray-300 text-[#B8860B] focus:ring-[#B8860B]"
                       />
-                      <label htmlFor="is_active" className="ml-2 block text-sm text-gray-900">
-                        Active (visible on website)
-                      </label>
-                    </div>
-
-                    <div className="flex space-x-4">
-                      <button
-                        type="submit"
-                        disabled={saving}
-                        className="flex-1 px-6 py-3 bg-[#B8860B] hover:bg-[#DAA520] text-white font-medium rounded-md transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
-                      >
-                        {saving ? 'Saving...' : editingSection ? 'Update Content' : 'Add Content'}
-                      </button>
-                      {editingSection && (
-                        <button
-                          type="button"
-                          onClick={() => {
-                            setEditingSection(null);
-                            setContentForm({
-                              title: '',
-                              content: '',
-                              section_type: 'hero',
-                              is_active: true
-                            });
-                          }}
-                          className="px-6 py-3 border border-gray-300 rounded-md text-gray-700 font-medium hover:bg-gray-50 transition-colors"
-                        >
-                          Cancel
-                        </button>
-                      )}
-                    </div>
-                  </form>
-                </div>
-
-                {/* Content List */}
-                <div>
-                  <h3 className="text-lg font-medium text-gray-900 mb-6">Existing Content Sections</h3>
-                  
-                  <div className="space-y-4">
-                    {contentSections.map((section, index) => (
-                      <motion.div
-                        key={section.id}
-                        className="border border-gray-200 rounded-lg p-4"
-                        initial={{ opacity: 0, y: 20 }}
-                        animate={{ opacity: 1, y: 0 }}
-                        transition={{ duration: 0.3, delay: index * 0.1 }}
-                      >
-                        <div className="flex justify-between items-start mb-3">
-                          <div className="flex-1">
-                            <div className="flex items-center space-x-2 mb-2">
-                              <h4 className="text-sm font-medium text-gray-900">{section.title}</h4>
-                              <span className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium ${getSectionTypeColor(section.section_type)}`}>
-                                {section.section_type}
-                              </span>
-                              {section.is_active && (
-                                <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-green-100 text-green-800">
-                                  Active
-                                </span>
-                              )}
-                            </div>
-                            <p className="text-sm text-gray-800 line-clamp-2">{section.content}</p>
-                          </div>
-                          <div className="flex space-x-2 ml-4">
-                            <button
-                              onClick={() => startEditingContent(section)}
-                              className="text-[#B8860B] hover:text-[#DAA520] text-sm font-medium"
-                            >
-                              Edit
-                            </button>
-                            <button
-                              onClick={() => deleteContent(section.id)}
-                              className="text-red-600 hover:text-red-800 text-sm font-medium"
-                            >
-                              Delete
-                            </button>
-                          </div>
-                        </div>
-                      </motion.div>
-                    ))}
-
-                    {contentSections.length === 0 && (
-                      <div className="text-center py-8">
-                        <div className="w-16 h-16 mx-auto mb-4 bg-gray-100 rounded-full flex items-center justify-center">
-                          <svg className="w-8 h-8 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
-                          </svg>
-                        </div>
-                        <h3 className="text-lg font-medium text-gray-900 mb-2">No content sections yet</h3>
-                        <p className="text-gray-800">Create your first content section to get started.</p>
-                      </div>
-                    )}
-                  </div>
-                </div>
-              </div>
-            </div>
-          )}
-
-          {/* Settings Tab */}
-          {activeTab === 'settings' && (
-            <div className="p-6">
-              <h3 className="text-lg font-medium text-gray-900 mb-6">Site Settings</h3>
-              
-              <form onSubmit={handleSettingsSubmit} className="max-w-2xl space-y-6">
-                {siteSettings.map((setting) => (
-                  <div key={setting.id}>
-                    <label htmlFor={setting.setting_key} className="block text-sm font-medium text-gray-700 mb-2">
-                      {setting.description}
+                      <span className="ml-2 text-sm text-gray-700">Active (visible on website)</span>
                     </label>
-                    {setting.setting_type === 'textarea' ? (
-                      <textarea
-                        id={setting.setting_key}
-                        rows={3}
-                        value={settingsForm[setting.setting_key] || ''}
-                        onChange={(e) => setSettingsForm(prev => ({
-                          ...prev,
-                          [setting.setting_key]: e.target.value
-                        }))}
-                        className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-[#B8860B] focus:border-[#B8860B] text-gray-900"
-                      />
-                    ) : (
-                      <input
-                        type={setting.setting_type}
-                        id={setting.setting_key}
-                        value={settingsForm[setting.setting_key] || ''}
-                        onChange={(e) => setSettingsForm(prev => ({
-                          ...prev,
-                          [setting.setting_key]: e.target.value
-                        }))}
-                        className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-[#B8860B] focus:border-[#B8860B] text-gray-900"
-                      />
-                    )}
                   </div>
-                ))}
 
-                {siteSettings.length === 0 && (
-                  <div className="text-center py-8">
-                    <div className="w-16 h-16 mx-auto mb-4 bg-gray-100 rounded-full flex items-center justify-center">
-                      <svg className="w-8 h-8 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M10.325 4.317c.426-1.756 2.924-1.756 3.35 0a1.724 1.724 0 002.573 1.066c1.543-.94 3.31.826 2.37 2.37a1.724 1.724 0 001.065 2.572c1.756.426 1.756 2.924 0 3.35a1.724 1.724 0 00-1.066 2.573c.94 1.543-.826 3.31-2.37 2.37a1.724 1.724 0 00-2.572 1.065c-.426 1.756-2.924 1.756-3.35 0a1.724 1.724 0 00-2.573-1.066c-1.543.94-3.31-.826-2.37-2.37a1.724 1.724 0 00-1.065-2.572c-1.756-.426-1.756-2.924 0-3.35a1.724 1.724 0 001.066-2.573c-.94-1.543.826-3.31 2.37-2.37.996.608 2.296.07 2.572-1.065z" />
-                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" />
-                      </svg>
+                  {error && (
+                    <div className="mb-6 bg-red-50 border border-red-200 text-red-600 px-4 py-3 rounded-md">
+                      {error}
                     </div>
-                    <h3 className="text-lg font-medium text-gray-900 mb-2">Settings will be available soon</h3>
-                    <p className="text-gray-800">Site settings management is being set up.</p>
-                  </div>
-                )}
+                  )}
 
-                {siteSettings.length > 0 && (
-                  <div className="flex justify-end">
+                  {success && (
+                    <div className="mb-6 bg-green-50 border border-green-200 text-green-600 px-4 py-3 rounded-md">
+                      {success}
+                    </div>
+                  )}
+
+                  <div className="flex justify-end space-x-4">
                     <button
-                      type="submit"
-                      disabled={saving}
-                      className="px-6 py-3 bg-[#B8860B] hover:bg-[#DAA520] text-white font-medium rounded-md transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+                      onClick={() => {
+                        setSelectedSection('');
+                        setContentForm({ title: '', content: '', is_active: true });
+                        setError(null);
+                        setSuccess(null);
+                      }}
+                      className="px-6 py-2 border border-gray-300 rounded-md text-gray-700 hover:bg-gray-50 transition-colors"
                     >
-                      {saving ? 'Saving...' : 'Save Settings'}
+                      Cancel
+                    </button>
+                    <button
+                      onClick={handleSaveContent}
+                      disabled={saving}
+                      className="px-6 py-2 bg-[#B8860B] hover:bg-[#DAA520] text-white rounded-md font-medium transition-colors disabled:opacity-50"
+                    >
+                      {saving ? 'Saving...' : 'Update Content'}
                     </button>
                   </div>
-                )}
-              </form>
+                </>
+              )}
             </div>
-          )}
+          </div>
+
+          {/* Existing Content Sections */}
+          <div className="lg:col-span-1">
+            <div className="bg-white rounded-lg shadow-sm border border-gray-200 p-6">
+              <h3 className="text-lg font-semibold text-[#8B4513] mb-4">Existing Content Sections</h3>
+              
+              {loading ? (
+                <div className="text-center py-8">
+                  <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-[#8B4513] mx-auto"></div>
+                </div>
+              ) : contentSections.length === 0 ? (
+                <div className="text-center py-8 text-gray-500">
+                  <p>No content sections found.</p>
+                </div>
+              ) : (
+                <div className="space-y-3 max-h-96 overflow-y-auto">
+                  {contentSections.map((section) => (
+                    <div
+                      key={section.id}
+                      className="p-3 border border-gray-200 rounded-md hover:bg-gray-50 cursor-pointer"
+                      onClick={() => {
+                        // Auto-select the page and section when clicking on existing content
+                        const pageEntry = Object.entries(PAGE_SECTIONS).find(([, pageData]) => 
+                          Object.values(pageData.sections).includes(section.section_key as any)
+                        );
+                        if (pageEntry) {
+                          const [pageName, pageData] = pageEntry;
+                          const sectionTitle = Object.entries(pageData.sections).find(([, key]) => key === section.section_key)?.[0] || section.title;
+                          setSelectedPage(pageName);
+                          handleSectionChange(section.section_key, sectionTitle);
+                        }
+                      }}
+                    >
+                      <div className="flex items-center justify-between">
+                        <div className="flex-1 min-w-0">
+                          <h4 className="text-sm font-medium text-gray-900 truncate">
+                            {section.title}
+                          </h4>
+                          <p className="text-xs text-gray-500 truncate">
+                            {section.section_type} • {section.section_key}
+                          </p>
+                        </div>
+                        <div className="flex items-center ml-2">
+                          <span className={`w-2 h-2 rounded-full ${
+                            section.is_active ? 'bg-green-400' : 'bg-gray-300'
+                          }`}></span>
+                        </div>
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              )}
+            </div>
+          </div>
         </div>
       </div>
     </div>

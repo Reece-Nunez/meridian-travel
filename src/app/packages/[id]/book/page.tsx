@@ -85,8 +85,8 @@ export default function BookPackage() {
   };
 
   const calculateTotal = () => {
-    if (!pkg) return 0;
-    return pkg.price_usd * formData.participants;
+    // Pricing removed - contact for quote
+    return 0;
   };
 
   const handleSubmit = async (e: React.FormEvent) => {
@@ -396,7 +396,7 @@ export default function BookPackage() {
               <div className="border-t pt-4 space-y-3">
                 <div className="flex justify-between text-sm">
                   <span>Price per person:</span>
-                  <span>{formatPrice(pkg.price_usd)}</span>
+                  <span>Contact for Quote</span>
                 </div>
                 <div className="flex justify-between text-sm">
                   <span>Participants:</span>

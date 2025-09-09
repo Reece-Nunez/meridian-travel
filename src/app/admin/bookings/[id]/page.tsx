@@ -52,7 +52,6 @@ export default function BookingDetail() {
             destination,
             duration,
             description,
-            price_usd,
             images
           ),
           custom_quotes (
@@ -208,7 +207,6 @@ export default function BookingDetail() {
         destination: booking.trip_packages.destination,
         duration: booking.trip_packages.duration,
         description: booking.trip_packages.description,
-        price: booking.trip_packages.price_usd,
         type: 'Package',
         images: booking.trip_packages.images
       };

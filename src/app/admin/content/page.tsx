@@ -211,32 +211,46 @@ export default function AdminContent() {
   };
 
   const handleSectionChange = (sectionKey: string, sectionTitle: string) => {
-    console.log('handleSectionChange called:', { sectionKey, sectionTitle });
-    console.log('Available contentSections:', contentSections.map(cs => ({ id: cs.id, section_key: cs.section_key, title: cs.title })));
+    console.log('=== handleSectionChange Debug ===');
+    console.log('Selected sectionKey:', sectionKey);
+    console.log('Selected sectionTitle:', sectionTitle);
+    console.log('Total contentSections available:', contentSections.length);
+    console.log('All contentSections:', contentSections.map(cs => ({
+      id: cs.id,
+      section_key: cs.section_key,
+      title: cs.title,
+      content_length: cs.content?.length || 0,
+      is_active: cs.is_active,
+      section_type: cs.section_type
+    })));
     
     setSelectedSection(sectionKey);
     
     // Find existing content for this section
-    const existingContent = contentSections.find(cs => cs.section_key === sectionKey);
-    console.log('Found existing content:', existingContent);
+    const existingContent = contentSections.find(cs => {
+      const matches = cs.section_key === sectionKey;
+      console.log(`Checking section_key "${cs.section_key}" === "${sectionKey}": ${matches}`);
+      return matches;
+    });
+    
+    console.log('Search result - existingContent:', existingContent ? {
+      id: existingContent.id,
+      section_key: existingContent.section_key,
+      title: existingContent.title,
+      content: existingContent.content,
+      content_length: existingContent.content?.length || 0,
+      is_active: existingContent.is_active
+    } : null);
     
     if (existingContent) {
-      console.log('Setting form with existing content:', {
-        title: existingContent.title,
-        content: existingContent.content?.substring(0, 50) + '...',
-        is_active: existingContent.is_active
-      });
+      console.log('✅ Found existing content - populating form');
       setContentForm({
         title: existingContent.title,
-        content: existingContent.content,
+        content: existingContent.content || '',
         is_active: existingContent.is_active
       });
     } else {
-      console.log('No existing content found, setting default:', {
-        title: sectionTitle,
-        content: '',
-        is_active: true
-      });
+      console.log('❌ No existing content found - setting defaults');
       setContentForm({
         title: sectionTitle,
         content: '',
@@ -246,6 +260,7 @@ export default function AdminContent() {
     
     setError(null);
     setSuccess(null);
+    console.log('=== End handleSectionChange Debug ===');
   };
 
   const handleSaveContent = async () => {
@@ -403,7 +418,13 @@ export default function AdminContent() {
                 <>
                   {/* Debug info */}
                   <div className="mb-4 p-3 bg-gray-100 rounded text-xs">
-                    <strong>Debug:</strong> Section: {selectedSection}, Title: "{contentForm.title}", Content length: {contentForm.content?.length || 0}
+                    <strong>Debug Info:</strong><br/>
+                    • Selected Section: {selectedSection}<br/>
+                    • Form Title: "{contentForm.title}"<br/>
+                    • Form Content Length: {contentForm.content?.length || 0}<br/>
+                    • Form Active: {contentForm.is_active ? 'Yes' : 'No'}<br/>
+                    • Total DB Sections: {contentSections.length}<br/>
+                    • Matching DB Section: {contentSections.find(cs => cs.section_key === selectedSection) ? '✅ Found' : '❌ Not Found'}
                   </div>
                   <div className="mb-6">
                     <label className="block text-sm font-medium text-gray-700 mb-2">

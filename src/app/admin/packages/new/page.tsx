@@ -7,10 +7,15 @@ import { useRouter } from 'next/navigation';
 import { supabase } from '@/lib/supabase';
 import { useSimpleAdminAuth } from '@/hooks/useSimpleAdminAuth';
 
+interface PackageActivity {
+  name: string;
+  description: string;
+}
+
 interface PackageItineraryDay {
   day: number;
   title: string;
-  activities: string[];
+  activities: PackageActivity[];
   accommodation?: string | null;
 }
 
@@ -23,8 +28,6 @@ export default function NewPackage() {
     description: '',
     destination: '',
     duration: 7,
-    price_usd: 2000,
-    difficulty_level: 'moderate' as 'easy' | 'moderate' | 'challenging',
     max_participants: 12,
     is_active: true,
     includes: [''],
@@ -32,7 +35,7 @@ export default function NewPackage() {
     images: ['']
   });
   const [itinerary, setItinerary] = useState<PackageItineraryDay[]>([
-    { day: 1, title: '', activities: [''], accommodation: '' }
+    { day: 1, title: '', activities: [{ name: '', description: '' }], accommodation: '' }
   ]);
 
   const handleInputChange = (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement | HTMLSelectElement>) => {
@@ -71,10 +74,10 @@ export default function NewPackage() {
     ));
   };
 
-  const handleActivityChange = (dayIndex: number, activityIndex: number, value: string) => {
+  const handleActivityChange = (dayIndex: number, activityIndex: number, field: 'name' | 'description', value: string) => {
     setItinerary(prev => prev.map((day, i) => 
       i === dayIndex 
-        ? { ...day, activities: day.activities.map((activity, j) => j === activityIndex ? value : activity) }
+        ? { ...day, activities: day.activities.map((activity, j) => j === activityIndex ? { ...activity, [field]: value } : activity) }
         : day
     ));
   };
@@ -83,14 +86,14 @@ export default function NewPackage() {
     setItinerary(prev => [...prev, {
       day: prev.length + 1,
       title: '',
-      activities: [''],
+      activities: [{ name: '', description: '' }],
       accommodation: ''
     }]);
   };
 
   const addActivity = (dayIndex: number) => {
     setItinerary(prev => prev.map((day, i) => 
-      i === dayIndex ? { ...day, activities: [...day.activities, ''] } : day
+      i === dayIndex ? { ...day, activities: [...day.activities, { name: '', description: '' }] } : day
     ));
   };
 
@@ -114,7 +117,7 @@ export default function NewPackage() {
         images: formData.images.filter((item: string) => item.trim() !== ''),
         itinerary: itinerary.map((day: any) => ({
           ...day,
-          activities: day.activities.filter((activity: string) => activity.trim() !== '')
+          activities: day.activities.filter((activity: PackageActivity) => activity.name.trim() !== '')
         }))
       };
 
@@ -233,23 +236,6 @@ export default function NewPackage() {
                 </select>
               </div>
 
-              <div>
-                <label htmlFor="difficulty_level" className="block text-sm font-medium text-gray-700 mb-2">
-                  Difficulty Level *
-                </label>
-                <select
-                  id="difficulty_level"
-                  name="difficulty_level"
-                  required
-                  value={formData.difficulty_level}
-                  onChange={handleInputChange}
-                  className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-[#B8860B] focus:border-[#B8860B] text-gray-900"
-                >
-                  <option value="easy">Easy</option>
-                  <option value="moderate">Moderate</option>
-                  <option value="challenging">Challenging</option>
-                </select>
-              </div>
 
               <div>
                 <label htmlFor="duration" className="block text-sm font-medium text-gray-700 mb-2">
@@ -267,21 +253,6 @@ export default function NewPackage() {
                 />
               </div>
 
-              <div>
-                <label htmlFor="price_usd" className="block text-sm font-medium text-gray-700 mb-2">
-                  Price (USD) *
-                </label>
-                <input
-                  type="number"
-                  id="price_usd"
-                  name="price_usd"
-                  required
-                  min="0"
-                  value={formData.price_usd}
-                  onChange={handleInputChange}
-                  className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-[#B8860B] focus:border-[#B8860B] text-gray-900"
-                />
-              </div>
 
               <div>
                 <label htmlFor="max_participants" className="block text-sm font-medium text-gray-700 mb-2">
@@ -491,25 +462,34 @@ export default function NewPackage() {
                       Activities
                     </label>
                     {day.activities.map((activity, activityIndex) => (
-                      <div key={activityIndex} className="flex items-center space-x-2 mb-2">
-                        <input
-                          type="text"
-                          value={activity}
-                          onChange={(e) => handleActivityChange(dayIndex, activityIndex, e.target.value)}
-                          placeholder="e.g., City tour of historic Lima"
-                          className="flex-1 px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-[#B8860B] focus:border-[#B8860B] text-gray-900"
+                      <div key={activityIndex} className="border border-gray-200 rounded-md p-4 mb-4">
+                        <div className="flex items-center space-x-2 mb-3">
+                          <input
+                            type="text"
+                            value={activity.name}
+                            onChange={(e) => handleActivityChange(dayIndex, activityIndex, 'name', e.target.value)}
+                            placeholder="e.g., City tour of historic Lima"
+                            className="flex-1 px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-[#B8860B] focus:border-[#B8860B] text-gray-900"
+                          />
+                          {day.activities.length > 1 && (
+                            <button
+                              type="button"
+                              onClick={() => removeActivity(dayIndex, activityIndex)}
+                              className="text-red-600 hover:text-red-700 p-2"
+                            >
+                              <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
+                              </svg>
+                            </button>
+                          )}
+                        </div>
+                        <textarea
+                          value={activity.description}
+                          onChange={(e) => handleActivityChange(dayIndex, activityIndex, 'description', e.target.value)}
+                          placeholder="Describe this activity in detail..."
+                          rows={3}
+                          className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-[#B8860B] focus:border-[#B8860B] text-gray-900"
                         />
-                        {day.activities.length > 1 && (
-                          <button
-                            type="button"
-                            onClick={() => removeActivity(dayIndex, activityIndex)}
-                            className="text-red-600 hover:text-red-700 p-2"
-                          >
-                            <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
-                            </svg>
-                          </button>
-                        )}
                       </div>
                     ))}
                     <button

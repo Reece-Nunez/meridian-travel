@@ -45,13 +45,9 @@ export interface Database {
           description: string | null
           destination: string
           duration: number
-          price_usd: number
-          price_eur: number | null
-          price_gbp: number | null
           itinerary: any[] | null
           images: string[] | null
           max_participants: number | null
-          difficulty_level: 'easy' | 'moderate' | 'challenging' | null
           includes: string[] | null
           excludes: string[] | null
           is_active: boolean | null
@@ -64,13 +60,9 @@ export interface Database {
           description?: string | null
           destination: string
           duration: number
-          price_usd: number
-          price_eur?: number | null
-          price_gbp?: number | null
           itinerary?: any[] | null
           images?: string[] | null
           max_participants?: number | null
-          difficulty_level?: 'easy' | 'moderate' | 'challenging' | null
           includes?: string[] | null
           excludes?: string[] | null
           is_active?: boolean | null
@@ -83,13 +75,9 @@ export interface Database {
           description?: string | null
           destination?: string
           duration?: number
-          price_usd?: number
-          price_eur?: number | null
-          price_gbp?: number | null
           itinerary?: any[] | null
           images?: string[] | null
           max_participants?: number | null
-          difficulty_level?: 'easy' | 'moderate' | 'challenging' | null
           includes?: string[] | null
           excludes?: string[] | null
           is_active?: boolean | null

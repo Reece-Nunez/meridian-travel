@@ -8,10 +8,15 @@ import { supabase } from '@/lib/supabase';
 import { TripPackage } from '@/types/database';
 import { useAuth } from '@/contexts/AuthContext';
 
+interface PackageActivity {
+  name: string;
+  description: string;
+}
+
 interface ItineraryDay {
   day: number;
   title: string;
-  activities: string[];
+  activities: (string | PackageActivity)[];
   accommodation: string | null;
 }
 
@@ -189,14 +194,27 @@ export default function PackageDetail() {
                         </div>
                         <div className="ml-4 flex-1">
                           <h3 className="text-xl font-semibold text-[#8B4513] mb-2">{day.title}</h3>
-                          <ul className="text-gray-600 space-y-1 mb-3">
-                            {day.activities.map((activity, actIndex) => (
-                              <li key={actIndex} className="flex items-start">
-                                <span className="text-[#B8860B] mr-2">•</span>
-                                {activity}
-                              </li>
-                            ))}
-                          </ul>
+                          <div className="space-y-3 mb-3">
+                            {day.activities.map((activity, actIndex) => {
+                              // Handle both old string format and new object format
+                              const activityName = typeof activity === 'string' ? activity : activity.name;
+                              const activityDescription = typeof activity === 'string' ? '' : activity.description;
+                              
+                              return (
+                                <div key={actIndex} className="">
+                                  <div className="flex items-start">
+                                    <span className="text-[#B8860B] mr-2 mt-1">•</span>
+                                    <div className="flex-1">
+                                      <div className="font-medium text-gray-800">{activityName}</div>
+                                      {activityDescription && (
+                                        <p className="text-gray-600 text-sm mt-1 leading-relaxed">{activityDescription}</p>
+                                      )}
+                                    </div>
+                                  </div>
+                                </div>
+                              );
+                            })}
+                          </div>
                           {day.accommodation && (
                             <div className="flex items-center text-sm text-gray-500">
                               <svg className="w-4 h-4 mr-1" fill="none" stroke="currentColor" viewBox="0 0 24 24">

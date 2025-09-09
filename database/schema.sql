@@ -23,13 +23,9 @@ CREATE TABLE IF NOT EXISTS trip_packages (
   description TEXT,
   destination TEXT NOT NULL,
   duration INTEGER NOT NULL, -- in days
-  price_usd DECIMAL(10,2) NOT NULL,
-  price_eur DECIMAL(10,2),
-  price_gbp DECIMAL(10,2),
   itinerary JSONB, -- detailed day-by-day itinerary
   images TEXT[], -- array of image URLs
   max_participants INTEGER DEFAULT 20,
-  difficulty_level TEXT CHECK (difficulty_level IN ('easy', 'moderate', 'challenging')),
   includes TEXT[], -- what's included in the package
   excludes TEXT[], -- what's not included
   is_active BOOLEAN DEFAULT true

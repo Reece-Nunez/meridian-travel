@@ -1,7 +1,7 @@
 'use client';
 
 import { useAuth } from '@/contexts/AuthContext';
-import { useRouter, useParams } from 'next/navigation';
+import { useRouter, useParams, useSearchParams } from 'next/navigation';
 import { useEffect, useState } from 'react';
 import { supabase } from '@/lib/supabase';
 import Link from 'next/link';
@@ -13,8 +13,10 @@ export default function QuoteDetails() {
   const [quote, setQuote] = useState<CustomQuote | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
+  const [paymentSuccess, setPaymentSuccess] = useState(false);
   const router = useRouter();
   const params = useParams();
+  const searchParams = useSearchParams();
   const quoteId = params.id as string;
 
   useEffect(() => {
@@ -23,10 +25,22 @@ export default function QuoteDetails() {
       return;
     }
 
+    // Check for payment success parameter
+    const paymentParam = searchParams?.get('payment');
+    if (paymentParam === 'success') {
+      setPaymentSuccess(true);
+      // Clear the URL parameter after showing success message
+      setTimeout(() => {
+        setPaymentSuccess(false);
+        const newUrl = window.location.pathname;
+        window.history.replaceState({}, '', newUrl);
+      }, 5000);
+    }
+
     if (user && quoteId) {
       fetchQuoteDetails();
     }
-  }, [user, authLoading, quoteId, router]);
+  }, [user, authLoading, quoteId, router, searchParams]);
 
   const fetchQuoteDetails = async () => {
     try {
@@ -99,6 +113,8 @@ export default function QuoteDetails() {
     switch (status) {
       case 'approved':
         return `${baseClasses} bg-green-100 text-green-800`;
+      case 'booked':
+        return `${baseClasses} bg-emerald-100 text-emerald-800`;
       case 'reviewing':
         return `${baseClasses} bg-blue-100 text-blue-800`;
       case 'rejected':
@@ -172,6 +188,26 @@ export default function QuoteDetails() {
           </Link>
           <h1 className="text-3xl font-bold text-[#8B4513]">Quote Details</h1>
         </div>
+
+        {/* Payment Success Banner */}
+        {paymentSuccess && (
+          <div className="mb-8 bg-green-50 border border-green-200 rounded-lg p-6">
+            <div className="flex items-center">
+              <div className="flex-shrink-0">
+                <svg className="h-8 w-8 text-green-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" />
+                </svg>
+              </div>
+              <div className="ml-4">
+                <h3 className="text-lg font-semibold text-green-800">Payment Successful!</h3>
+                <p className="text-sm text-green-700 mt-1">
+                  Your booking has been confirmed and you'll receive a confirmation email shortly. 
+                  Your booking reference will be provided once processing is complete.
+                </p>
+              </div>
+            </div>
+          </div>
+        )}
 
         <div className="grid grid-cols-1 lg:grid-cols-5 gap-8">
           {/* Quote Details */}
@@ -306,6 +342,16 @@ export default function QuoteDetails() {
                 >
                   {loading ? 'Processing...' : 'Book & Pay Now'}
                 </button>
+              ) : quote.status === 'booked' ? (
+                <div className="text-center p-4 bg-green-50 rounded-lg border border-green-200">
+                  <div className="flex items-center justify-center mb-2">
+                    <svg className="w-5 h-5 text-green-600 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" />
+                    </svg>
+                    <p className="text-sm font-medium text-green-800">Booking Confirmed</p>
+                  </div>
+                  <p className="text-xs text-green-600">Your trip has been successfully booked and paid for</p>
+                </div>
               ) : (
                 <div className="text-center p-4 bg-gray-50 rounded-lg">
                   <p className="text-sm text-gray-600">

@@ -98,7 +98,7 @@ export interface Database {
           special_requirements: string | null
           contact_email: string
           contact_phone: string | null
-          status: 'pending' | 'reviewing' | 'approved' | 'rejected' | null
+          status: 'pending' | 'reviewing' | 'approved' | 'rejected' | 'booked' | null
           quoted_price: number | null
           quoted_currency: string | null
           admin_notes: string | null
@@ -117,7 +117,7 @@ export interface Database {
           special_requirements?: string | null
           contact_email: string
           contact_phone?: string | null
-          status?: 'pending' | 'reviewing' | 'approved' | 'rejected' | null
+          status?: 'pending' | 'reviewing' | 'approved' | 'rejected' | 'booked' | null
           quoted_price?: number | null
           quoted_currency?: string | null
           admin_notes?: string | null
@@ -136,7 +136,7 @@ export interface Database {
           special_requirements?: string | null
           contact_email?: string
           contact_phone?: string | null
-          status?: 'pending' | 'reviewing' | 'approved' | 'rejected' | null
+          status?: 'pending' | 'reviewing' | 'approved' | 'rejected' | 'booked' | null
           quoted_price?: number | null
           quoted_currency?: string | null
           admin_notes?: string | null

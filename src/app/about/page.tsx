@@ -21,11 +21,11 @@ export default function About() {
       try {
         // Clear cache to get latest content
         clearContentCache();
-        
+
         // Use the new CMS structure with section_key based content
         const [
           aboutPageTitle,
-          aboutContent, 
+          aboutContent,
           aboutStoryTitle,
           aboutStoryContent,
           aboutServicesTitle,
@@ -34,7 +34,7 @@ export default function About() {
         ] = await Promise.all([
           getContentByKey('about_page_title'),
           getContentByKey('about_content'),
-          getContentByKey('about_story_title'), 
+          getContentByKey('about_story_title'),
           getContentByKey('about_story_content'),
           getContentByKey('about_services_title'),
           getContentByKey('about_services_content'),
@@ -73,8 +73,8 @@ export default function About() {
       {/* Header Section */}
       <div className="relative py-24 overflow-hidden">
         <div className="absolute inset-0">
-          <img 
-            src="/about-us.jpg" 
+          <img
+            src="/about-us.jpg"
             alt="About us team and travel experiences"
             className="w-full h-full object-cover"
             onError={(e) => {
@@ -111,17 +111,17 @@ export default function About() {
           <div className="grid grid-cols-1 lg:grid-cols-2 gap-12 items-center mb-16">
             <div>
               <h3 className="text-2xl font-bold text-[#8B4513] mb-4">
-                Peru Specialists Since Day One
+                Luxury Travel Specialists Since Day One
               </h3>
               <p className="text-gray-600 mb-4">
-                While other travel companies try to cover the entire world, we've chosen to focus 
-                exclusively on Peru and the surrounding regions. This specialization allows us to 
+                While other travel companies try to cover the entire world, we've chosen to focus
+                exclusively on Peru and the surrounding regions. This specialization allows us to
                 offer unparalleled expertise and insider access to experiences that other travelers simply can't find.
               </p>
               <p className="text-gray-600">
-                Our team has personally explored every destination we recommend, from the ancient 
-                citadels of the Sacred Valley to the remote tributaries of the Amazon rainforest. 
-                We know the best local guides, the most authentic experiences, and the hidden gems 
+                Our team has personally explored every destination we recommend, from the ancient
+                citadels of the Sacred Valley to the remote tributaries of the Amazon rainforest.
+                We know the best local guides, the most authentic experiences, and the hidden gems
                 that make Peru truly magical.
               </p>
             </div>
@@ -147,7 +147,7 @@ export default function About() {
           </div>
 
           <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
-            <motion.div 
+            <motion.div
               className="bg-white p-8 rounded-lg shadow-md"
               initial={{ opacity: 0, y: 30 }}
               whileInView={{ opacity: 1, y: 0 }}
@@ -163,12 +163,12 @@ export default function About() {
                 Bespoke Itineraries
               </h3>
               <p className="text-gray-600">
-                Customized trips designed around your passions and schedule. Every journey is crafted 
+                Customized trips designed around your passions and schedule. Every journey is crafted
                 to reflect your unique interests and travel dreams.
               </p>
             </motion.div>
 
-            <motion.div 
+            <motion.div
               className="bg-white p-8 rounded-lg shadow-md"
               initial={{ opacity: 0, y: 30 }}
               whileInView={{ opacity: 1, y: 0 }}
@@ -184,12 +184,12 @@ export default function About() {
                 Exclusive Accommodations
               </h3>
               <p className="text-gray-600">
-                Hand-picked 5-star resorts, boutique hideaways, and luxury villas that reflect 
+                Hand-picked 5-star resorts, boutique hideaways, and luxury villas that reflect
                 both elegance and authenticity.
               </p>
             </motion.div>
 
-            <motion.div 
+            <motion.div
               className="bg-white p-8 rounded-lg shadow-md"
               initial={{ opacity: 0, y: 30 }}
               whileInView={{ opacity: 1, y: 0 }}
@@ -205,12 +205,12 @@ export default function About() {
                 Private Experiences
               </h3>
               <p className="text-gray-600">
-                From cooking with Michelin-starred chefs to after-hours museum tours, 
+                From cooking with Michelin-starred chefs to after-hours museum tours,
                 exclusive access to experiences few others can provide.
               </p>
             </motion.div>
 
-            <motion.div 
+            <motion.div
               className="bg-white p-8 rounded-lg shadow-md"
               initial={{ opacity: 0, y: 30 }}
               whileInView={{ opacity: 1, y: 0 }}
@@ -226,7 +226,7 @@ export default function About() {
                 Seamless Logistics
               </h3>
               <p className="text-gray-600">
-                Private transfers, first-class rail, chartered yachts, and concierge service 
+                Private transfers, first-class rail, chartered yachts, and concierge service
                 to ensure every step feels effortless.
               </p>
             </motion.div>
@@ -241,14 +241,12 @@ export default function About() {
             Our Commitment to You
           </h2>
           <p className="text-lg text-gray-600 mb-8 leading-relaxed">
-            At Meridian Luxury Travel, we don't just plan trips—we create transformational experiences. 
-            We're committed to showing you the Peru that lives beyond the guidebooks, the Peru 
-            that captures hearts and changes perspectives. Every journey we craft is designed to 
-            connect you deeply with this incredible country's landscapes, cultures, and people.
+            At every stage, our mission is to elevate travel into an art form—where every journey reflects your unique story, and every detail whispers luxury.
+
           </p>
           <p className="text-lg text-gray-600 mb-12 leading-relaxed">
-            Your dreams become our mission. Your adventure becomes our passion. Let us show you 
-            why Peru will become one of the most meaningful travel experiences of your life.
+            Your dreams become our mission. Your adventure becomes our passion. Let us show you
+            why Meridian Luxury Travel will become one of the most meaningful travel experiences of your life.
           </p>
           <Link
             href="/quote"

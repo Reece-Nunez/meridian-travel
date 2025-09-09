@@ -2,14 +2,22 @@ import { NextResponse } from 'next/server';
 import Stripe from 'stripe';
 import { createSupabaseAdmin } from '@/lib/supabase';
 
-const stripe = new Stripe(process.env.STRIPE_SECRET_KEY!, {
+const stripe = process.env.STRIPE_SECRET_KEY ? new Stripe(process.env.STRIPE_SECRET_KEY, {
   apiVersion: '2025-08-27.basil',
-});
+}) : null;
 
-const endpointSecret = process.env.STRIPE_WEBHOOK_SECRET!;
+const endpointSecret = process.env.STRIPE_WEBHOOK_SECRET;
 
 export async function POST(request: Request) {
   try {
+    // Check if we have the required environment variables
+    if (!process.env.STRIPE_SECRET_KEY || !stripe || !endpointSecret) {
+      return NextResponse.json(
+        { error: 'Webhook processing not configured' },
+        { status: 500 }
+      );
+    }
+
     const body = await request.text();
     const signature = request.headers.get('stripe-signature');
 

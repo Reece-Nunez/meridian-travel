@@ -21,29 +21,47 @@ export default function About() {
       try {
         // Clear cache to get latest content
         clearContentCache();
-        const aboutSections = await getContentByType('about');
-        const companyName = await getSettingByKey('company_name');
-        const servicesTitle = await getContentByKey('services_title');
-        const servicesContent = await getContentByKey('services_content');
-
-        // Find specific about content - look for content with "About Us Title" in the title field
-        const aboutTitleSection = aboutSections.find(s => s.title.toLowerCase().includes('about us title') || s.title.toLowerCase().includes('about title'));
-        const aboutContentSection = aboutSections.find(s => s.title.toLowerCase().includes('about us content') || s.title.toLowerCase().includes('about content'));
         
-        const aboutTitle = aboutTitleSection ? aboutTitleSection.content : content.aboutTitle;
-        const aboutContent = aboutContentSection ? aboutContentSection.content : (aboutSections.length > 0 ? aboutSections[0].content : content.aboutContent);
+        // Use the new CMS structure with section_key based content
+        const [
+          aboutPageTitle,
+          aboutContent, 
+          aboutStoryTitle,
+          aboutStoryContent,
+          aboutServicesTitle,
+          aboutServicesContent,
+          companyName
+        ] = await Promise.all([
+          getContentByKey('about_page_title'),
+          getContentByKey('about_content'),
+          getContentByKey('about_story_title'), 
+          getContentByKey('about_story_content'),
+          getContentByKey('about_services_title'),
+          getContentByKey('about_services_content'),
+          getSettingByKey('company_name')
+        ]);
+
+        console.log('About page content loaded:', {
+          aboutPageTitle,
+          aboutContent: aboutContent?.substring(0, 50) + '...',
+          aboutStoryTitle,
+          aboutStoryContent: aboutStoryContent?.substring(0, 50) + '...',
+          aboutServicesTitle,
+          aboutServicesContent: aboutServicesContent?.substring(0, 50) + '...',
+          companyName
+        });
 
         setContent({
-          aboutTitle,
-          aboutContent,
-          storyTitle: 'Our Story',
-          storyContent: aboutContent, // Use about content for story too
-          companyName,
-          servicesTitle,
-          servicesContent
+          aboutTitle: aboutPageTitle || content.aboutTitle,
+          aboutContent: aboutContent || content.aboutContent,
+          storyTitle: aboutStoryTitle || content.storyTitle,
+          storyContent: aboutStoryContent || content.storyContent,
+          companyName: companyName || content.companyName,
+          servicesTitle: aboutServicesTitle || content.servicesTitle,
+          servicesContent: aboutServicesContent || content.servicesContent
         });
       } catch (error) {
-        console.log('Using fallback content for about page');
+        console.log('Using fallback content for about page', error);
       }
     };
 

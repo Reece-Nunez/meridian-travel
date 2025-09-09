@@ -190,7 +190,7 @@ export default function AdminContent() {
       setContentSections(data || []);
     } catch (err) {
       console.error('Catch block - Error fetching content:', err);
-      if (err.message === 'Request timeout') {
+      if (err instanceof Error && err.message === 'Request timeout') {
         setError('Request timed out - please try refreshing');
       } else {
         setError('Failed to load content sections');
@@ -407,7 +407,7 @@ export default function AdminContent() {
                   >
                     <option value="">Choose a section to edit...</option>
                     {Object.entries(availableSections).map(([title, key]) => (
-                      <option key={key} value={key}>{title}</option>
+                      <option key={String(key)} value={String(key)}>{title}</option>
                     ))}
                   </select>
                 </div>
@@ -417,7 +417,7 @@ export default function AdminContent() {
               {selectedSection && (
                 <>
                   {/* Debug info */}
-                  <div className="mb-4 p-3 bg-gray-100 rounded text-xs">
+                  <div className="mb-4 p-3 bg-gray-100 text-black rounded text-xs">
                     <strong>Debug Info:</strong><br/>
                     • Selected Section: {selectedSection}<br/>
                     • Form Title: "{contentForm.title}"<br/>

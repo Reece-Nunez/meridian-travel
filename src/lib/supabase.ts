@@ -23,9 +23,13 @@ export const createSupabaseAdmin = () => {
   
   const serviceRoleKey = process.env.SUPABASE_SERVICE_ROLE_KEY
   if (!serviceRoleKey || !supabaseUrl) {
-    const error = new Error(`Missing Supabase admin environment variables: URL=${!!supabaseUrl}, ServiceKey=${!!serviceRoleKey}`)
-    console.error('createSupabaseAdmin error:', error.message)
-    throw error
+    console.warn('Supabase admin environment variables missing - using dummy client for build')
+    return createClient('https://dummy.supabase.co', 'dummy-service-key', {
+      auth: {
+        autoRefreshToken: false,
+        persistSession: false
+      }
+    })
   }
 
   console.log('Creating Supabase admin client with URL:', supabaseUrl)

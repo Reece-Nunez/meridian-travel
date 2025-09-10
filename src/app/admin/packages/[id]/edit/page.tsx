@@ -401,7 +401,7 @@ export default function EditPackage() {
             accommodation: day.accommodation ? String(day.accommodation) : null,
             activities: cleanActivities,
             // Only include images if they exist (for backward compatibility)
-            ...(day.images && day.images.length > 0 && { images: day.images.map(img => String(img)) })
+            ...(day.images && day.images.length > 0 && { images: day.images.map((img: string) => String(img)) })
           };
         }),
         updated_at: new Date().toISOString()
@@ -471,24 +471,8 @@ export default function EditPackage() {
           // Don't throw - basic fields are already saved
           console.log('Itinerary update failed, but basic changes are saved');
         }
-        
-        const data = itineraryData || basicUpdateData;
-        const error = null;
       } catch (timeoutError) {
         console.log('Itinerary update timed out, but basic changes are saved');
-        const data = basicUpdateData;
-        const error = null;
-      }
-
-      if (error) {
-        console.error('Supabase error details:', {
-          message: error.message,
-          details: error.details,
-          hint: error.hint,
-          code: error.code,
-          fullError: error
-        });
-        throw error;
       }
 
       console.log('Save successful, redirecting...');

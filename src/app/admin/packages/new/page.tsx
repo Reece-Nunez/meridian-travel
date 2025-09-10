@@ -6,6 +6,13 @@ import Link from 'next/link';
 import { useRouter } from 'next/navigation';
 import { supabase } from '@/lib/supabase';
 import { useSimpleAdminAuth } from '@/hooks/useSimpleAdminAuth';
+import ImageUpload from '@/components/admin/ImageUpload';
+
+interface PendingImage {
+  id: string;
+  file: File;
+  previewUrl: string;
+}
 
 interface PackageActivity {
   name: string;
@@ -17,6 +24,9 @@ interface PackageItineraryDay {
   title: string;
   activities: PackageActivity[];
   accommodation?: string | null;
+  images?: string[];
+  pendingImages?: PendingImage[];
+  imagesToDelete?: string[];
 }
 
 export default function NewPackage() {
@@ -32,10 +42,13 @@ export default function NewPackage() {
     is_active: true,
     includes: [''],
     excludes: [''],
-    images: ['']
+    luxury_highlights: [''],
+    images: [] as string[]
   });
+  const [pendingPackageImages, setPendingPackageImages] = useState<PendingImage[]>([]);
+  const [packageImagesToDelete, setPackageImagesToDelete] = useState<string[]>([]);
   const [itinerary, setItinerary] = useState<PackageItineraryDay[]>([
-    { day: 1, title: '', activities: [{ name: '', description: '' }], accommodation: '' }
+    { day: 1, title: '', activities: [{ name: '', description: '' }], accommodation: '', images: [], pendingImages: [], imagesToDelete: [] }
   ]);
 
   const handleInputChange = (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement | HTMLSelectElement>) => {
@@ -47,21 +60,21 @@ export default function NewPackage() {
     }));
   };
 
-  const handleArrayChange = (field: 'includes' | 'excludes' | 'images', index: number, value: string) => {
+  const handleArrayChange = (field: 'includes' | 'excludes' | 'luxury_highlights', index: number, value: string) => {
     setFormData(prev => ({
       ...prev,
       [field]: prev[field].map((item, i) => i === index ? value : item)
     }));
   };
 
-  const addArrayItem = (field: 'includes' | 'excludes' | 'images') => {
+  const addArrayItem = (field: 'includes' | 'excludes' | 'luxury_highlights') => {
     setFormData(prev => ({
       ...prev,
       [field]: [...prev[field], '']
     }));
   };
 
-  const removeArrayItem = (field: 'includes' | 'excludes' | 'images', index: number) => {
+  const removeArrayItem = (field: 'includes' | 'excludes' | 'luxury_highlights', index: number) => {
     setFormData(prev => ({
       ...prev,
       [field]: prev[field].filter((_, i) => i !== index)
@@ -87,7 +100,10 @@ export default function NewPackage() {
       day: prev.length + 1,
       title: '',
       activities: [{ name: '', description: '' }],
-      accommodation: ''
+      accommodation: '',
+      images: [],
+      pendingImages: [],
+      imagesToDelete: []
     }]);
   };
 
@@ -105,19 +121,117 @@ export default function NewPackage() {
     ));
   };
 
+
+  // Handle package image changes (deferred upload)
+  const handlePackageImagesChange = (images: string[], pendingImages: PendingImage[], imagesToDelete: string[]) => {
+    setFormData(prev => ({ ...prev, images }));
+    setPendingPackageImages(pendingImages);
+    setPackageImagesToDelete(imagesToDelete);
+  };
+
+  // Handle day image changes (deferred upload)
+  const handleDayImagesChange = (dayIndex: number, images: string[], pendingImages: PendingImage[], imagesToDelete: string[]) => {
+    setItinerary(prev => prev.map((day, i) => 
+      i === dayIndex 
+        ? { ...day, images, pendingImages, imagesToDelete }
+        : day
+    ));
+  };
+
+  // Upload a single image file to Supabase storage
+  const uploadImageFile = async (file: File, bucketName: string): Promise<string> => {
+    const fileExtension = file.name.split('.').pop();
+    const fileName = `${Date.now()}_${Math.random().toString(36).substring(2)}.${fileExtension}`;
+    const filePath = `${fileName}`;
+
+    const { data, error } = await supabase.storage
+      .from(bucketName)
+      .upload(filePath, file);
+
+    if (error) {
+      console.error(`Error uploading ${file.name}:`, error);
+      throw error;
+    }
+
+    const { data: urlData } = supabase.storage
+      .from(bucketName)
+      .getPublicUrl(filePath);
+
+    return urlData.publicUrl;
+  };
+
+  // Upload all pending images and return updated image arrays
+  const uploadAllPendingImages = async () => {
+    const uploadedPackageImages: string[] = [];
+    const updatedItinerary = [...itinerary];
+
+    // Upload package images
+    for (const pendingImage of pendingPackageImages) {
+      try {
+        const uploadedUrl = await uploadImageFile(pendingImage.file, 'package-images');
+        uploadedPackageImages.push(uploadedUrl);
+        // Clean up the preview URL
+        URL.revokeObjectURL(pendingImage.previewUrl);
+      } catch (error) {
+        console.error('Failed to upload package image:', error);
+        throw error;
+      }
+    }
+
+    // Upload itinerary day images
+    for (let dayIndex = 0; dayIndex < updatedItinerary.length; dayIndex++) {
+      const day = updatedItinerary[dayIndex];
+      const uploadedDayImages: string[] = [];
+      
+      if (day.pendingImages && day.pendingImages.length > 0) {
+        for (const pendingImage of day.pendingImages) {
+          try {
+            const uploadedUrl = await uploadImageFile(pendingImage.file, 'itinerary-images');
+            uploadedDayImages.push(uploadedUrl);
+            // Clean up the preview URL
+            URL.revokeObjectURL(pendingImage.previewUrl);
+          } catch (error) {
+            console.error(`Failed to upload day ${dayIndex + 1} image:`, error);
+            throw error;
+          }
+        }
+      }
+
+      // Update the day with new uploaded images and clear pending
+      updatedItinerary[dayIndex] = {
+        ...day,
+        images: [...(day.images || []), ...uploadedDayImages],
+        pendingImages: [],
+        imagesToDelete: []
+      };
+    }
+
+    return {
+      packageImages: [...formData.images, ...uploadedPackageImages],
+      updatedItinerary
+    };
+  };
+
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setLoading(true);
 
     try {
+      console.log('Starting form submission...');
+      
+      // Upload all pending images first
+      const { packageImages, updatedItinerary } = await uploadAllPendingImages();
+      
       const packageData = {
         ...formData,
         includes: formData.includes.filter((item: string) => item.trim() !== ''),
         excludes: formData.excludes.filter((item: string) => item.trim() !== ''),
-        images: formData.images.filter((item: string) => item.trim() !== ''),
-        itinerary: itinerary.map((day: any) => ({
+        luxury_highlights: formData.luxury_highlights.filter((item: string) => item.trim() !== ''),
+        images: packageImages,
+        itinerary: updatedItinerary.map((day: any) => ({
           ...day,
-          activities: day.activities.filter((activity: PackageActivity) => activity.name.trim() !== '')
+          activities: day.activities.filter((activity: PackageActivity) => activity.name.trim() !== ''),
+          images: day.images || []
         }))
       };
 
@@ -285,48 +399,25 @@ export default function NewPackage() {
             </div>
           </motion.div>
 
-          {/* Images */}
+          {/* Package Images */}
           <motion.div
             className="bg-white rounded-lg shadow-sm p-6"
             initial={{ opacity: 0, y: 20 }}
             animate={{ opacity: 1, y: 0 }}
             transition={{ duration: 0.5, delay: 0.1 }}
           >
-            <h3 className="text-lg font-medium text-gray-900 mb-6">Images</h3>
-            
-            {formData.images.map((image, index) => (
-              <div key={index} className="flex items-center space-x-2 mb-3">
-                <input
-                  type="url"
-                  value={image}
-                  onChange={(e) => handleArrayChange('images', index, e.target.value)}
-                  placeholder="Image URL"
-                  className="flex-1 px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-[#B8860B] focus:border-[#B8860B] text-gray-900"
-                />
-                {formData.images.length > 1 && (
-                  <button
-                    type="button"
-                    onClick={() => removeArrayItem('images', index)}
-                    className="text-red-600 hover:text-red-700 p-2"
-                  >
-                    <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
-                    </svg>
-                  </button>
-                )}
-              </div>
-            ))}
-            
-            <button
-              type="button"
-              onClick={() => addArrayItem('images')}
-              className="text-[#B8860B] hover:text-[#DAA520] font-medium"
-            >
-              + Add Image URL
-            </button>
+            <h3 className="text-lg font-medium text-gray-900 mb-6">Package Images</h3>
+            <ImageUpload
+              currentImages={formData.images}
+              pendingImages={pendingPackageImages}
+              imagesToDelete={packageImagesToDelete}
+              maxImages={10}
+              onImagesChange={handlePackageImagesChange}
+              bucketName="package-images"
+            />
           </motion.div>
 
-          {/* Includes/Excludes */}
+          {/* Package Details */}
           <motion.div
             className="bg-white rounded-lg shadow-sm p-6"
             initial={{ opacity: 0, y: 20 }}
@@ -335,7 +426,40 @@ export default function NewPackage() {
           >
             <h3 className="text-lg font-medium text-gray-900 mb-6">Package Details</h3>
             
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
+            <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
+              <div>
+                <h4 className="text-md font-medium text-gray-800 mb-3">Luxury Highlights</h4>
+                {formData.luxury_highlights.map((item, index) => (
+                  <div key={index} className="flex items-center space-x-2 mb-3">
+                    <input
+                      type="text"
+                      value={item}
+                      onChange={(e) => handleArrayChange('luxury_highlights', index, e.target.value)}
+                      placeholder="e.g., Private chef experiences"
+                      className="flex-1 px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-[#B8860B] focus:border-[#B8860B] text-gray-900"
+                    />
+                    {formData.luxury_highlights.length > 1 && (
+                      <button
+                        type="button"
+                        onClick={() => removeArrayItem('luxury_highlights', index)}
+                        className="text-red-600 hover:text-red-700 p-2"
+                      >
+                        <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
+                        </svg>
+                      </button>
+                    )}
+                  </div>
+                ))}
+                <button
+                  type="button"
+                  onClick={() => addArrayItem('luxury_highlights')}
+                  className="text-[#B8860B] hover:text-[#DAA520] font-medium"
+                >
+                  + Add Highlight
+                </button>
+              </div>
+
               <div>
                 <h4 className="text-md font-medium text-gray-800 mb-3">What's Included</h4>
                 {formData.includes.map((item, index) => (
@@ -499,6 +623,19 @@ export default function NewPackage() {
                     >
                       + Add Activity
                     </button>
+                  </div>
+
+                  {/* Day Images */}
+                  <div className="mt-6">
+                    <h5 className="text-sm font-medium text-gray-700 mb-3">Day Images</h5>
+                    <ImageUpload
+                      currentImages={day.images || []}
+                      pendingImages={day.pendingImages || []}
+                      imagesToDelete={day.imagesToDelete || []}
+                      maxImages={5}
+                      onImagesChange={(images, pendingImages, imagesToDelete) => handleDayImagesChange(dayIndex, images, pendingImages, imagesToDelete)}
+                      bucketName="itinerary-images"
+                    />
                   </div>
                 </div>
               ))}

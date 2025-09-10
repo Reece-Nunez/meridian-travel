@@ -175,12 +175,17 @@ function getFallbackContentByKey(key: string): string {
 function getFallbackSettingByKey(key: string): string {
   const fallbacks: { [key: string]: string } = {
     'company_name': 'Meridian Luxury Travel',
+    'tagline': 'Creating extraordinary travel experiences',
+    'business_hours': 'Monday - Friday: 9:00 AM - 6:00 PM EST',
+    'website_url': 'https://www.meridianluxury.travel',
     'contact_email': 'chris@meridianluxury.travel',
     'contact_phone': '+1 (555) 123-4567',
-    'website_url': 'https://www.meridianluxury.travel',
+    'emergency_contact': '+1 (555) 911-HELP',
     'company_address': '123 Travel Way, Adventure City, AC 12345',
-    'business_hours': 'Monday - Friday: 9:00 AM - 6:00 PM EST',
-    'tagline': 'Creating extraordinary travel experiences'
+    'social_facebook': '',
+    'social_instagram': '',
+    'booking_terms': '',
+    'cancellation_policy': ''
   };
   
   return fallbacks[key] || '';

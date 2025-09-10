@@ -247,7 +247,7 @@ export default function AdminContent() {
   const autoSaveTimeoutRef = useRef<NodeJS.Timeout | null>(null);
   const previousFormRef = useRef(contentForm);
 
-  // Auto-save functionality
+  // Auto-save functionality (saves as draft to localStorage)
   const performAutoSave = useCallback(async (formData: typeof contentForm) => {
     if (!selectedSection) {
       return;
@@ -262,49 +262,29 @@ export default function AdminContent() {
     try {
       setAutoSaving(true);
       
-      const existingContent = contentSections.find((cs) => cs.section_key === selectedSection);
-      const pageKey = (selectedPage ? PAGE_SECTIONS[selectedPage].key : 'hero') ?? 'hero';
-
-      if (existingContent) {
-        const { error } = await supabase
-          .from('content_sections')
-          .update({
-            title: formData.title,
-            content: formData.content,
-            is_active: formData.is_active,
-            updated_at: new Date().toISOString(),
-          })
-          .eq('id', existingContent.id);
-
-        if (error) throw error;
-      } else {
-        const { error } = await supabase.from('content_sections').insert({
-          section_key: selectedSection,
-          title: formData.title,
-          content: formData.content,
-          section_type: pageKey,
-          is_active: formData.is_active,
-        });
-
-        if (error) throw error;
-      }
+      // Save draft to localStorage instead of database
+      const draftKey = `content_draft_${selectedSection}`;
+      const draftData = {
+        title: formData.title,
+        content: formData.content,
+        is_active: formData.is_active,
+        lastSaved: new Date().toISOString(),
+        sectionKey: selectedSection
+      };
+      
+      localStorage.setItem(draftKey, JSON.stringify(draftData));
 
       setLastSaved(new Date());
       setHasUnsavedChanges(false);
       
-      // Refresh content sections
-      await fetchContentSections();
-      
-      // Clear content cache
-      clearContentCache();
+      console.log('Draft saved locally for section:', selectedSection);
     } catch (error) {
       console.error('Auto-save failed:', error);
-      // Don't show error for auto-save failures, just mark as unsaved
       setHasUnsavedChanges(true);
     } finally {
       setAutoSaving(false);
     }
-  }, [selectedSection, contentSections, selectedPage, validateForm]);
+  }, [selectedSection, validateForm]);
 
   // Debounced auto-save effect
   useEffect(() => {
@@ -414,21 +394,45 @@ export default function AdminContent() {
       autoSaveTimeoutRef.current = null;
     }
 
-    const existingContent = contentSections.find((cs) => cs.section_key === sectionKey);
+    // Check for saved draft first
+    const draftKey = `content_draft_${sectionKey}`;
+    const savedDraft = localStorage.getItem(draftKey);
+    
+    if (savedDraft) {
+      try {
+        const draftData = JSON.parse(savedDraft);
+        setContentForm({
+          title: draftData.title,
+          content: draftData.content,
+          is_active: draftData.is_active,
+        });
+        setLastSaved(new Date(draftData.lastSaved));
+        setHasUnsavedChanges(true); // Mark as having unsaved changes since it's a draft
+        console.log('Loaded draft for section:', sectionKey);
+      } catch (error) {
+        console.error('Error loading draft:', error);
+        // Fall through to existing content loading
+      }
+    }
+    
+    // If no draft found, load from database
+    if (!savedDraft) {
+      const existingContent = contentSections.find((cs) => cs.section_key === sectionKey);
 
-    if (existingContent) {
-      setContentForm({
-        title: existingContent.title ?? sectionTitle,
-        content: existingContent.content ?? '',
-        is_active: existingContent.is_active,
-      });
-      setLastSaved(existingContent.updated_at ? new Date(existingContent.updated_at) : new Date(existingContent.created_at));
-    } else {
-      setContentForm({
-        title: sectionTitle,
-        content: '',
-        is_active: true,
-      });
+      if (existingContent) {
+        setContentForm({
+          title: existingContent.title ?? sectionTitle,
+          content: existingContent.content ?? '',
+          is_active: existingContent.is_active,
+        });
+        setLastSaved(existingContent.updated_at ? new Date(existingContent.updated_at) : new Date(existingContent.created_at));
+      } else {
+        setContentForm({
+          title: sectionTitle,
+          content: '',
+          is_active: false, // Set new content as inactive by default
+        });
+      }
     }
 
     setError(null);
@@ -500,7 +504,11 @@ export default function AdminContent() {
         autoSaveTimeoutRef.current = null;
       }
 
-      setSuccess('Content updated successfully!');
+      // Clear the draft since we've published the content
+      const draftKey = `content_draft_${selectedSection}`;
+      localStorage.removeItem(draftKey);
+
+      setSuccess('Content published successfully!');
       setTimeout(() => setSuccess(null), 3000);
     } catch {
       setError('Failed to save content');
@@ -964,26 +972,26 @@ export default function AdminContent() {
                       {autoSaving && (
                         <>
                           <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-[#B8860B]"></div>
-                          <span className="text-[#B8860B]">Auto-saving...</span>
+                          <span className="text-[#B8860B]">Saving draft...</span>
                         </>
                       )}
                       {hasUnsavedChanges && !autoSaving && (
                         <>
                           <div className="w-2 h-2 bg-orange-500 rounded-full"></div>
-                          <span className="text-orange-600">Unsaved changes</span>
+                          <span className="text-orange-600">Draft changes (not published)</span>
                         </>
                       )}
                       {!hasUnsavedChanges && !autoSaving && lastSaved && (
                         <>
-                          <div className="w-2 h-2 bg-green-500 rounded-full"></div>
-                          <span className="text-green-600">
-                            Saved {lastSaved.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
+                          <div className="w-2 h-2 bg-blue-500 rounded-full"></div>
+                          <span className="text-blue-600">
+                            Draft saved {lastSaved.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
                           </span>
                         </>
                       )}
                     </div>
                     <div className="text-xs text-gray-400">
-                      Auto-saves 2s after typing stops
+                      Auto-saves drafts locally • Click "Update Content" to publish
                     </div>
                   </div>
 

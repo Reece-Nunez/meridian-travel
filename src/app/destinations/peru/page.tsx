@@ -1,184 +1,344 @@
 'use client';
 
 import Link from 'next/link';
-import { motion } from 'framer-motion';
+import { motion, AnimatePresence } from 'framer-motion';
+import { useState } from 'react';
 
-export default function Destinations() {
-  const destinations = [
+export default function PeruDestination() {
+  const [selectedRegion, setSelectedRegion] = useState<string | null>(null);
+
+  const handleRegionClick = (regionId: string) => {
+    console.log('🎯 Region clicked:', regionId);
+    console.log('📋 Current selectedRegion:', selectedRegion);
+    
+    const newSelection = selectedRegion === regionId ? null : regionId;
+    console.log('✨ Setting selectedRegion to:', newSelection);
+    
+    setSelectedRegion(newSelection);
+  };
+
+  const regions = [
     {
-      id: 'machu-picchu',
-      name: 'Machu Picchu & Sacred Valley',
-      duration: '4-7 Days',
-      difficulty: 'Easy to Moderate',
-      highlights: ['Machu Picchu sunrise', 'Sacred Valley markets', 'Ollantaytambo fortress', 'Traditional weaving demonstrations'],
-      description: 'Discover the crown jewel of Peru with this iconic journey to Machu Picchu. Experience the mystical ancient citadel at sunrise, explore the vibrant Sacred Valley markets, and immerse yourself in traditional Andean culture.',
-      price: 'From $2,800 per person'
+      id: 'highlands',
+      name: 'The Andes Highlands',
+      shortName: 'Highlands',
+      description: 'Ancient civilizations, dramatic peaks, and sacred valleys',
+      highlights: ['Machu Picchu', 'Cusco', 'Sacred Valley', 'Rainbow Mountain', 'Lake Titicaca'],
+      climate: 'Dry season: May-September (ideal for trekking)',
+      altitude: 'Up to 4,200m (13,780ft)',
+      image: '/andean-highlands.jpg'
     },
     {
-      id: 'amazon-rainforest',
-      name: 'Amazon Rainforest Adventure',
-      duration: '3-5 Days',
-      difficulty: 'Easy to Moderate',
-      highlights: ['Canopy walks', 'Wildlife spotting', 'River excursions', 'Indigenous community visits'],
-      description: 'Venture deep into the Peruvian Amazon, one of the world\'s most biodiverse ecosystems. Spot exotic wildlife, walk through the canopy, and learn from indigenous communities about their sustainable way of life.',
-      price: 'From $1,950 per person'
+      id: 'amazon',
+      name: 'The Amazon Rainforest',
+      shortName: 'Amazon',
+      description: 'Biodiversity capital with pristine wilderness and indigenous culture',
+      highlights: ['Manu National Park', 'Iquitos', 'Tambopata Reserve', 'Indigenous communities'],
+      climate: 'Wet season: Nov-Apr, Dry season: May-Oct',
+      altitude: '80-500m (260-1,640ft)',
+      image: '/rainforest.jpg'
     },
     {
-      id: 'inca-trail',
-      name: 'Classic Inca Trail Trek',
-      duration: '4 Days',
-      difficulty: 'Challenging',
-      highlights: ['Ancient Inca ruins', 'Mountain passes', 'Cloud forest', 'Sunrise at Machu Picchu'],
-      description: 'Follow in the footsteps of the ancient Incas on this legendary 4-day trek. Cross high mountain passes, explore remote archaeological sites, and culminate your journey with a spectacular sunrise at Machu Picchu.',
-      price: 'From $3,200 per person'
+      id: 'coast',
+      name: 'The Pacific Coast',
+      shortName: 'Coast',
+      description: 'Desert landscapes, colonial cities, and world-renowned cuisine',
+      highlights: ['Lima', 'Nazca Lines', 'Huacachina Oasis', 'Paracas Peninsula'],
+      climate: 'Mild year-round, very little rain',
+      altitude: 'Sea level to 500m (1,640ft)',
+      image: '/pacific-coast.webp'
+    }
+  ];
+
+  const culturalHighlights = [
+    {
+      title: 'Ancient Civilizations',
+      description: 'From the mysterious Inca empire to lesser-known cultures like the Moche and Nazca',
+      icon: '🏛️'
     },
     {
-      id: 'cusco-lima',
-      name: 'Cusco & Lima Cultural Journey',
-      duration: '6-8 Days',
-      difficulty: 'Easy',
-      highlights: ['Colonial architecture', 'World-class cuisine', 'Art galleries', 'Museums and markets'],
-      description: 'Experience Peru\'s rich cultural heritage in two of its most important cities. Explore colonial Cusco\'s cobblestone streets and discover Lima\'s world-renowned culinary scene and vibrant arts district.',
-      price: 'From $2,400 per person'
+      title: 'Living Traditions',
+      description: 'Experience authentic Quechua communities and traditional textile weaving',
+      icon: '🧶'
     },
     {
-      id: 'rainbow-mountain',
-      name: 'Rainbow Mountain & Ausangate',
-      duration: '2-4 Days',
-      difficulty: 'Moderate to Challenging',
-      highlights: ['Colorful mineral mountains', 'High-altitude landscapes', 'Andean communities', 'Hot springs'],
-      description: 'Marvel at the incredible natural beauty of Peru\'s Rainbow Mountain (Vinicunca) and the stunning Ausangate region. Experience some of the most dramatically beautiful high-altitude landscapes in the world.',
-      price: 'From $1,600 per person'
+      title: 'Culinary Heritage',
+      description: 'Peru\'s cuisine blends indigenous, Spanish, Chinese, and Japanese influences',
+      icon: '🍽️'
     },
     {
-      id: 'northern-peru',
-      name: 'Northern Peru Archaeological Tour',
-      duration: '5-7 Days',
-      difficulty: 'Easy to Moderate',
-      highlights: ['Sipán tomb', 'Huacas del Sol y de la Luna', 'Chachapoya culture', 'Cloud forest'],
-      description: 'Discover Peru\'s lesser-known archaeological treasures in the north. Explore ancient Moche and Chachapoya sites, visit world-class museums, and experience the mystical cloud forests.',
-      price: 'From $2,600 per person'
+      title: 'Natural Wonders',
+      description: 'From Amazon biodiversity to dramatic Andean landscapes',
+      icon: '🦋'
+    }
+  ];
+
+  const travelTips = [
+    {
+      category: 'Best Time to Visit',
+      details: [
+        'Highlands: May-September (dry season)',
+        'Amazon: May-October (less rain)',
+        'Coast: Year-round (mild climate)'
+      ]
+    },
+    {
+      category: 'Altitude Considerations',
+      details: [
+        'Cusco: 3,400m (11,150ft) - arrive early to acclimatize',
+        'Machu Picchu: 2,400m (7,875ft)',
+        'Consider altitude sickness medication'
+      ]
+    },
+    {
+      category: 'Cultural Etiquette',
+      details: [
+        'Learn basic Spanish phrases',
+        'Respect indigenous customs and photography preferences',
+        'Bargaining expected in markets'
+      ]
+    },
+    {
+      category: 'What to Pack',
+      details: [
+        'Layers for varying climates',
+        'Comfortable hiking boots',
+        'Sun protection and insect repellent'
+      ]
     }
   ];
 
   return (
     <div className="min-h-screen bg-white">
-      {/* Header Section */}
-      <div className="relative py-24 overflow-hidden">
+      {/* Hero Section */}
+      <div className="relative h-screen overflow-hidden">
         <div className="absolute inset-0">
           <img 
             src="/peru-header.jpg" 
-            alt="Peru landscape header"
+            alt="Peru landscape"
             className="w-full h-full object-cover"
-            onError={(e) => {
-              console.error('Failed to load peru-header.jpg');
-              e.currentTarget.style.display = 'none';
-            }}
           />
-          <div className="absolute inset-0 bg-black opacity-50"></div>
+          <div className="absolute inset-0 bg-gradient-to-t from-black via-black/30 to-transparent"></div>
         </div>
-        <div className="relative z-10 px-4 sm:px-6 lg:px-8 max-w-7xl mx-auto">
-          <div className="text-center text-white">
-            <h1 className="text-4xl sm:text-5xl font-bold mb-4">
-              Peru Destinations
-            </h1>
-            <p className="text-xl sm:text-2xl mb-8 max-w-3xl mx-auto">
-              From ancient ruins to natural wonders, discover Peru's most captivating destinations 
-              with expertly crafted itineraries tailored to your interests.
-            </p>
+        <div className="relative z-10 h-full flex items-center justify-center px-4 sm:px-6 lg:px-8">
+          <div className="text-center text-white max-w-4xl">
+            <motion.h1 
+              className="text-5xl sm:text-7xl font-bold mb-6"
+              initial={{ opacity: 0, y: 30 }}
+              animate={{ opacity: 1, y: 0 }}
+              transition={{ duration: 0.8 }}
+            >
+              Peru
+            </motion.h1>
+            <motion.p 
+              className="text-xl sm:text-2xl mb-8 text-gray-200"
+              initial={{ opacity: 0, y: 20 }}
+              animate={{ opacity: 1, y: 0 }}
+              transition={{ duration: 0.8, delay: 0.2 }}
+            >
+              Where ancient civilizations meet pristine nature in the heart of South America
+            </motion.p>
+            <motion.div
+              className="flex flex-col sm:flex-row gap-4 justify-center"
+              initial={{ opacity: 0, y: 20 }}
+              animate={{ opacity: 1, y: 0 }}
+              transition={{ duration: 0.8, delay: 0.4 }}
+            >
+              <Link
+                href="/packages"
+                className="bg-[#B8860B] hover:bg-[#DAA520] text-white px-8 py-4 rounded-md text-lg font-medium transition-colors duration-200"
+              >
+                View Trip Packages
+              </Link>
+              <Link
+                href="/quote"
+                className="border-2 border-white text-white hover:bg-white hover:text-[#8B4513] px-8 py-4 rounded-md text-lg font-medium transition-colors duration-200"
+              >
+                Plan Custom Journey
+              </Link>
+            </motion.div>
           </div>
         </div>
       </div>
 
-      {/* Destinations Grid */}
-      <div className="py-16 px-4 sm:px-6 lg:px-8 max-w-7xl mx-auto">
-        <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
-          {destinations.map((destination, index) => (
-            <motion.div 
-              key={destination.id} 
-              className="bg-white border border-gray-200 rounded-lg shadow-lg hover:shadow-xl transition-shadow duration-300"
-              initial={{ opacity: 0, y: 30 }}
-              whileInView={{ opacity: 1, y: 0 }}
-              viewport={{ once: true, amount: 0.1 }}
-              transition={{ duration: 0.6, delay: index * 0.05 }}
-            >
-              <div className="p-8">
-                <div className="flex justify-between items-start mb-4">
-                  <h3 className="text-2xl font-bold text-[#8B4513]">{destination.name}</h3>
-                  <span className="text-[#B8860B] font-bold text-lg">{destination.price}</span>
+      {/* Peru Overview */}
+      <section className="py-20 bg-gray-50">
+        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+          <div className="text-center mb-16">
+            <h2 className="text-4xl font-bold text-[#8B4513] mb-6">Why Peru?</h2>
+            <p className="text-xl text-gray-600 max-w-4xl mx-auto leading-relaxed">
+              Peru offers an unparalleled combination of ancient history, diverse ecosystems, and vibrant culture. 
+              From the mystical ruins of Machu Picchu to the pristine Amazon rainforest, every corner tells a story 
+              waiting to be discovered.
+            </p>
+          </div>
+          
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-8">
+            {culturalHighlights.map((highlight, index) => (
+              <motion.div
+                key={index}
+                className="bg-white p-6 rounded-lg shadow-lg text-center"
+                initial={{ opacity: 0, y: 30 }}
+                whileInView={{ opacity: 1, y: 0 }}
+                viewport={{ once: true }}
+                transition={{ duration: 0.6, delay: index * 0.1 }}
+              >
+                <div className="text-4xl mb-4">{highlight.icon}</div>
+                <h3 className="text-xl font-bold text-[#8B4513] mb-3">{highlight.title}</h3>
+                <p className="text-gray-600">{highlight.description}</p>
+              </motion.div>
+            ))}
+          </div>
+        </div>
+      </section>
+
+      {/* Regions Section */}
+      <section className="py-20">
+        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+          <div className="text-center mb-16">
+            <h2 className="text-4xl font-bold text-[#8B4513] mb-6">Explore Peru's Diverse Regions</h2>
+            <p className="text-xl text-gray-600 max-w-3xl mx-auto">
+              Peru's incredible diversity spans three distinct regions, each offering unique landscapes, 
+              wildlife, and cultural experiences.
+            </p>
+          </div>
+
+          <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
+            {regions.map((region, index) => (
+              <motion.div
+                key={region.id}
+                className="group bg-white rounded-lg shadow-lg overflow-hidden hover:shadow-xl transition-shadow duration-300 cursor-pointer flex flex-col"
+                initial={{ opacity: 0, y: 30 }}
+                whileInView={{ opacity: 1, y: 0 }}
+                viewport={{ once: true }}
+                transition={{ duration: 0.6, delay: index * 0.1 }}
+                onClick={() => handleRegionClick(region.id)}
+              >
+                <div className="h-64 relative overflow-hidden">
+                  <img
+                    src={region.image}
+                    alt={region.name}
+                    className="absolute inset-0 w-full h-full object-cover group-hover:scale-105 transition-transform duration-300"
+                    onError={(e) => {
+                      const target = e.currentTarget as HTMLImageElement;
+                      target.src = '/destinations/default.jpg';
+                    }}
+                  />
+                  <div className="absolute inset-0 bg-gradient-to-t from-black/60 to-transparent"></div>
+                  <div className="absolute bottom-4 left-4 text-white">
+                    <h3 className="text-2xl font-bold">{region.shortName}</h3>
+                  </div>
                 </div>
                 
-                <div className="flex flex-wrap gap-4 mb-4 text-sm text-gray-600">
-                  <span className="flex items-center">
-                    <svg className="w-4 h-4 mr-1" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z" />
-                    </svg>
-                    {destination.duration}
-                  </span>
-                  <span className="flex items-center">
-                    <svg className="w-4 h-4 mr-1" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 10V3L4 14h7v7l9-11h-7z" />
-                    </svg>
-                    {destination.difficulty}
-                  </span>
+                <div className="p-6 flex-1 flex flex-col">
+                  <h4 className="text-xl font-bold text-[#8B4513] mb-2">{region.name}</h4>
+                  <p className="text-gray-600 mb-4">{region.description}</p>
+                  
+                  {/* Debug: Show what's actually rendering */}
+                  <div className="text-xs bg-yellow-100 p-1 mb-2">
+                    Card: {region.id} | Selected: {selectedRegion} | Match: {String(selectedRegion === region.id)}
+                  </div>
+                  
+                  {selectedRegion === region.id ? (
+                    <motion.div
+                      initial={{ opacity: 0, height: 0 }}
+                      animate={{ opacity: 1, height: 'auto' }}
+                      exit={{ opacity: 0, height: 0 }}
+                      transition={{ duration: 0.3, ease: 'easeInOut' }}
+                      className="border-t pt-4 overflow-hidden"
+                    >
+                      <div className="mb-4">
+                        <h5 className="font-semibold text-[#8B4513] mb-2">Highlights:</h5>
+                        <div className="flex flex-wrap gap-2">
+                          {region.highlights.map((highlight, idx) => (
+                            <span key={idx} className="bg-[#F5F5DC] text-[#8B4513] px-2 py-1 rounded-md text-sm">
+                              {highlight}
+                            </span>
+                          ))}
+                        </div>
+                      </div>
+                      <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 text-sm">
+                        <div>
+                          <strong className="text-[#8B4513]">Climate:</strong>
+                          <p className="text-gray-600">{region.climate}</p>
+                        </div>
+                        <div>
+                          <strong className="text-[#8B4513]">Altitude:</strong>
+                          <p className="text-gray-600">{region.altitude}</p>
+                        </div>
+                      </div>
+                    </motion.div>
+                  ) : (
+                    <div className="text-xs bg-red-100 p-1">
+                      NOT RENDERING DROPDOWN for {region.id}
+                    </div>
+                  )}
                 </div>
-
-                <p className="text-gray-600 mb-6 leading-relaxed">
-                  {destination.description}
-                </p>
-
-                <div className="mb-6">
-                  <h4 className="font-semibold text-[#8B4513] mb-2">Tour Highlights:</h4>
-                  <ul className="grid grid-cols-1 sm:grid-cols-2 gap-1">
-                    {destination.highlights.map((highlight, index) => (
-                      <li key={index} className="flex items-center text-gray-600 text-sm">
-                        <svg className="w-4 h-4 text-[#2D5016] mr-2 flex-shrink-0" fill="currentColor" viewBox="0 0 20 20">
-                          <path fillRule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" clipRule="evenodd" />
-                        </svg>
-                        {highlight}
-                      </li>
-                    ))}
-                  </ul>
-                </div>
-
-                <div className="flex flex-col sm:flex-row gap-3">
-                  <Link
-                    href="/quote"
-                    className="bg-[#B8860B] hover:bg-[#DAA520] text-[#F5F5DC] px-6 py-3 rounded-md text-center font-medium transition-colors duration-200 flex-1"
-                  >
-                    Request Quote
-                  </Link>
-                  <Link
-                    href="/contact"
-                    className="border border-[#8B4513] text-[#8B4513] hover:bg-[#F5F5DC] px-6 py-3 rounded-md text-center font-medium transition-colors duration-200 flex-1"
-                  >
-                    Learn More
-                  </Link>
-                </div>
-              </div>
-            </motion.div>
-          ))}
+              </motion.div>
+            ))}
+          </div>
         </div>
-      </div>
+      </section>
+
+      {/* Travel Planning Section */}
+      <section className="py-20 bg-[#F5F5DC]">
+        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+          <div className="text-center mb-16">
+            <h2 className="text-4xl font-bold text-[#8B4513] mb-6">Planning Your Peru Adventure</h2>
+            <p className="text-xl text-gray-600 max-w-3xl mx-auto">
+              Essential information to help you prepare for your journey to Peru
+            </p>
+          </div>
+
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-8">
+            {travelTips.map((tip, index) => (
+              <motion.div
+                key={index}
+                className="bg-white p-6 rounded-lg shadow-lg"
+                initial={{ opacity: 0, y: 30 }}
+                whileInView={{ opacity: 1, y: 0 }}
+                viewport={{ once: true }}
+                transition={{ duration: 0.6, delay: index * 0.1 }}
+              >
+                <h3 className="text-lg font-bold text-[#8B4513] mb-4">{tip.category}</h3>
+                <ul className="space-y-2">
+                  {tip.details.map((detail, idx) => (
+                    <li key={idx} className="text-sm text-gray-600 flex items-start">
+                      <span className="text-[#B8860B] mr-2 mt-1">•</span>
+                      {detail}
+                    </li>
+                  ))}
+                </ul>
+              </motion.div>
+            ))}
+          </div>
+        </div>
+      </section>
 
       {/* Call to Action */}
-      <div className="bg-[#F5F5DC] py-16">
-        <div className="px-4 sm:px-6 lg:px-8 max-w-4xl mx-auto text-center">
-          <h2 className="text-3xl font-bold text-[#8B4513] mb-4">
-            Don't See What You're Looking For?
-          </h2>
-          <p className="text-xl text-gray-600 mb-8">
-            Every journey we create is completely customized. Let us know your interests, 
-            and we'll craft the perfect Peru adventure just for you.
+      <section className="py-20 bg-[#8B4513]">
+        <div className="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8 text-center text-white">
+          <h2 className="text-4xl font-bold mb-6">Ready to Discover Peru?</h2>
+          <p className="text-xl mb-8 opacity-90">
+            Let our Peru specialists create a personalized journey that matches your interests, 
+            timeline, and travel style. Every trip is uniquely crafted for you.
           </p>
-          <Link
-            href="/quote"
-            className="bg-[#B8860B] hover:bg-[#DAA520] text-[#F5F5DC] px-8 py-4 rounded-md text-lg font-medium transition-colors duration-200"
-          >
-            Plan Your Custom Journey
-          </Link>
+          <div className="flex flex-col sm:flex-row gap-4 justify-center">
+            <Link
+              href="/packages"
+              className="bg-[#B8860B] hover:bg-[#DAA520] text-white px-8 py-4 rounded-md text-lg font-medium transition-colors duration-200"
+            >
+              Browse Peru Packages
+            </Link>
+            <Link
+              href="/quote"
+              className="border-2 border-white text-white hover:bg-white hover:text-[#8B4513] px-8 py-4 rounded-md text-lg font-medium transition-colors duration-200"
+            >
+              Request Custom Quote
+            </Link>
+          </div>
         </div>
-      </div>
+      </section>
     </div>
   );
 }

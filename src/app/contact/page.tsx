@@ -3,7 +3,7 @@
 import Link from 'next/link';
 import { motion } from 'framer-motion';
 import { useState, useEffect } from 'react';
-import { getContentByKey } from '@/lib/content';
+import { getContentByKey, getSettingByKey } from '@/lib/content';
 
 export default function Contact() {
   const [content, setContent] = useState({
@@ -77,12 +77,12 @@ export default function Contact() {
           getContentByKey('contact_page_title'),
           getContentByKey('contact_page_subtitle'),
           getContentByKey('contact_section_title'),
-          getContentByKey('contact_phone'),
-          getContentByKey('contact_phone_hours'),
-          getContentByKey('contact_email'),
+          getSettingByKey('contact_phone'),
+          getSettingByKey('business_hours'),
+          getSettingByKey('contact_email'),
           getContentByKey('contact_email_response'),
-          getContentByKey('contact_address'),
-          getContentByKey('contact_emergency_phone'),
+          getSettingByKey('company_address'),
+          getSettingByKey('emergency_contact'),
           getContentByKey('contact_emergency_text'),
           getContentByKey('contact_quick_action_title'),
           getContentByKey('contact_quick_action_content'),

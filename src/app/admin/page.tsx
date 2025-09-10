@@ -17,10 +17,22 @@ export default function AdminDashboard() {
   const [statsLoading, setStatsLoading] = useState(true);
 
   useEffect(() => {
-    if (isAuthenticated) {
+    if (isAuthenticated && !loading) {
       fetchStats();
     }
-  }, [isAuthenticated]);
+  }, [isAuthenticated, loading]);
+
+  // Fallback to ensure stats loading doesn't hang
+  useEffect(() => {
+    const timer = setTimeout(() => {
+      if (statsLoading) {
+        console.warn('Stats loading timeout, using default values');
+        setStatsLoading(false);
+      }
+    }, 10000); // 10 second timeout for stats
+
+    return () => clearTimeout(timer);
+  }, [statsLoading]);
 
   const fetchStats = async () => {
     try {

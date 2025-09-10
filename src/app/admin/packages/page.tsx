@@ -34,6 +34,19 @@ export default function AdminPackages() {
     fetchPackages();
   }, []);
 
+  // Fallback to ensure data loading doesn't hang
+  useEffect(() => {
+    const timer = setTimeout(() => {
+      if (loading) {
+        console.warn('Packages loading timeout');
+        setLoading(false);
+        setError('Loading timeout - please refresh the page');
+      }
+    }, 15000); // 15 second timeout
+
+    return () => clearTimeout(timer);
+  }, [loading]);
+
   const fetchPackages = async () => {
     try {
       setLoading(true);

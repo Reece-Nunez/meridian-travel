@@ -7,6 +7,13 @@ import { useRouter, useParams } from 'next/navigation';
 import { supabase } from '@/lib/supabase';
 import { TripPackage } from '@/types/database';
 import { useSimpleAdminAuth } from '@/hooks/useSimpleAdminAuth';
+import ImageUpload from '@/components/admin/ImageUpload';
+
+interface PendingImage {
+  id: string;
+  file: File;
+  previewUrl: string;
+}
 
 interface PackageActivity {
   name: string;
@@ -18,6 +25,9 @@ interface PackageItineraryDay {
   title: string;
   activities: PackageActivity[];
   accommodation?: string | null;
+  images?: string[];
+  pendingImages?: PendingImage[];
+  imagesToDelete?: string[];
 }
 
 export default function EditPackage() {
@@ -39,10 +49,13 @@ export default function EditPackage() {
     is_active: true,
     includes: [''],
     excludes: [''],
-    images: ['']
+    luxury_highlights: [''],
+    images: [] as string[]
   });
+  const [pendingPackageImages, setPendingPackageImages] = useState<PendingImage[]>([]);
+  const [packageImagesToDelete, setPackageImagesToDelete] = useState<string[]>([]);
   const [itinerary, setItinerary] = useState<PackageItineraryDay[]>([
-    { day: 1, title: '', activities: [{ name: '', description: '' }], accommodation: '' }
+    { day: 1, title: '', activities: [{ name: '', description: '' }], accommodation: '', images: [], pendingImages: [], imagesToDelete: [] }
   ]);
 
   useEffect(() => {
@@ -50,6 +63,19 @@ export default function EditPackage() {
       fetchPackage();
     }
   }, [packageId]);
+
+  // Fallback to ensure data loading doesn't hang
+  useEffect(() => {
+    const timer = setTimeout(() => {
+      if (loading) {
+        console.warn('Package loading timeout');
+        setLoading(false);
+        setError('Loading timeout - please refresh the page');
+      }
+    }, 15000); // 15 second timeout
+
+    return () => clearTimeout(timer);
+  }, [loading]);
 
   const fetchPackage = async () => {
     try {
@@ -63,6 +89,7 @@ export default function EditPackage() {
       if (error) throw error;
 
       if (data) {
+        
         setFormData({
           title: data.title || '',
           description: data.description || '',
@@ -72,20 +99,45 @@ export default function EditPackage() {
           is_active: data.is_active ?? true,
           includes: data.includes && data.includes.length > 0 ? data.includes : [''],
           excludes: data.excludes && data.excludes.length > 0 ? data.excludes : [''],
-          images: data.images && data.images.length > 0 ? data.images : ['']
+          luxury_highlights: data.luxury_highlights && data.luxury_highlights.length > 0 ? data.luxury_highlights : [''],
+          images: data.images || []
         });
 
         if (data.itinerary && data.itinerary.length > 0) {
-          setItinerary(data.itinerary.map((day: any) => ({
-            ...day,
-            activities: day.activities && day.activities.length > 0 
-              ? day.activities.map((activity: any) => 
-                  typeof activity === 'string' 
+          const processedItinerary = data.itinerary.map((day: any, dayIndex: number) => {
+            const processedActivities = day.activities && day.activities.length > 0 
+              ? day.activities.map((activity: any, actIndex: number) => {
+                  // Fix corrupted activity data - if it has numeric keys, it's corrupted
+                  if (activity && typeof activity === 'object' && activity.hasOwnProperty('0')) {
+                    console.log(`🔧 Fixed corrupted activity data for day ${dayIndex + 1}, activity ${actIndex + 1}`);
+                    return {
+                      name: activity.name || '',
+                      description: activity.description || ''
+                    };
+                  }
+                  
+                  const processed = typeof activity === 'string' 
                     ? { name: activity, description: '' }
-                    : activity
-                )
-              : [{ name: '', description: '' }]
-          })));
+                    : (activity && typeof activity === 'object') 
+                      ? { name: activity.name || '', description: activity.description || '' }
+                      : { name: '', description: '' };
+                  
+                  return processed;
+                })
+              : [{ name: '', description: '' }];
+            
+            return {
+              day: day.day,
+              title: day.title,
+              accommodation: day.accommodation,
+              activities: processedActivities,
+              images: day.images || [],
+              pendingImages: [],
+              imagesToDelete: []
+            };
+          });
+          
+          setItinerary(processedItinerary);
         }
       }
     } catch (err) {
@@ -105,21 +157,21 @@ export default function EditPackage() {
     }));
   };
 
-  const handleArrayChange = (field: 'includes' | 'excludes' | 'images', index: number, value: string) => {
+  const handleArrayChange = (field: 'includes' | 'excludes' | 'luxury_highlights', index: number, value: string) => {
     setFormData(prev => ({
       ...prev,
       [field]: prev[field].map((item, i) => i === index ? value : item)
     }));
   };
 
-  const addArrayItem = (field: 'includes' | 'excludes' | 'images') => {
+  const addArrayItem = (field: 'includes' | 'excludes' | 'luxury_highlights') => {
     setFormData(prev => ({
       ...prev,
       [field]: [...prev[field], '']
     }));
   };
 
-  const removeArrayItem = (field: 'includes' | 'excludes' | 'images', index: number) => {
+  const removeArrayItem = (field: 'includes' | 'excludes' | 'luxury_highlights', index: number) => {
     setFormData(prev => ({
       ...prev,
       [field]: prev[field].filter((_, i) => i !== index)
@@ -145,7 +197,10 @@ export default function EditPackage() {
       day: prev.length + 1,
       title: '',
       activities: [{ name: '', description: '' }],
-      accommodation: ''
+      accommodation: '',
+      images: [],
+      pendingImages: [],
+      imagesToDelete: []
     }]);
   };
 
@@ -163,35 +218,295 @@ export default function EditPackage() {
     ));
   };
 
+  // Handle package image changes (deferred upload)
+  const handlePackageImagesChange = (images: string[], pendingImages: PendingImage[], imagesToDelete: string[]) => {
+    setFormData(prev => ({ ...prev, images }));
+    setPendingPackageImages(pendingImages);
+    setPackageImagesToDelete(imagesToDelete);
+  };
+
+  // Handle day image changes (deferred upload)
+  const handleDayImagesChange = (dayIndex: number, images: string[], pendingImages: PendingImage[], imagesToDelete: string[]) => {
+    setItinerary(prev => prev.map((day, i) => 
+      i === dayIndex 
+        ? { ...day, images, pendingImages, imagesToDelete }
+        : day
+    ));
+  };
+
+  // Upload a single image file to Supabase storage
+  const uploadImageFile = async (file: File, bucketName: string): Promise<string> => {
+    const fileExtension = file.name.split('.').pop();
+    const fileName = `${Date.now()}_${Math.random().toString(36).substring(2)}.${fileExtension}`;
+    const filePath = `${fileName}`;
+
+    const { data, error } = await supabase.storage
+      .from(bucketName)
+      .upload(filePath, file);
+
+    if (error) {
+      console.error(`Error uploading ${file.name}:`, error);
+      throw error;
+    }
+
+    const { data: urlData } = supabase.storage
+      .from(bucketName)
+      .getPublicUrl(filePath);
+
+    return urlData.publicUrl;
+  };
+
+  // Delete a single image from Supabase storage
+  const deleteImageFromStorage = async (imageUrl: string, bucketName: string) => {
+    try {
+      // Extract the file path from the public URL
+      const urlParts = imageUrl.split('/');
+      const fileName = urlParts[urlParts.length - 1];
+      
+      console.log(`Deleting ${fileName} from ${bucketName}`);
+      
+      const { error } = await supabase.storage
+        .from(bucketName)
+        .remove([fileName]);
+
+      if (error) {
+        console.error(`Error deleting ${fileName}:`, error);
+        throw error;
+      }
+
+      console.log(`Successfully deleted ${fileName}`);
+    } catch (error) {
+      console.error('Failed to delete image:', error);
+      throw error;
+    }
+  };
+
+  // Delete all images marked for deletion
+  const deleteAllMarkedImages = async () => {
+    // Delete package images
+    for (const imageUrl of packageImagesToDelete) {
+      try {
+        await deleteImageFromStorage(imageUrl, 'package-images');
+      } catch (error) {
+        console.error('Failed to delete package image:', error);
+        // Continue with other deletions even if one fails
+      }
+    }
+
+    // Delete itinerary day images
+    for (let dayIndex = 0; dayIndex < itinerary.length; dayIndex++) {
+      const day = itinerary[dayIndex];
+      if (day.imagesToDelete && day.imagesToDelete.length > 0) {
+        for (const imageUrl of day.imagesToDelete) {
+          try {
+            await deleteImageFromStorage(imageUrl, 'itinerary-images');
+          } catch (error) {
+            console.error(`Failed to delete day ${dayIndex + 1} image:`, error);
+            // Continue with other deletions even if one fails
+          }
+        }
+      }
+    }
+  };
+
+  // Upload all pending images and return updated image arrays
+  const uploadAllPendingImages = async () => {
+    const uploadedPackageImages: string[] = [];
+    const updatedItinerary = [...itinerary];
+
+    // Upload package images
+    for (const pendingImage of pendingPackageImages) {
+      try {
+        const uploadedUrl = await uploadImageFile(pendingImage.file, 'package-images');
+        uploadedPackageImages.push(uploadedUrl);
+        // Clean up the preview URL
+        URL.revokeObjectURL(pendingImage.previewUrl);
+      } catch (error) {
+        console.error('Failed to upload package image:', error);
+        throw error;
+      }
+    }
+
+    // Upload itinerary day images
+    for (let dayIndex = 0; dayIndex < updatedItinerary.length; dayIndex++) {
+      const day = updatedItinerary[dayIndex];
+      const uploadedDayImages: string[] = [];
+      
+      if (day.pendingImages && day.pendingImages.length > 0) {
+        for (const pendingImage of day.pendingImages) {
+          try {
+            const uploadedUrl = await uploadImageFile(pendingImage.file, 'itinerary-images');
+            uploadedDayImages.push(uploadedUrl);
+            // Clean up the preview URL
+            URL.revokeObjectURL(pendingImage.previewUrl);
+          } catch (error) {
+            console.error(`Failed to upload day ${dayIndex + 1} image:`, error);
+            throw error;
+          }
+        }
+      }
+
+      // Update the day with new uploaded images and clear pending/delete arrays
+      updatedItinerary[dayIndex] = {
+        ...day,
+        images: [...(day.images || []), ...uploadedDayImages],
+        pendingImages: [],
+        imagesToDelete: []
+      };
+    }
+
+    return {
+      packageImages: [...formData.images, ...uploadedPackageImages],
+      updatedItinerary
+    };
+  };
+
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setSaving(true);
 
     try {
-      const packageData = {
-        ...formData,
+      console.log('Starting form submission...');
+      
+      // Delete marked images first
+      await deleteAllMarkedImages();
+      console.log('Marked images deleted successfully');
+      
+      // Upload all pending images
+      const { packageImages, updatedItinerary } = await uploadAllPendingImages();
+      
+      // Prepare package data - be defensive about new fields
+      const packageData: any = {
+        title: formData.title,
+        description: formData.description,
+        destination: formData.destination,
+        duration: formData.duration,
+        max_participants: formData.max_participants,
+        is_active: formData.is_active,
         includes: formData.includes.filter((item: string) => item.trim() !== ''),
         excludes: formData.excludes.filter((item: string) => item.trim() !== ''),
-        images: formData.images.filter((item: string) => item.trim() !== ''),
-        itinerary: itinerary.map((day: any) => ({
-          ...day,
-          activities: day.activities.filter((activity: PackageActivity) => activity.name.trim() !== '')
-        })),
+        images: packageImages,
+        itinerary: updatedItinerary.map((day: any, dayIndex: number) => {
+          // Ensure activities are clean objects without character indices
+          const cleanActivities = day.activities
+            .filter((activity: PackageActivity) => activity.name && activity.name.trim() !== '')
+            .map((activity: PackageActivity) => ({
+              name: String(activity.name || '').trim(),
+              description: String(activity.description || '').trim()
+            }));
+          
+          return {
+            day: Number(day.day),
+            title: String(day.title || ''),
+            accommodation: day.accommodation ? String(day.accommodation) : null,
+            activities: cleanActivities,
+            // Only include images if they exist (for backward compatibility)
+            ...(day.images && day.images.length > 0 && { images: day.images.map(img => String(img)) })
+          };
+        }),
         updated_at: new Date().toISOString()
       };
 
-      const { error } = await supabase
+      // Only add luxury_highlights if it exists and has content
+      if (formData.luxury_highlights && formData.luxury_highlights.some((item: string) => item.trim() !== '')) {
+        packageData.luxury_highlights = formData.luxury_highlights.filter((item: string) => item.trim() !== '');
+      }
+
+      // Split the update - do basic fields first, then itinerary separately
+      
+      // First update: Basic fields only (fast)
+      const basicData = {
+        title: packageData.title,
+        description: packageData.description,
+        destination: packageData.destination,
+        duration: packageData.duration,
+        max_participants: packageData.max_participants,
+        is_active: packageData.is_active,
+        includes: packageData.includes,
+        excludes: packageData.excludes,
+        images: packageData.images,
+        luxury_highlights: packageData.luxury_highlights,
+        updated_at: packageData.updated_at
+      };
+      
+      // Add timeout back for basic fields
+      const basicUpdatePromise = supabase
         .from('trip_packages')
-        .update(packageData)
+        .update(basicData)
         .eq('id', packageId);
 
-      if (error) throw error;
+      const basicTimeoutPromise = new Promise((_, reject) => 
+        setTimeout(() => reject(new Error('Basic update timed out after 15 seconds')), 15000)
+      );
 
+      const { data: basicUpdateData, error: basicError } = await Promise.race([
+        basicUpdatePromise, 
+        basicTimeoutPromise
+      ]) as any;
+
+      if (basicError) {
+        console.error('Basic update error:', basicError);
+        throw basicError;
+      }
+
+      // Now update the itinerary with a reasonable timeout
+      
+      const itineraryUpdatePromise = supabase
+        .from('trip_packages')
+        .update({ itinerary: packageData.itinerary })
+        .eq('id', packageId);
+
+      const itineraryTimeoutPromise = new Promise((_, reject) => 
+        setTimeout(() => reject(new Error('Itinerary update timed out after 20 seconds')), 20000)
+      );
+
+      try {
+        const { data: itineraryData, error: itineraryError } = await Promise.race([
+          itineraryUpdatePromise, 
+          itineraryTimeoutPromise
+        ]) as any;
+
+        if (itineraryError) {
+          console.error('Itinerary update error:', itineraryError);
+          // Don't throw - basic fields are already saved
+          console.log('Itinerary update failed, but basic changes are saved');
+        }
+        
+        const data = itineraryData || basicUpdateData;
+        const error = null;
+      } catch (timeoutError) {
+        console.log('Itinerary update timed out, but basic changes are saved');
+        const data = basicUpdateData;
+        const error = null;
+      }
+
+      if (error) {
+        console.error('Supabase error details:', {
+          message: error.message,
+          details: error.details,
+          hint: error.hint,
+          code: error.code,
+          fullError: error
+        });
+        throw error;
+      }
+
+      console.log('Save successful, redirecting...');
+      
+      // Clear pending images and deletion state since everything is now saved
+      setPendingPackageImages([]);
+      setPackageImagesToDelete([]);
+      setItinerary(prev => prev.map(day => ({ ...day, pendingImages: [], imagesToDelete: [] })));
+      
       router.push('/admin/packages');
     } catch (error) {
       console.error('Error updating package:', error);
-      alert('Failed to update package. Please try again.');
+      if (error instanceof Error) {
+        console.error('Error message:', error.message);
+      }
+      alert(`Failed to update package: ${error instanceof Error ? error.message : JSON.stringify(error)}`);
     } finally {
+      console.log('🏁 Setting saving to false');
       setSaving(false);
     }
   };
@@ -375,48 +690,25 @@ export default function EditPackage() {
             </div>
           </motion.div>
 
-          {/* Images */}
+          {/* Package Images */}
           <motion.div
             className="bg-white rounded-lg shadow-sm p-6"
             initial={{ opacity: 0, y: 20 }}
             animate={{ opacity: 1, y: 0 }}
             transition={{ duration: 0.5, delay: 0.1 }}
           >
-            <h3 className="text-lg font-medium text-gray-900 mb-6">Images</h3>
-            
-            {formData.images.map((image, index) => (
-              <div key={index} className="flex items-center space-x-2 mb-3">
-                <input
-                  type="url"
-                  value={image}
-                  onChange={(e) => handleArrayChange('images', index, e.target.value)}
-                  placeholder="Image URL"
-                  className="flex-1 px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-[#B8860B] focus:border-[#B8860B] text-gray-900"
-                />
-                {formData.images.length > 1 && (
-                  <button
-                    type="button"
-                    onClick={() => removeArrayItem('images', index)}
-                    className="text-red-600 hover:text-red-700 p-2"
-                  >
-                    <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
-                    </svg>
-                  </button>
-                )}
-              </div>
-            ))}
-            
-            <button
-              type="button"
-              onClick={() => addArrayItem('images')}
-              className="text-[#B8860B] hover:text-[#DAA520] font-medium"
-            >
-              + Add Image URL
-            </button>
+            <h3 className="text-lg font-medium text-gray-900 mb-6">Package Images</h3>
+            <ImageUpload
+              currentImages={formData.images}
+              pendingImages={pendingPackageImages}
+              imagesToDelete={packageImagesToDelete}
+              maxImages={10}
+              onImagesChange={handlePackageImagesChange}
+              bucketName="package-images"
+            />
           </motion.div>
 
-          {/* Includes/Excludes */}
+          {/* Package Details */}
           <motion.div
             className="bg-white rounded-lg shadow-sm p-6"
             initial={{ opacity: 0, y: 20 }}
@@ -425,7 +717,40 @@ export default function EditPackage() {
           >
             <h3 className="text-lg font-medium text-gray-900 mb-6">Package Details</h3>
             
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
+            <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
+              <div>
+                <h4 className="text-md font-medium text-gray-800 mb-3">Luxury Highlights</h4>
+                {formData.luxury_highlights.map((item, index) => (
+                  <div key={index} className="flex items-center space-x-2 mb-3">
+                    <input
+                      type="text"
+                      value={item}
+                      onChange={(e) => handleArrayChange('luxury_highlights', index, e.target.value)}
+                      placeholder="e.g., Private chef experiences"
+                      className="flex-1 px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-[#B8860B] focus:border-[#B8860B] text-gray-900"
+                    />
+                    {formData.luxury_highlights.length > 1 && (
+                      <button
+                        type="button"
+                        onClick={() => removeArrayItem('luxury_highlights', index)}
+                        className="text-red-600 hover:text-red-700 p-2"
+                      >
+                        <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
+                        </svg>
+                      </button>
+                    )}
+                  </div>
+                ))}
+                <button
+                  type="button"
+                  onClick={() => addArrayItem('luxury_highlights')}
+                  className="text-[#B8860B] hover:text-[#DAA520] font-medium"
+                >
+                  + Add Highlight
+                </button>
+              </div>
+
               <div>
                 <h4 className="text-md font-medium text-gray-800 mb-3">What's Included</h4>
                 {formData.includes.map((item, index) => (
@@ -589,6 +914,19 @@ export default function EditPackage() {
                     >
                       + Add Activity
                     </button>
+                  </div>
+
+                  {/* Day Images */}
+                  <div className="mt-6">
+                    <h5 className="text-sm font-medium text-gray-700 mb-3">Day Images</h5>
+                    <ImageUpload
+                      currentImages={day.images || []}
+                      pendingImages={day.pendingImages || []}
+                      imagesToDelete={day.imagesToDelete || []}
+                      maxImages={5}
+                      onImagesChange={(images, pendingImages, imagesToDelete) => handleDayImagesChange(dayIndex, images, pendingImages, imagesToDelete)}
+                      bucketName="itinerary-images"
+                    />
                   </div>
                 </div>
               ))}

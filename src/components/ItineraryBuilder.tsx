@@ -4,6 +4,13 @@ import { useState, useEffect } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { supabase } from '@/lib/supabase';
 import { ItineraryDay, ItineraryActivity, ItineraryImage } from '@/types/database';
+import ImageUpload from '@/components/admin/ImageUpload';
+
+interface PendingImage {
+  id: string;
+  file: File;
+  previewUrl: string;
+}
 
 interface ItineraryBuilderProps {
   quoteId: string;
@@ -20,16 +27,13 @@ interface DayData {
   description: string;
   display_order: number;
   activities: ActivityData[];
-  images: ItineraryImageData[];
+  images: string[]; // Current saved image URLs
+  pendingImages?: PendingImage[]; // New images to upload
+  imagesToDelete?: string[]; // Images marked for deletion
 }
 
 interface ActivityData extends Omit<ItineraryActivity, 'id' | 'day_id' | 'created_at' | 'updated_at'> {
   id?: string;
-}
-
-interface ItineraryImageData extends Omit<ItineraryImage, 'id' | 'day_id' | 'created_at' | 'updated_at'> {
-  id?: string;
-  file?: File; // For new uploads
 }
 
 const ACTIVITY_TYPES = [
@@ -131,12 +135,9 @@ export default function ItineraryBuilder({ quoteId, onSave }: ItineraryBuilderPr
           })),
         images: (day.itinerary_images || [])
           .sort((a: any, b: any) => a.display_order - b.display_order)
-          .map((image: any) => ({
-            image_url: image.image_url,
-            alt_text: image.alt_text,
-            display_order: image.display_order,
-            id: image.id
-          }))
+          .map((image: any) => image.image_url),
+        pendingImages: [],
+        imagesToDelete: []
       }));
 
       setDays(transformedDays);
@@ -158,7 +159,9 @@ export default function ItineraryBuilder({ quoteId, onSave }: ItineraryBuilderPr
       description: '',
       display_order: days.length,
       activities: [],
-      images: []
+      images: [],
+      pendingImages: [],
+      imagesToDelete: []
     };
     setDays([...days, newDay]);
     setExpandedDays(prev => new Set([...prev, days.length]));
@@ -205,50 +208,54 @@ export default function ItineraryBuilder({ quoteId, onSave }: ItineraryBuilderPr
     updateDay(dayIndex, { activities: updatedActivities });
   };
 
-  const addImages = (dayIndex: number, files: FileList) => {
-    const newImages: ItineraryImageData[] = Array.from(files).map((file, index) => ({
-      image_url: '', // Will be set after upload
-      alt_text: file.name,
-      display_order: days[dayIndex].images.length + index,
-      file
-    }));
-    
-    updateDay(dayIndex, {
-      images: [...days[dayIndex].images, ...newImages]
-    });
+  // Handle day image changes (deferred upload)
+  const handleDayImagesChange = (dayIndex: number, images: string[], pendingImages: PendingImage[], imagesToDelete: string[]) => {
+    updateDay(dayIndex, { images, pendingImages, imagesToDelete });
   };
 
-  const removeImage = (dayIndex: number, imageIndex: number) => {
-    const updatedImages = days[dayIndex].images.filter((_, index) => index !== imageIndex);
-    updateDay(dayIndex, { images: updatedImages });
+  // Upload a single image file to Supabase storage
+  const uploadImageFile = async (file: File): Promise<string> => {
+    const fileExtension = file.name.split('.').pop();
+    const fileName = `${Date.now()}_${Math.random().toString(36).substring(2)}.${fileExtension}`;
+    const filePath = `${fileName}`;
+
+    const { data, error } = await supabase.storage
+      .from('itinerary-images')
+      .upload(filePath, file);
+
+    if (error) {
+      console.error(`Error uploading ${file.name}:`, error);
+      throw error;
+    }
+
+    const { data: urlData } = supabase.storage
+      .from('itinerary-images')
+      .getPublicUrl(filePath);
+
+    return urlData.publicUrl;
   };
 
-  const uploadImage = async (file: File): Promise<string> => {
+  // Delete a single image from Supabase storage
+  const deleteImageFromStorage = async (imageUrl: string) => {
     try {
-      // Get admin email from session
-      const session = localStorage.getItem('admin_session');
-      const adminEmail = session ? JSON.parse(session).email : '';
+      // Extract the file path from the public URL
+      const urlParts = imageUrl.split('/');
+      const fileName = urlParts[urlParts.length - 1];
       
-      const formData = new FormData();
-      formData.append('file', file);
-      formData.append('adminEmail', adminEmail);
-      formData.append('quoteId', quoteId);
+      console.log(`Deleting ${fileName} from itinerary-images`);
+      
+      const { error } = await supabase.storage
+        .from('itinerary-images')
+        .remove([fileName]);
 
-      const response = await fetch('/api/admin/upload-image', {
-        method: 'POST',
-        body: formData,
-      });
-
-      if (!response.ok) {
-        const errorText = await response.text();
-        console.error('Upload response error:', errorText);
-        throw new Error(`Upload failed: ${response.status} ${errorText}`);
+      if (error) {
+        console.error(`Error deleting ${fileName}:`, error);
+        throw error;
       }
 
-      const data = await response.json();
-      return data.url;
+      console.log(`Successfully deleted ${fileName}`);
     } catch (error) {
-      console.error('Error uploading image:', error);
+      console.error('Failed to delete image:', error);
       throw error;
     }
   };
@@ -264,16 +271,43 @@ export default function ItineraryBuilder({ quoteId, onSave }: ItineraryBuilderPr
       for (let dayIndex = 0; dayIndex < days.length; dayIndex++) {
         const day = days[dayIndex];
         
-        // Upload new images first
-        const uploadedImages = await Promise.all(
-          day.images.map(async (image) => {
-            if (image.file) {
-              const imageUrl = await uploadImage(image.file);
-              return { ...image, image_url: imageUrl, file: undefined };
+        // Delete marked images first
+        if (day.imagesToDelete && day.imagesToDelete.length > 0) {
+          for (const imageUrl of day.imagesToDelete) {
+            try {
+              await deleteImageFromStorage(imageUrl);
+            } catch (error) {
+              console.error(`Failed to delete image:`, error);
+              // Continue with other operations even if deletion fails
             }
-            return image;
-          })
-        );
+          }
+        }
+        
+        // Upload new images
+        const uploadedImageUrls: string[] = [];
+        if (day.pendingImages && day.pendingImages.length > 0) {
+          for (const pendingImage of day.pendingImages) {
+            try {
+              const uploadedUrl = await uploadImageFile(pendingImage.file);
+              uploadedImageUrls.push(uploadedUrl);
+              // Clean up the preview URL
+              URL.revokeObjectURL(pendingImage.previewUrl);
+            } catch (error) {
+              console.error('Failed to upload image:', error);
+              throw error;
+            }
+          }
+        }
+        
+        // Combine existing images with newly uploaded images
+        const allImages = [...day.images, ...uploadedImageUrls];
+        
+        // Create image objects for the API
+        const imageObjects = allImages.map((imageUrl, index) => ({
+          image_url: imageUrl,
+          alt_text: `Image ${index + 1}`,
+          display_order: index
+        }));
         
         // Save day data
         const response = await fetch('/api/admin/itinerary', {
@@ -286,7 +320,7 @@ export default function ItineraryBuilder({ quoteId, onSave }: ItineraryBuilderPr
             day: {
               ...day,
               display_order: dayIndex,
-              images: uploadedImages
+              images: imageObjects
             }
           }),
         });
@@ -590,47 +624,15 @@ export default function ItineraryBuilder({ quoteId, onSave }: ItineraryBuilderPr
 
                           {/* Images Section */}
                           <div>
-                            <div className="flex justify-between items-center mb-4">
-                              <h5 className="font-medium text-gray-900">Images</h5>
-                              <label className="px-3 py-1 bg-[#B8860B] hover:bg-[#DAA520] text-white rounded text-sm cursor-pointer transition-colors">
-                                + Add Images
-                                <input
-                                  type="file"
-                                  multiple
-                                  accept="image/*"
-                                  onChange={(e) => e.target.files && addImages(dayIndex, e.target.files)}
-                                  className="hidden"
-                                />
-                              </label>
-                            </div>
-
-                            <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4">
-                              {day.images.map((image, imageIndex) => (
-                                <div key={imageIndex} className="relative group">
-                                  <div className="aspect-w-16 aspect-h-12 bg-gray-100 rounded-lg overflow-hidden">
-                                    {image.file ? (
-                                      <img 
-                                        src={URL.createObjectURL(image.file)}
-                                        alt={image.alt_text || ''}
-                                        className="w-full h-32 object-cover"
-                                      />
-                                    ) : (
-                                      <img 
-                                        src={image.image_url}
-                                        alt={image.alt_text || ''}
-                                        className="w-full h-32 object-cover"
-                                      />
-                                    )}
-                                    <button
-                                      onClick={() => removeImage(dayIndex, imageIndex)}
-                                      className="absolute top-2 right-2 bg-red-600 text-white rounded-full w-6 h-6 flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity"
-                                    >
-                                      ×
-                                    </button>
-                                  </div>
-                                </div>
-                              ))}
-                            </div>
+                            <h5 className="font-medium text-gray-900 mb-4">Day Images</h5>
+                            <ImageUpload
+                              currentImages={day.images || []}
+                              pendingImages={day.pendingImages || []}
+                              imagesToDelete={day.imagesToDelete || []}
+                              maxImages={5}
+                              onImagesChange={(images, pendingImages, imagesToDelete) => handleDayImagesChange(dayIndex, images, pendingImages, imagesToDelete)}
+                              bucketName="itinerary-images"
+                            />
                           </div>
                         </div>
                       </motion.div>

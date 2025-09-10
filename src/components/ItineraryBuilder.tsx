@@ -25,6 +25,7 @@ interface DayData {
   end_date?: string | null;
   city: string;
   description: string;
+  accommodation?: string | null;
   display_order: number;
   activities: ActivityData[];
   images: string[]; // Current saved image URLs
@@ -157,6 +158,7 @@ export default function ItineraryBuilder({ quoteId, onSave }: ItineraryBuilderPr
       end_date: null,
       city: '',
       description: '',
+      accommodation: '',
       display_order: days.length,
       activities: [],
       images: [],
@@ -506,6 +508,19 @@ export default function ItineraryBuilder({ quoteId, onSave }: ItineraryBuilderPr
                                 placeholder="e.g., Lima, La Paz"
                               />
                             </div>
+                          </div>
+
+                          <div>
+                            <label className="block text-sm font-medium text-gray-900 mb-2">
+                              Accommodation
+                            </label>
+                            <input
+                              type="text"
+                              value={day.accommodation || ''}
+                              onChange={(e) => updateDay(dayIndex, { accommodation: e.target.value })}
+                              className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-[#B8860B] focus:border-[#B8860B] text-gray-900"
+                              placeholder="e.g., Hotel Casa Andina Premium, Luxury Resort"
+                            />
                           </div>
 
                           <div>

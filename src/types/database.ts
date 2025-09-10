@@ -50,6 +50,7 @@ export interface Database {
           max_participants: number | null
           includes: string[] | null
           excludes: string[] | null
+          luxury_highlights: string[] | null
           is_active: boolean | null
         }
         Insert: {
@@ -65,6 +66,7 @@ export interface Database {
           max_participants?: number | null
           includes?: string[] | null
           excludes?: string[] | null
+          luxury_highlights?: string[] | null
           is_active?: boolean | null
         }
         Update: {
@@ -80,6 +82,7 @@ export interface Database {
           max_participants?: number | null
           includes?: string[] | null
           excludes?: string[] | null
+          luxury_highlights?: string[] | null
           is_active?: boolean | null
         }
       }

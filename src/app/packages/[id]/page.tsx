@@ -18,6 +18,7 @@ interface ItineraryDay {
   title: string;
   activities: (string | PackageActivity)[];
   accommodation: string | null;
+  images?: string[];
 }
 
 export default function PackageDetail() {
@@ -216,11 +217,29 @@ export default function PackageDetail() {
                             })}
                           </div>
                           {day.accommodation && (
-                            <div className="flex items-center text-sm text-gray-500">
+                            <div className="flex items-center text-sm text-gray-500 mb-3">
                               <svg className="w-4 h-4 mr-1" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M3 7v10a2 2 0 002 2h14a2 2 0 002-2V9a2 2 0 00-2-2H5a2 2 0 00-2-2z" />
                               </svg>
                               <strong>Accommodation:</strong> {day.accommodation}
+                            </div>
+                          )}
+                          {/* Day Images */}
+                          {day.images && day.images.length > 0 && (
+                            <div className="mt-4">
+                              <div className="grid grid-cols-2 md:grid-cols-3 gap-2">
+                                {day.images.map((image, imgIndex) => (
+                                  <img
+                                    key={imgIndex}
+                                    src={image}
+                                    alt={`${day.title} - Image ${imgIndex + 1}`}
+                                    className="w-full h-24 object-cover rounded-md border border-gray-200"
+                                    onError={(e) => {
+                                      e.currentTarget.style.display = 'none';
+                                    }}
+                                  />
+                                ))}
+                              </div>
                             </div>
                           )}
                         </div>
@@ -240,15 +259,15 @@ export default function PackageDetail() {
               <div className="space-y-3 text-sm">
                 <div className="flex justify-between">
                   <span className="text-gray-600">Duration:</span>
-                  <span className="font-medium">{pkg.duration} days</span>
+                  <span className="font-medium text-[#8B4513]">{pkg.duration} days</span>
                 </div>
                 <div className="flex justify-between">
                   <span className="text-gray-600">Destination:</span>
-                  <span className="font-medium">{pkg.destination}</span>
+                  <span className="font-medium text-[#8B4513]">{pkg.destination}</span>
                 </div>
                 <div className="flex justify-between">
                   <span className="text-gray-600">Max Participants:</span>
-                  <span className="font-medium">{pkg.max_participants} people</span>
+                  <span className="font-medium text-[#8B4513]">{pkg.max_participants} people</span>
                 </div>
               </div>
               <button
@@ -258,6 +277,28 @@ export default function PackageDetail() {
                 Book This Trip
               </button>
             </div>
+
+            {/* Luxury Highlights */}
+            {pkg.luxury_highlights && pkg.luxury_highlights.length > 0 && (
+              <div className="bg-gradient-to-br from-[#8B4513]/5 to-[#B8860B]/5 rounded-lg shadow-sm border border-[#B8860B]/20 p-6">
+                <h3 className="text-lg font-semibold text-[#8B4513] mb-4 flex items-center">
+                  <svg className="w-5 h-5 text-[#B8860B] mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M11.049 2.927c.3-.921 1.603-.921 1.902 0l1.519 4.674a1 1 0 00.95.69h4.915c.969 0 1.371 1.24.588 1.81l-3.976 2.888a1 1 0 00-.363 1.118l1.518 4.674c.3.922-.755 1.688-1.538 1.118l-3.976-2.888a1 1 0 00-1.176 0l-3.976 2.888c-.783.57-1.838-.197-1.538-1.118l1.518-4.674a1 1 0 00-.363-1.118l-3.976-2.888c-.784-.57-.38-1.81.588-1.81h4.914a1 1 0 00.951-.69l1.519-4.674z" />
+                  </svg>
+                  Luxury Highlights
+                </h3>
+                <ul className="space-y-2 text-sm">
+                  {pkg.luxury_highlights.map((item, index) => (
+                    <li key={index} className="flex items-start">
+                      <svg className="w-4 h-4 text-[#B8860B] mr-2 mt-0.5 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M11.049 2.927c.3-.921 1.603-.921 1.902 0l1.519 4.674a1 1 0 00.95.69h4.915c.969 0 1.371 1.24.588 1.81l-3.976 2.888a1 1 0 00-.363 1.118l1.518 4.674c.3.922-.755 1.688-1.538 1.118l-3.976-2.888a1 1 0 00-1.176 0l-3.976 2.888c-.783.57-1.838-.197-1.538-1.118l1.518-4.674a1 1 0 00-.363-1.118l-3.976-2.888c-.784-.57-.38-1.81.588-1.81h4.914a1 1 0 00.951-.69l1.519-4.674z" />
+                      </svg>
+                      <span className="text-gray-700 font-medium">{item}</span>
+                    </li>
+                  ))}
+                </ul>
+              </div>
+            )}
 
             {/* What's Included */}
             {pkg.includes && pkg.includes.length > 0 && (

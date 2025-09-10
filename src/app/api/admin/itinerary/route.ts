@@ -40,6 +40,7 @@ export async function POST(request: NextRequest) {
           end_date: day.end_date,
           city: day.city,
           description: day.description,
+          accommodation: day.accommodation,
           display_order: day.display_order,
           updated_at: new Date().toISOString()
         })
@@ -64,6 +65,7 @@ export async function POST(request: NextRequest) {
           end_date: day.end_date,
           city: day.city,
           description: day.description,
+          accommodation: day.accommodation,
           display_order: day.display_order
         })
         .select()

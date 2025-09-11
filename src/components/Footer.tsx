@@ -1,8 +1,60 @@
 'use client';
 
 import Link from 'next/link';
+import { useState, useEffect } from 'react';
+import { getSettingByKey } from '@/lib/content';
 
 export default function Footer() {
+  const [contactInfo, setContactInfo] = useState({
+    phone: '+1 (555) 012-3456',
+    email: 'info@meridianluxury.travel',
+    address: '123 Travel Avenue\nAdventure City, AC 12345\nUnited States',
+    businessHours: 'Mon-Fri: 9AM-6PM EST',
+    companyName: 'Meridian Luxury Travel'
+  });
+
+  const fetchContactInfo = async () => {
+    try {
+      console.log('🏢 Footer: Fetching contact info from admin settings...');
+      const [phone, email, address, businessHours, companyName] = await Promise.all([
+        getSettingByKey('contact_phone'),
+        getSettingByKey('contact_email'),
+        getSettingByKey('company_address'),
+        getSettingByKey('business_hours'),
+        getSettingByKey('company_name')
+      ]);
+
+      const newContactInfo = {
+        phone: phone || '+1 (555) 012-3456',
+        email: email || 'info@meridianluxury.travel',
+        address: address || '123 Travel Avenue\nAdventure City, AC 12345\nUnited States',
+        businessHours: businessHours || 'Mon-Fri: 9AM-6PM EST',
+        companyName: companyName || 'Meridian Luxury Travel'
+      };
+      
+      console.log('🏢 Footer: Updated contact info:', newContactInfo);
+      setContactInfo(newContactInfo);
+    } catch (error) {
+      console.error('Error fetching contact info:', error);
+    }
+  };
+
+  useEffect(() => {
+    fetchContactInfo();
+    
+    // Listen for settings updates from admin panel
+    const handleSettingsUpdate = () => {
+      console.log('📡 Footer: Settings update detected, re-fetching...');
+      fetchContactInfo();
+    };
+    
+    window.addEventListener('settingsUpdated', handleSettingsUpdate);
+    
+    return () => {
+      window.removeEventListener('settingsUpdated', handleSettingsUpdate);
+    };
+  }, []);
+
   return (
     <footer className="bg-[#2D5016] text-white">
       {/* Main Footer Content */}
@@ -13,7 +65,7 @@ export default function Footer() {
             <div className="mb-6">
               <img 
                 src="/logo.png" 
-                alt="Meridian Luxury Travel" 
+                alt={contactInfo.companyName} 
                 className="h-32 w-auto mb-4"
                 onError={(e) => {
                   console.error('Failed to load logo.png');
@@ -117,18 +169,18 @@ export default function Footer() {
                   <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M3 5a2 2 0 012-2h3.28a1 1 0 01.948.684l1.498 4.493a1 1 0 01-.502 1.21l-2.257 1.13a11.042 11.042 0 005.516 5.516l1.13-2.257a1 1 0 011.21-.502l4.493 1.498a1 1 0 01.684.949V19a2 2 0 01-2 2h-1C9.716 21 3 14.284 3 6V5z" />
                 </svg>
                 <div>
-                  <a href="tel:+1-555-0123" className="text-[#F5F5DC] hover:text-[#B8860B] transition-colors duration-200">
-                    +1 (555) 012-3456
+                  <a href={`tel:${contactInfo.phone.replace(/\s+/g, '').replace(/[^\d+]/g, '')}`} className="text-[#F5F5DC] hover:text-[#B8860B] transition-colors duration-200">
+                    {contactInfo.phone}
                   </a>
-                  <p className="text-xs text-gray-400 mt-1">Mon-Fri: 9AM-6PM EST</p>
+                  <p className="text-xs text-gray-400 mt-1">{contactInfo.businessHours}</p>
                 </div>
               </div>
               <div className="flex items-start">
                 <svg className="w-5 h-5 text-[#B8860B] mr-3 mt-0.5 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                   <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M3 8l7.89 5.26a2 2 0 002.22 0L21 8M5 19h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z" />
                 </svg>
-                <a href="mailto:info@meridianluxurytravel.com" className="text-[#F5F5DC] hover:text-[#B8860B] transition-colors duration-200">
-                  info@meridianluxurytravel.com
+                <a href={`mailto:${contactInfo.email}`} className="text-[#F5F5DC] hover:text-[#B8860B] transition-colors duration-200">
+                  {contactInfo.email}
                 </a>
               </div>
               <div className="flex items-start">
@@ -137,9 +189,12 @@ export default function Footer() {
                   <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 11a3 3 0 11-6 0 3 3 0 016 0z" />
                 </svg>
                 <div className="text-[#F5F5DC] text-sm">
-                  123 Travel Avenue<br />
-                  Adventure City, AC 12345<br />
-                  United States
+                  {contactInfo.address.split('\n').map((line, index) => (
+                    <span key={index}>
+                      {line}
+                      {index < contactInfo.address.split('\n').length - 1 && <br />}
+                    </span>
+                  ))}
                 </div>
               </div>
             </div>
@@ -175,7 +230,7 @@ export default function Footer() {
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-6">
           <div className="flex flex-col md:flex-row justify-between items-center">
             <div className="text-[#F5F5DC] text-sm mb-4 md:mb-0">
-              © {new Date().getFullYear()} Meridian Luxury Travel. All rights reserved.
+              © {new Date().getFullYear()} {contactInfo.companyName}. All rights reserved.
             </div>
             <div className="flex flex-wrap justify-center md:justify-end space-x-6">
               <Link href="/privacy" className="text-[#F5F5DC] hover:text-[#B8860B] text-sm transition-colors duration-200">

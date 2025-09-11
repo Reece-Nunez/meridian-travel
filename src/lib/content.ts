@@ -67,9 +67,12 @@ export async function getContentByKey(sectionKey: string): Promise<string> {
 }
 
 export async function getSettingByKey(settingKey: string): Promise<string> {
+  console.log(`🔍 Getting setting for key: ${settingKey}`);
   const settings = await getAllSettings();
   const setting = settings.find(item => item.setting_key === settingKey);
-  return setting?.setting_value || getFallbackSettingByKey(settingKey);
+  const result = setting?.setting_value || getFallbackSettingByKey(settingKey);
+  console.log(`📋 Setting ${settingKey}: ${result} (${setting ? 'from database' : 'fallback'})`);
+  return result;
 }
 
 export async function getContentByType(sectionType: string): Promise<ContentSection[]> {
@@ -193,7 +196,13 @@ function getFallbackSettingByKey(key: string): string {
 
 // Clear cache function (useful for admin updates)
 export function clearContentCache() {
+  console.log('🗑️ Clearing content and settings cache...');
   contentCache = null;
   settingsCache = null;
   cacheTimestamp = 0;
+  
+  // Also force a reload for any components listening to window events
+  if (typeof window !== 'undefined') {
+    window.dispatchEvent(new CustomEvent('settingsUpdated'));
+  }
 }

@@ -187,7 +187,9 @@ export default function AdminSettings() {
       });
 
       // Clear cache so changes appear immediately on the website
+      console.log('💾 Settings saved to database, clearing cache...');
       clearContentCache();
+      console.log('✅ Cache cleared, settings should update across the site');
       alert(`${settingsType} updated successfully!`);
     } catch (error) {
       console.error('Error saving settings:', error);

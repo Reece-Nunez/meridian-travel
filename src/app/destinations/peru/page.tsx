@@ -205,15 +205,15 @@ export default function PeruDestination() {
 
           <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
             {regions.map((region, index) => (
-              <motion.div
-                key={region.id}
-                className="group bg-white rounded-lg shadow-lg overflow-hidden hover:shadow-xl transition-shadow duration-300 cursor-pointer flex flex-col"
-                initial={{ opacity: 0, y: 30 }}
-                whileInView={{ opacity: 1, y: 0 }}
-                viewport={{ once: true }}
-                transition={{ duration: 0.6, delay: index * 0.1 }}
-                onClick={() => handleRegionClick(region.id)}
-              >
+              <div key={region.id} className="relative">
+                <motion.div
+                  className="group bg-white rounded-lg shadow-lg overflow-hidden hover:shadow-xl transition-shadow duration-300 cursor-pointer flex flex-col"
+                  initial={{ opacity: 0, y: 30 }}
+                  whileInView={{ opacity: 1, y: 0 }}
+                  viewport={{ once: true }}
+                  transition={{ duration: 0.6, delay: index * 0.1 }}
+                  onClick={() => handleRegionClick(region.id)}
+                >
                 <div className="h-64 relative overflow-hidden">
                   <img
                     src={region.image}
@@ -234,47 +234,42 @@ export default function PeruDestination() {
                   <h4 className="text-xl font-bold text-[#8B4513] mb-2">{region.name}</h4>
                   <p className="text-gray-600 mb-4">{region.description}</p>
                   
-                  {/* Debug: Show what's actually rendering */}
-                  <div className="text-xs bg-yellow-100 p-1 mb-2">
-                    Card: {region.id} | Selected: {selectedRegion} | Match: {String(selectedRegion === region.id)}
-                  </div>
-                  
-                  {selectedRegion === region.id ? (
-                    <motion.div
-                      initial={{ opacity: 0, height: 0 }}
-                      animate={{ opacity: 1, height: 'auto' }}
-                      exit={{ opacity: 0, height: 0 }}
-                      transition={{ duration: 0.3, ease: 'easeInOut' }}
-                      className="border-t pt-4 overflow-hidden"
-                    >
-                      <div className="mb-4">
-                        <h5 className="font-semibold text-[#8B4513] mb-2">Highlights:</h5>
-                        <div className="flex flex-wrap gap-2">
-                          {region.highlights.map((highlight, idx) => (
-                            <span key={idx} className="bg-[#F5F5DC] text-[#8B4513] px-2 py-1 rounded-md text-sm">
-                              {highlight}
-                            </span>
-                          ))}
+                  {selectedRegion === region.id && (
+                    <AnimatePresence>
+                      <motion.div
+                        key={`dropdown-${region.id}`}
+                        initial={{ opacity: 0, height: 0 }}
+                        animate={{ opacity: 1, height: 'auto' }}
+                        exit={{ opacity: 0, height: 0 }}
+                        transition={{ duration: 0.3, ease: 'easeInOut' }}
+                        className="border-t pt-4 overflow-hidden"
+                      >
+                        <div className="mb-4">
+                          <h5 className="font-semibold text-[#8B4513] mb-2">Highlights:</h5>
+                          <div className="flex flex-wrap gap-2">
+                            {region.highlights.map((highlight, idx) => (
+                              <span key={idx} className="bg-[#F5F5DC] text-[#8B4513] px-2 py-1 rounded-md text-sm">
+                                {highlight}
+                              </span>
+                            ))}
+                          </div>
                         </div>
-                      </div>
-                      <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 text-sm">
-                        <div>
-                          <strong className="text-[#8B4513]">Climate:</strong>
-                          <p className="text-gray-600">{region.climate}</p>
+                        <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 text-sm">
+                          <div>
+                            <strong className="text-[#8B4513]">Climate:</strong>
+                            <p className="text-gray-600">{region.climate}</p>
+                          </div>
+                          <div>
+                            <strong className="text-[#8B4513]">Altitude:</strong>
+                            <p className="text-gray-600">{region.altitude}</p>
+                          </div>
                         </div>
-                        <div>
-                          <strong className="text-[#8B4513]">Altitude:</strong>
-                          <p className="text-gray-600">{region.altitude}</p>
-                        </div>
-                      </div>
-                    </motion.div>
-                  ) : (
-                    <div className="text-xs bg-red-100 p-1">
-                      NOT RENDERING DROPDOWN for {region.id}
-                    </div>
+                      </motion.div>
+                    </AnimatePresence>
                   )}
                 </div>
-              </motion.div>
+                </motion.div>
+              </div>
             ))}
           </div>
         </div>

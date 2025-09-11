@@ -234,15 +234,33 @@ export default function PeruDestination() {
                   <h4 className="text-xl font-bold text-[#8B4513] mb-2">{region.name}</h4>
                   <p className="text-gray-600 mb-4">{region.description}</p>
                   
-                  {selectedRegion === region.id && (
-                    <AnimatePresence>
+                  <AnimatePresence>
+                    {selectedRegion === region.id && (
                       <motion.div
                         key={`dropdown-${region.id}`}
-                        initial={{ opacity: 0, height: 0 }}
-                        animate={{ opacity: 1, height: 'auto' }}
-                        exit={{ opacity: 0, height: 0 }}
-                        transition={{ duration: 0.3, ease: 'easeInOut' }}
-                        className="border-t pt-4 overflow-hidden"
+                        initial={{ opacity: 0, height: 0, paddingTop: 0 }}
+                        animate={{ 
+                          opacity: 1, 
+                          height: 'auto',
+                          paddingTop: 16,
+                          transition: {
+                            height: { duration: 0.4, ease: [0.4, 0.0, 0.2, 1] },
+                            opacity: { duration: 0.3, delay: 0.1 },
+                            paddingTop: { duration: 0.4, ease: [0.4, 0.0, 0.2, 1] }
+                          }
+                        }}
+                        exit={{ 
+                          opacity: 0, 
+                          height: 0,
+                          paddingTop: 0,
+                          transition: {
+                            height: { duration: 0.3, ease: [0.4, 0.0, 0.2, 1] },
+                            opacity: { duration: 0.2 },
+                            paddingTop: { duration: 0.3, ease: [0.4, 0.0, 0.2, 1] }
+                          }
+                        }}
+                        className="border-t overflow-hidden"
+                        style={{ borderTopWidth: 1 }}
                       >
                         <div className="mb-4">
                           <h5 className="font-semibold text-[#8B4513] mb-2">Highlights:</h5>
@@ -265,8 +283,8 @@ export default function PeruDestination() {
                           </div>
                         </div>
                       </motion.div>
-                    </AnimatePresence>
-                  )}
+                    )}
+                  </AnimatePresence>
                 </div>
                 </motion.div>
               </div>

@@ -39,6 +39,8 @@ export default function Contact() {
     ctaButton2: 'Send an Email'
   });
 
+  const [isLoading, setIsLoading] = useState(true);
+
   useEffect(() => {
     const fetchContent = async () => {
       try {
@@ -140,11 +142,25 @@ export default function Contact() {
         });
       } catch (error) {
         console.log('Using fallback content for contact page');
+      } finally {
+        setIsLoading(false);
       }
     };
 
     fetchContent();
   }, []);
+
+  if (isLoading) {
+    return (
+      <div className="min-h-screen bg-white flex items-center justify-center">
+        <div className="text-center">
+          <div className="animate-spin rounded-full h-16 w-16 border-b-4 border-[#8B4513] mx-auto mb-4"></div>
+          <p className="text-[#8B4513] text-lg font-medium">Loading contact information...</p>
+        </div>
+      </div>
+    );
+  }
+
   return (
     <div className="min-h-screen bg-white">
       {/* Header Section */}

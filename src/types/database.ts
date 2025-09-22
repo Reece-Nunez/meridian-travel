@@ -359,6 +359,50 @@ export interface Database {
           updated_at?: string
         }
       }
+      payments: {
+        Row: {
+          id: string
+          created_at: string
+          updated_at: string
+          quote_id: string
+          user_id: string
+          stripe_payment_intent_id: string
+          amount: number
+          currency: string
+          status: 'pending' | 'succeeded' | 'failed' | 'cancelled'
+          metadata: any | null
+          completed_at: string | null
+          booking_id: string | null
+        }
+        Insert: {
+          id?: string
+          created_at?: string
+          updated_at?: string
+          quote_id: string
+          user_id: string
+          stripe_payment_intent_id: string
+          amount: number
+          currency?: string
+          status?: 'pending' | 'succeeded' | 'failed' | 'cancelled'
+          metadata?: any | null
+          completed_at?: string | null
+          booking_id?: string | null
+        }
+        Update: {
+          id?: string
+          created_at?: string
+          updated_at?: string
+          quote_id?: string
+          user_id?: string
+          stripe_payment_intent_id?: string
+          amount?: number
+          currency?: string
+          status?: 'pending' | 'succeeded' | 'failed' | 'cancelled'
+          metadata?: any | null
+          completed_at?: string | null
+          booking_id?: string | null
+        }
+      }
       content_sections: {
         Row: {
           id: string
@@ -454,3 +498,4 @@ export type SiteSetting = Database['public']['Tables']['site_settings']['Row']
 export type ItineraryDay = Database['public']['Tables']['itinerary_days']['Row']
 export type ItineraryActivity = Database['public']['Tables']['itinerary_activities']['Row']
 export type ItineraryImage = Database['public']['Tables']['itinerary_images']['Row']
+export type Payment = Database['public']['Tables']['payments']['Row']

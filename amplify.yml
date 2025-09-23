@@ -6,6 +6,15 @@ frontend:
         - npm ci
     build:
       commands:
+        # Echo environment variables to .env so Next.js can access them at runtime
+        - echo "NEXT_PUBLIC_SUPABASE_URL=$NEXT_PUBLIC_SUPABASE_URL" >> .env
+        - echo "NEXT_PUBLIC_SUPABASE_ANON_KEY=$NEXT_PUBLIC_SUPABASE_ANON_KEY" >> .env
+        - echo "NEXT_PUBLIC_SITE_URL=$NEXT_PUBLIC_SITE_URL" >> .env
+        - echo "SUPABASE_SERVICE_ROLE_KEY=$SUPABASE_SERVICE_ROLE_KEY" >> .env
+        - echo "RESEND_API_KEY=$RESEND_API_KEY" >> .env
+        - echo "DATABASE_URL=$DATABASE_URL" >> .env
+        - echo "STRIPE_SECRET_KEY=$STRIPE_SECRET_KEY" >> .env
+        - echo "STRIPE_WEBHOOK_SECRET=$STRIPE_WEBHOOK_SECRET" >> .env
         - npm run build
   artifacts:
     baseDirectory: .next
@@ -20,5 +29,10 @@ frontend:
     variables:
       - NEXT_PUBLIC_SUPABASE_URL
       - NEXT_PUBLIC_SUPABASE_ANON_KEY
+      - NEXT_PUBLIC_SITE_URL
     secrets:
       - SUPABASE_SERVICE_ROLE_KEY
+      - RESEND_API_KEY
+      - DATABASE_URL
+      - STRIPE_SECRET_KEY
+      - STRIPE_WEBHOOK_SECRET

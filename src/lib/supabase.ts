@@ -33,10 +33,16 @@ export const createSupabaseAdmin = () => {
   }
 
   console.log('Creating Supabase admin client with URL:', supabaseUrl)
-  return createClient(supabaseUrl, serviceRoleKey, {
+  console.log('Service role key length:', serviceRoleKey.length)
+  console.log('Service role key starts with:', serviceRoleKey.substring(0, 20) + '...')
+
+  const client = createClient(supabaseUrl, serviceRoleKey, {
     auth: {
       autoRefreshToken: false,
       persistSession: false
     }
   })
+
+  console.log('Supabase admin client created successfully')
+  return client
 }

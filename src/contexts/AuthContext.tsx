@@ -66,76 +66,100 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       return;
     }
 
-    // Get initial session
-    supabase.auth.getSession().then(({ data: { session }, error }) => {
-      if (error) {
-        console.error('Error getting session:', error);
+    let isMounted = true;
+
+    const initializeAuth = async () => {
+      try {
+        // Get initial session
+        const { data: { session }, error } = await supabase.auth.getSession();
+
+        if (!isMounted) return;
+
+        if (error) {
+          console.error('Error getting session:', error);
+          setLoading(false);
+          return;
+        }
+
+        setSession(session);
+        setUser(session?.user ?? null);
+
+        if (session?.user) {
+          const profileData = await fetchProfile(session.user.id);
+          if (isMounted) {
+            setProfile(profileData);
+          }
+        }
+
+        if (isMounted) {
+          setLoading(false);
+        }
+      } catch (error) {
+        console.error('Session initialization error:', error);
+        if (isMounted) {
+          setLoading(false);
+        }
+      }
+    };
+
+    initializeAuth();
+
+    // Safety timeout to ensure loading never stays true indefinitely
+    const safetyTimeout = setTimeout(() => {
+      if (isMounted) {
+        console.warn('Auth initialization timeout - forcing loading to false');
         setLoading(false);
-        return;
       }
-      
-      setSession(session);
-      setUser(session?.user ?? null);
-      
-      if (session?.user) {
-        fetchProfile(session.user.id).then(setProfile);
-      }
-      
-      setLoading(false);
-    }).catch((error) => {
-      console.error('Session initialization error:', error);
-      setLoading(false);
-    });
+    }, 10000); // 10 second timeout
 
     // Listen for auth changes
     const { data: { subscription } } = supabase.auth.onAuthStateChange(
       async (event, session) => {
+        if (!isMounted) return;
+
         console.log('Auth state change:', event, 'session:', !!session?.user);
-        
-        // Handle auth state changes but avoid unnecessary loading states
-        if (event === 'SIGNED_IN') {
-          setSession(session);
-          setUser(session?.user ?? null);
-          
-          if (session?.user) {
-            const profileData = await fetchProfile(session.user.id);
-            setProfile(profileData);
-          }
-          
-          setLoading(false);
-        } else if (event === 'SIGNED_OUT') {
-          console.log('Processing SIGNED_OUT event');
-          setSession(null);
-          setUser(null);
-          setProfile(null);
-          setLoading(false);
-        } else if (event === 'TOKEN_REFRESHED') {
-          // Token refresh should not trigger loading states or UI changes
-          // Only update session and user if they're different
-          if (session?.user?.id !== user?.id) {
+
+        try {
+          // Handle specific auth events
+          if (event === 'SIGNED_IN') {
             setSession(session);
             setUser(session?.user ?? null);
+
+            if (session?.user) {
+              const profileData = await fetchProfile(session.user.id);
+              if (isMounted) {
+                setProfile(profileData);
+              }
+            }
+          } else if (event === 'SIGNED_OUT') {
+            console.log('Processing SIGNED_OUT event');
+            setSession(null);
+            setUser(null);
+            setProfile(null);
+          } else if (event === 'TOKEN_REFRESHED') {
+            // Token refresh - only update if different user
+            if (session?.user?.id !== user?.id) {
+              setSession(session);
+              setUser(session?.user ?? null);
+            }
           }
-        } else if (event === 'INITIAL_SESSION') {
-          // Handle initial session load
-          setSession(session);
-          setUser(session?.user ?? null);
-          
-          if (session?.user) {
-            const profileData = await fetchProfile(session.user.id);
-            setProfile(profileData);
+
+          // Always ensure loading is false after processing
+          if (isMounted) {
+            setLoading(false);
           }
-          
-          setLoading(false);
-        } else {
-          // For any other events, ensure loading is false but don't change user state
-          console.log('Other auth event:', event, '- ensuring loading is false');
-          setLoading(false);
+        } catch (error) {
+          console.error('Auth state change error:', error);
+          if (isMounted) {
+            setLoading(false);
+          }
         }
       }
     );
 
     return () => {
+      isMounted = false;
+      clearTimeout(safetyTimeout);
       subscription.unsubscribe();
     };
   }, []);

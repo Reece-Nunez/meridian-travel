@@ -147,9 +147,14 @@ CREATE POLICY "Trip packages are publicly readable" ON trip_packages FOR SELECT 
 CREATE POLICY "Content sections are publicly readable" ON content_sections FOR SELECT USING (is_active = true);
 CREATE POLICY "Content sections are manageable" ON content_sections FOR ALL USING (true);
 
--- Site settings policies (publicly readable, admin manageable)  
+-- Site settings policies (publicly readable, admin manageable)
 CREATE POLICY "Site settings are publicly readable" ON site_settings FOR SELECT USING (true);
 CREATE POLICY "Site settings are manageable" ON site_settings FOR ALL USING (true);
+
+-- Quote tokens policies
+ALTER TABLE quote_tokens ENABLE ROW LEVEL SECURITY;
+CREATE POLICY "Users can view own quote tokens" ON quote_tokens
+  FOR SELECT USING (auth.uid() = user_id);
 
 -- Functions to generate booking reference
 CREATE OR REPLACE FUNCTION generate_booking_reference()
@@ -184,6 +189,31 @@ RETURNS TRIGGER AS $$
 BEGIN
     NEW.updated_at = NOW();
     RETURN NEW;
+END;
+$$ LANGUAGE plpgsql;
+
+-- Quote tokens for secure account linking
+CREATE TABLE IF NOT EXISTS quote_tokens (
+  id UUID DEFAULT uuid_generate_v4() PRIMARY KEY,
+  created_at TIMESTAMP WITH TIME ZONE DEFAULT NOW(),
+  expires_at TIMESTAMP WITH TIME ZONE DEFAULT (NOW() + INTERVAL '7 days'),
+  quote_id UUID REFERENCES custom_quotes(id) ON DELETE CASCADE NOT NULL,
+  token TEXT UNIQUE NOT NULL,
+  email TEXT NOT NULL,
+  used_at TIMESTAMP WITH TIME ZONE,
+  user_id UUID REFERENCES auth.users(id) ON DELETE SET NULL
+);
+
+-- Index for performance
+CREATE INDEX IF NOT EXISTS idx_quote_tokens_token ON quote_tokens(token);
+CREATE INDEX IF NOT EXISTS idx_quote_tokens_email ON quote_tokens(email);
+CREATE INDEX IF NOT EXISTS idx_quote_tokens_quote_id ON quote_tokens(quote_id);
+
+-- Function to generate secure random token
+CREATE OR REPLACE FUNCTION generate_quote_token()
+RETURNS TEXT AS $$
+BEGIN
+  RETURN encode(gen_random_bytes(32), 'hex');
 END;
 $$ LANGUAGE plpgsql;
 

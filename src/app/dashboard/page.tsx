@@ -6,6 +6,7 @@ import { useEffect, useState, Suspense } from 'react';
 import { supabase } from '@/lib/supabase';
 import Link from 'next/link';
 import { Booking, CustomQuote } from '@/types/database';
+import LoadingFallback from '@/components/LoadingFallback';
 
 function DashboardContent() {
   const { user, profile, loading: authLoading, signOut } = useAuth();
@@ -151,11 +152,15 @@ function DashboardContent() {
   };
 
   // Show loading while auth is loading or if no user yet
-  if (authLoading || (!user && !authLoading)) {
+  if (authLoading) {
     return (
-      <div className="min-h-screen flex items-center justify-center">
-        <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-[#8B4513]"></div>
-      </div>
+      <LoadingFallback
+        message="Loading your dashboard..."
+        onTimeout={() => {
+          console.error('Dashboard auth loading timeout');
+          router.push('/auth/signin?redirect=/dashboard');
+        }}
+      />
     );
   }
 

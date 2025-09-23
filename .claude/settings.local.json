@@ -85,7 +85,8 @@
       "Bash(FILTER_BRANCH_SQUELCH_WARNING=1 git filter-branch --msg-filter 'sed \"\"/^Co-Authored-By:/d; /^🤖 Generated with \\[Claude Code\\]/d; /^$/N; /^\\n$/d\"\"' HEAD~5..HEAD)",
       "Bash(git rebase:*)",
       "Bash(git reset:*)",
-      "WebFetch(domain:www.meanadvertising.com)"
+      "WebFetch(domain:www.meanadvertising.com)",
+      "Bash(find:*)"
     ],
     "deny": [],
     "ask": []

@@ -257,6 +257,38 @@ export interface Database {
           refund_reason?: string | null
         }
       }
+      quote_tokens: {
+        Row: {
+          id: string
+          created_at: string
+          expires_at: string
+          quote_id: string
+          token: string
+          email: string
+          used_at: string | null
+          user_id: string | null
+        }
+        Insert: {
+          id?: string
+          created_at?: string
+          expires_at?: string
+          quote_id: string
+          token: string
+          email: string
+          used_at?: string | null
+          user_id?: string | null
+        }
+        Update: {
+          id?: string
+          created_at?: string
+          expires_at?: string
+          quote_id?: string
+          token?: string
+          email?: string
+          used_at?: string | null
+          user_id?: string | null
+        }
+      }
       itinerary_days: {
         Row: {
           id: string
@@ -499,3 +531,4 @@ export type ItineraryDay = Database['public']['Tables']['itinerary_days']['Row']
 export type ItineraryActivity = Database['public']['Tables']['itinerary_activities']['Row']
 export type ItineraryImage = Database['public']['Tables']['itinerary_images']['Row']
 export type Payment = Database['public']['Tables']['payments']['Row']
+export type QuoteToken = Database['public']['Tables']['quote_tokens']['Row']

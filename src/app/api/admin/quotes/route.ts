@@ -3,39 +3,65 @@ import { createSupabaseAdmin } from '@/lib/supabase';
 
 export async function GET(request: Request) {
   try {
+    console.log('Admin quotes API: Starting request');
+
     // Basic admin auth check - in production you'd want proper JWT verification
     const { searchParams } = new URL(request.url);
     const adminEmail = searchParams.get('admin_email');
-    
+
+    console.log('Admin quotes API: Admin email:', adminEmail);
+
     // Simple admin check - in production, use proper authentication
     if (adminEmail !== 'chris@meridianluxury.travel') {
+      console.log('Admin quotes API: Unauthorized admin email');
       return NextResponse.json(
         { error: 'Unauthorized' },
         { status: 401 }
       );
     }
 
+    // Check environment variables
+    const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL;
+    const serviceRoleKey = process.env.SUPABASE_SERVICE_ROLE_KEY;
+
+    console.log('Admin quotes API: Environment check:');
+    console.log('- SUPABASE_URL configured:', !!supabaseUrl);
+    console.log('- SERVICE_ROLE_KEY configured:', !!serviceRoleKey);
+
+    if (!supabaseUrl || !serviceRoleKey) {
+      console.error('Admin quotes API: Missing required environment variables');
+      return NextResponse.json(
+        { error: 'Server configuration error - missing environment variables' },
+        { status: 500 }
+      );
+    }
+
     // Use admin client to bypass RLS
+    console.log('Admin quotes API: Creating Supabase admin client');
     const supabaseAdmin = createSupabaseAdmin();
+
+    console.log('Admin quotes API: Querying custom_quotes table');
     const { data, error } = await supabaseAdmin
       .from('custom_quotes')
       .select('*')
       .order('created_at', { ascending: false });
 
     if (error) {
-      console.error('Database error:', error);
+      console.error('Admin quotes API: Database error:', error);
+      console.error('Admin quotes API: Error details:', JSON.stringify(error, null, 2));
       return NextResponse.json(
-        { error: 'Failed to fetch quotes' },
+        { error: 'Failed to fetch quotes', details: error.message },
         { status: 500 }
       );
     }
 
+    console.log('Admin quotes API: Successfully fetched', data?.length || 0, 'quotes');
     return NextResponse.json(data);
 
   } catch (error) {
-    console.error('API error:', error);
+    console.error('Admin quotes API: Unexpected error:', error);
     return NextResponse.json(
-      { error: 'Internal server error' },
+      { error: 'Internal server error', details: error instanceof Error ? error.message : 'Unknown error' },
       { status: 500 }
     );
   }

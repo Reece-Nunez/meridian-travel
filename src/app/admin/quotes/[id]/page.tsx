@@ -119,6 +119,13 @@ export default function QuoteDetail() {
       // Update local state
       setQuote(updatedQuote);
 
+      // Debug the email notification conditions
+      console.log('Quote update complete. Checking email conditions:');
+      console.log('formData.status:', formData.status);
+      console.log('updatedQuote.quoted_price:', updatedQuote.quoted_price);
+      console.log('updatedQuote.status:', updatedQuote.status);
+      console.log('Will send email:', formData.status === 'approved' && updatedQuote.quoted_price);
+
       // Send email notification if status was changed to approved
       if (formData.status === 'approved' && updatedQuote.quoted_price) {
         try {

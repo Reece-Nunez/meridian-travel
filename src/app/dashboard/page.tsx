@@ -88,7 +88,7 @@ function DashboardContent() {
           .or(`id.in.(${quoteIds.join(',')}),user_id.eq.${user.id}`)
           .order('created_at', { ascending: false });
 
-        quotesData = fetchedQuotes;
+        quotesData = fetchedQuotes || [];
         quotesError = fetchError;
       } else {
         // No quote tokens, just fetch quotes directly assigned to user
@@ -98,7 +98,7 @@ function DashboardContent() {
           .eq('user_id', user.id)
           .order('created_at', { ascending: false });
 
-        quotesData = fetchedQuotes;
+        quotesData = fetchedQuotes || [];
         quotesError = fetchError;
       }
 

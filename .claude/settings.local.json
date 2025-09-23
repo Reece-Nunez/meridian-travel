@@ -86,7 +86,8 @@
       "Bash(git rebase:*)",
       "Bash(git reset:*)",
       "WebFetch(domain:www.meanadvertising.com)",
-      "Bash(find:*)"
+      "Bash(find:*)",
+      "Bash(git revert:*)"
     ],
     "deny": [],
     "ask": []

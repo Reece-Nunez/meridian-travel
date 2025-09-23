@@ -65,12 +65,42 @@ function DashboardContent() {
     setLoading(true);
     
     try {
-      // Fetch user's quotes
-      const { data: quotesData, error: quotesError } = await supabase
-        .from('custom_quotes')
-        .select('*')
-        .eq('user_id', user.id)
-        .order('created_at', { ascending: false });
+      // First, get quote IDs from quote_tokens for this user
+      const { data: userQuoteTokens, error: tokensError } = await supabase
+        .from('quote_tokens')
+        .select('quote_id')
+        .eq('user_id', user.id);
+
+      let quotesData = [];
+      let quotesError = null;
+
+      if (tokensError) {
+        console.error('Dashboard: Error fetching quote tokens:', tokensError);
+        quotesError = tokensError;
+      } else if (userQuoteTokens && userQuoteTokens.length > 0) {
+        // Get unique quote IDs
+        const quoteIds = [...new Set(userQuoteTokens.map(token => token.quote_id))];
+
+        // Fetch quotes by IDs, plus any quotes directly assigned to user
+        const { data: fetchedQuotes, error: fetchError } = await supabase
+          .from('custom_quotes')
+          .select('*')
+          .or(`id.in.(${quoteIds.join(',')}),user_id.eq.${user.id}`)
+          .order('created_at', { ascending: false });
+
+        quotesData = fetchedQuotes;
+        quotesError = fetchError;
+      } else {
+        // No quote tokens, just fetch quotes directly assigned to user
+        const { data: fetchedQuotes, error: fetchError } = await supabase
+          .from('custom_quotes')
+          .select('*')
+          .eq('user_id', user.id)
+          .order('created_at', { ascending: false });
+
+        quotesData = fetchedQuotes;
+        quotesError = fetchError;
+      }
 
       if (quotesError) {
         console.error('Dashboard: Error fetching quotes:', quotesError);

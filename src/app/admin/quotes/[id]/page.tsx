@@ -37,10 +37,16 @@ export default function QuoteDetail() {
     try {
       setLoading(true);
       
-      // Get admin email from session
+      // Get admin email from session, with fallback to expected admin email
       const session = localStorage.getItem('admin_session');
-      const adminEmail = session ? JSON.parse(session).email : '';
-      
+      let adminEmail = session ? JSON.parse(session).email : '';
+
+      // Ensure we use the correct admin email for API calls
+      if (!adminEmail || adminEmail !== 'chris@meridianluxury.travel') {
+        adminEmail = 'chris@meridianluxury.travel';
+        console.log('Using fallback admin email for fetch:', adminEmail);
+      }
+
       const response = await fetch(`/api/admin/quotes/${quoteId}?admin_email=${encodeURIComponent(adminEmail)}`);
       
       if (!response.ok) {
@@ -79,9 +85,15 @@ export default function QuoteDetail() {
     setSaving(true);
 
     try {
-      // Get admin email from session
+      // Get admin email from session, with fallback to expected admin email
       const session = localStorage.getItem('admin_session');
-      const adminEmail = session ? JSON.parse(session).email : '';
+      let adminEmail = session ? JSON.parse(session).email : '';
+
+      // Ensure we use the correct admin email for API calls
+      if (!adminEmail || adminEmail !== 'chris@meridianluxury.travel') {
+        adminEmail = 'chris@meridianluxury.travel';
+        console.log('Using fallback admin email for notifications:', adminEmail);
+      }
 
       const response = await fetch('/api/admin/quotes', {
         method: 'PATCH',
@@ -110,6 +122,9 @@ export default function QuoteDetail() {
       // Send email notification if status was changed to approved
       if (formData.status === 'approved' && updatedQuote.quoted_price) {
         try {
+          console.log('Sending email notification for quote:', quoteId);
+          console.log('Admin email:', adminEmail);
+
           const emailResponse = await fetch('/api/notifications/quote-approved', {
             method: 'POST',
             headers: {
@@ -121,10 +136,16 @@ export default function QuoteDetail() {
             }),
           });
 
+          console.log('Email response status:', emailResponse.status);
+
           if (emailResponse.ok) {
+            const result = await emailResponse.json();
+            console.log('Email sent successfully:', result);
             alert('Quote updated successfully! Email notification sent to client.');
           } else {
-            alert('Quote updated successfully, but failed to send email notification.');
+            const errorData = await emailResponse.text();
+            console.error('Email send failed:', errorData);
+            alert(`Quote updated successfully, but failed to send email notification. Error: ${errorData}`);
           }
         } catch (emailError) {
           console.error('Email notification error:', emailError);

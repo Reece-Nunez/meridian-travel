@@ -5,10 +5,13 @@ export async function POST(request: Request) {
   try {
     const { quoteId, adminEmail } = await request.json();
 
+    console.log('Quote approval notification request:', { quoteId, adminEmail });
+
     // Verify admin authentication
     if (adminEmail !== 'chris@meridianluxury.travel') {
+      console.error('Unauthorized admin email:', adminEmail, 'Expected: chris@meridianluxury.travel');
       return NextResponse.json(
-        { error: 'Unauthorized' },
+        { error: 'Unauthorized - Invalid admin email' },
         { status: 401 }
       );
     }
@@ -183,12 +186,18 @@ export async function POST(request: Request) {
 
     // Send email using Resend
     const resendApiKey = process.env.RESEND_API_KEY;
+    console.log('Resend API key configured:', !!resendApiKey);
+
     if (!resendApiKey) {
+      console.error('RESEND_API_KEY environment variable not set');
       return NextResponse.json(
         { error: 'Email service not configured' },
         { status: 500 }
       );
     }
+
+    console.log('Sending email to:', quote.contact_email);
+    console.log('Email subject:', emailSubject);
 
     const emailResponse = await fetch('https://api.resend.com/emails', {
       method: 'POST',

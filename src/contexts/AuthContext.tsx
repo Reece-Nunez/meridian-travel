@@ -193,7 +193,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   const signOut = async () => {
     try {
       console.log('AuthContext: Starting signOut process...');
-      
+
       if (isDummyClient()) {
         console.warn('AuthContext: Using dummy client - skipping Supabase signOut');
         // Just clear local state for dummy client
@@ -204,27 +204,46 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
         return { error: null };
       }
 
-      const { error } = await supabase.auth.signOut();
-      
-      if (error) {
-        console.error('AuthContext: Sign out error:', error);
-        return { error };
-      }
-      
-      console.log('AuthContext: Supabase signOut successful, clearing state...');
-      
-      // Clear state immediately on successful signOut
+      // Always clear local state first, regardless of API call success
+      console.log('AuthContext: Clearing local state...');
       setUser(null);
       setSession(null);
       setProfile(null);
       setLoading(false);
-      
-      console.log('AuthContext: Local state cleared');
-      
+
+      // Attempt to sign out from Supabase, but don't fail if session is already invalid
+      try {
+        const { error } = await supabase.auth.signOut();
+
+        if (error) {
+          // If it's just a session missing error, that's OK - user is already signed out
+          if (error.message?.includes('Auth session missing') ||
+              error.message?.includes('session missing') ||
+              error.status === 403) {
+            console.log('AuthContext: Session already invalid - user successfully signed out locally');
+            return { error: null };
+          }
+          console.error('AuthContext: Sign out error:', error);
+          // Still return success since local state is cleared
+          return { error: null };
+        }
+
+        console.log('AuthContext: Supabase signOut successful');
+      } catch (supabaseError) {
+        console.warn('AuthContext: Supabase signOut failed, but local state cleared:', supabaseError);
+        // Local state is cleared, so this is still a success from user perspective
+      }
+
+      console.log('AuthContext: Sign out complete');
       return { error: null };
     } catch (catchError) {
       console.error('AuthContext: Sign out catch error:', catchError);
-      return { error: catchError as AuthError };
+      // Even on error, ensure local state is cleared
+      setUser(null);
+      setSession(null);
+      setProfile(null);
+      setLoading(false);
+      return { error: null }; // Return success since local state is cleared
     }
   };
 

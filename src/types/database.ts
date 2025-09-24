@@ -105,6 +105,12 @@ export interface Database {
           quoted_price: number | null
           quoted_currency: string | null
           admin_notes: string | null
+          adult_price: number | null
+          child_price: number | null
+          adult_count: number | null
+          child_count: number | null
+          inclusions: string[] | null
+          exclusions: string[] | null
         }
         Insert: {
           id?: string
@@ -124,6 +130,12 @@ export interface Database {
           quoted_price?: number | null
           quoted_currency?: string | null
           admin_notes?: string | null
+          adult_price?: number | null
+          child_price?: number | null
+          adult_count?: number | null
+          child_count?: number | null
+          inclusions?: string[] | null
+          exclusions?: string[] | null
         }
         Update: {
           id?: string
@@ -143,6 +155,12 @@ export interface Database {
           quoted_price?: number | null
           quoted_currency?: string | null
           admin_notes?: string | null
+          adult_price?: number | null
+          child_price?: number | null
+          adult_count?: number | null
+          child_count?: number | null
+          inclusions?: string[] | null
+          exclusions?: string[] | null
         }
       }
       bookings: {

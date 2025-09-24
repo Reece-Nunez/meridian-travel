@@ -49,7 +49,7 @@ export async function POST(request: Request) {
 
         // Update payment status in database
         const { error: updateError } = await supabaseAdmin
-          .from('payments')
+          .from('payment_history')
           .update({
             status: 'succeeded',
             completed_at: new Date().toISOString(),
@@ -67,7 +67,7 @@ export async function POST(request: Request) {
 
         // Get payment details to create booking
         const { data: payment, error: paymentError } = await supabaseAdmin
-          .from('payments')
+          .from('payment_history')
           .select('*')
           .eq('stripe_payment_intent_id', paymentIntent.id)
           .single();
@@ -128,7 +128,7 @@ export async function POST(request: Request) {
 
         // Update payment record with booking ID
         await supabaseAdmin
-          .from('payments')
+          .from('payment_history')
           .update({ booking_id: booking.id })
           .eq('id', payment.id);
 
@@ -148,7 +148,7 @@ export async function POST(request: Request) {
 
         // Update payment status in database
         const { error: updateError } = await supabaseAdmin
-          .from('payments')
+          .from('payment_history')
           .update({
             status: 'failed',
             metadata: paymentIntent.metadata,
@@ -167,7 +167,7 @@ export async function POST(request: Request) {
 
         // Update payment status in database
         const { error: updateError } = await supabaseAdmin
-          .from('payments')
+          .from('payment_history')
           .update({
             status: 'cancelled',
             metadata: paymentIntent.metadata,

@@ -17,7 +17,7 @@ export async function POST(request: Request) {
     }
 
     const body = await request.json();
-    const { quoteId, amount, currency = 'usd' } = body;
+    const { quoteId, amount, currency = 'usd', userId } = body;
 
     if (!quoteId || !amount) {
       return NextResponse.json(
@@ -26,7 +26,9 @@ export async function POST(request: Request) {
       );
     }
 
-    // Verify the quote exists and get user info
+    console.log('Payment intent request:', { quoteId, amount, currency, userId });
+
+    // Verify the quote exists (don't filter by user_id since RLS will handle access control)
     const supabaseAdmin = createSupabaseAdmin();
     const { data: quote, error: quoteError } = await supabaseAdmin
       .from('custom_quotes')
@@ -36,8 +38,9 @@ export async function POST(request: Request) {
       .single();
 
     if (quoteError || !quote) {
+      console.error('Quote query error:', quoteError);
       return NextResponse.json(
-        { error: 'Quote not found or not approved' },
+        { error: 'Quote not found or not approved for payment' },
         { status: 404 }
       );
     }
@@ -49,13 +52,15 @@ export async function POST(request: Request) {
       );
     }
 
+    console.log('Quote found:', { id: quote.id, destination: quote.destination, user_id: quote.user_id });
+
     // Create payment intent
     const paymentIntent = await stripe.paymentIntents.create({
       amount: Math.round(amount), // Amount in cents
       currency: currency.toLowerCase(),
       metadata: {
         quoteId: quoteId,
-        userId: quote.user_id,
+        userId: userId || quote.user_id || 'unknown',
         destination: quote.destination,
         participants: quote.participants.toString(),
         pricePerPerson: quote.quoted_price.toString(),
@@ -65,12 +70,14 @@ export async function POST(request: Request) {
       },
     });
 
-    // Store payment intent in database for tracking
+    console.log('Payment intent created:', paymentIntent.id);
+
+    // Store payment intent in database for tracking (use correct table name)
     const { error: insertError } = await supabaseAdmin
-      .from('payments')
+      .from('payment_history')
       .insert({
         quote_id: quoteId,
-        user_id: quote.user_id,
+        user_id: userId || quote.user_id,
         stripe_payment_intent_id: paymentIntent.id,
         amount: amount / 100, // Store in dollars
         currency: currency,

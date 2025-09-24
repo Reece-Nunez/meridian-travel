@@ -50,7 +50,6 @@ export default function QuoteDetails() {
         .from('custom_quotes')
         .select('*')
         .eq('id', quoteId)
-        .eq('user_id', user?.id) // Ensure user can only access their own quotes
         .single();
 
       console.log('QuoteDetails: Supabase response:', { data, error });
@@ -71,12 +70,28 @@ export default function QuoteDetails() {
     }
   };
 
+  const calculateQuoteTotal = () => {
+    if (!quote) return 0;
+
+    // If we have detailed pricing breakdown, use that
+    if (quote.adult_price || quote.child_price) {
+      const adultTotal = (quote.adult_price || 0) * (quote.adult_count || 0);
+      const childTotal = (quote.child_price || 0) * (quote.child_count || 0);
+      return adultTotal + childTotal;
+    }
+
+    // Otherwise fall back to quoted_price * participants (legacy behavior)
+    return parseFloat(quote.quoted_price?.toString() || '0') * quote.participants;
+  };
+
   const handlePayment = async () => {
     if (!quote || !quote.quoted_price) return;
 
     try {
       setLoading(true);
-      
+
+      const totalAmount = calculateQuoteTotal();
+
       // Create payment intent
       const response = await fetch('/api/payments/create-intent', {
         method: 'POST',
@@ -85,8 +100,9 @@ export default function QuoteDetails() {
         },
         body: JSON.stringify({
           quoteId: quote.id,
-          amount: parseFloat(quote.quoted_price.toString()) * quote.participants * 100, // Convert to cents (total for all participants)
+          amount: totalAmount * 100, // Convert to cents
           currency: quote.quoted_currency?.toLowerCase() || 'usd',
+          userId: user?.id,
         }),
       });
 
@@ -95,10 +111,10 @@ export default function QuoteDetails() {
       }
 
       const { clientSecret } = await response.json();
-      
+
       // Redirect to payment page with client secret
       router.push(`/dashboard/quotes/${quote.id}/payment?client_secret=${clientSecret}`);
-      
+
     } catch (err) {
       console.error('Payment error:', err);
       setError('Failed to initiate payment');
@@ -225,15 +241,65 @@ export default function QuoteDetails() {
 
               {quote.quoted_price && (
                 <div className="border-t pt-6 mb-6">
-                  <div className="flex justify-between items-center">
-                    <span className="text-lg font-semibold text-gray-900">Price Per Person:</span>
-                    <span className="text-2xl font-bold text-[#8B4513]">
-                      {new Intl.NumberFormat('en-US', {
-                        style: 'currency',
-                        currency: quote.quoted_currency || 'USD',
-                      }).format(parseFloat(quote.quoted_price.toString()))}
-                    </span>
-                  </div>
+                  {/* Display breakdown if we have adult/child pricing */}
+                  {quote.adult_price || quote.child_price ? (
+                    <div className="space-y-4">
+                      <h3 className="text-lg font-semibold text-[#8B4513] mb-4">Pricing Breakdown</h3>
+                      <div className="bg-gray-50 rounded-lg p-4">
+                        {quote.adult_count && quote.adult_count > 0 && (
+                          <div className="flex justify-between items-center mb-2">
+                            <span className="text-gray-700">Adults ({quote.adult_count}):</span>
+                            <span className="font-medium text-[#8B4513]">
+                              {new Intl.NumberFormat('en-US', {
+                                style: 'currency',
+                                currency: quote.quoted_currency || 'USD',
+                              }).format(quote.adult_price || 0)} × {quote.adult_count} = {' '}
+                              {new Intl.NumberFormat('en-US', {
+                                style: 'currency',
+                                currency: quote.quoted_currency || 'USD',
+                              }).format((quote.adult_price || 0) * quote.adult_count)}
+                            </span>
+                          </div>
+                        )}
+                        {quote.child_count && quote.child_count > 0 && (
+                          <div className="flex justify-between items-center mb-2">
+                            <span className="text-gray-700">Children under 12 ({quote.child_count}):</span>
+                            <span className="font-medium text-[#8B4513]">
+                              {new Intl.NumberFormat('en-US', {
+                                style: 'currency',
+                                currency: quote.quoted_currency || 'USD',
+                              }).format(quote.child_price || 0)} × {quote.child_count} = {' '}
+                              {new Intl.NumberFormat('en-US', {
+                                style: 'currency',
+                                currency: quote.quoted_currency || 'USD',
+                              }).format((quote.child_price || 0) * quote.child_count)}
+                            </span>
+                          </div>
+                        )}
+                        <div className="border-t pt-2 mt-2">
+                          <div className="flex justify-between items-center">
+                            <span className="text-lg font-semibold text-gray-900">Total:</span>
+                            <span className="text-xl font-bold text-[#8B4513]">
+                              {new Intl.NumberFormat('en-US', {
+                                style: 'currency',
+                                currency: quote.quoted_currency || 'USD',
+                              }).format(((quote.adult_price || 0) * (quote.adult_count || 0)) + ((quote.child_price || 0) * (quote.child_count || 0)))}
+                            </span>
+                          </div>
+                        </div>
+                      </div>
+                    </div>
+                  ) : (
+                    <div className="flex justify-between items-center">
+                      <span className="text-lg font-semibold text-gray-900">Price Per Person:</span>
+                      <span className="text-2xl font-bold text-[#8B4513]">
+                        {new Intl.NumberFormat('en-US', {
+                          style: 'currency',
+                          currency: quote.quoted_currency || 'USD',
+                        }).format(parseFloat(quote.quoted_price.toString()))}
+                      </span>
+                    </div>
+                  )}
                 </div>
               )}
 
@@ -277,6 +343,44 @@ export default function QuoteDetails() {
                 </div>
               )}
 
+              {/* What's Included */}
+              {quote.inclusions && quote.inclusions.length > 0 && (
+                <div className="border-t pt-6">
+                  <h3 className="text-lg font-semibold text-[#8B4513] mb-4">What's Included</h3>
+                  <div className="bg-green-50 border border-green-200 rounded-lg p-4">
+                    <ul className="space-y-2">
+                      {quote.inclusions.map((inclusion, index) => (
+                        <li key={index} className="flex items-start">
+                          <svg className="w-5 h-5 text-green-600 mr-3 mt-0.5 flex-shrink-0" fill="currentColor" viewBox="0 0 20 20">
+                            <path fillRule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z" clipRule="evenodd" />
+                          </svg>
+                          <span className="text-gray-700">{inclusion}</span>
+                        </li>
+                      ))}
+                    </ul>
+                  </div>
+                </div>
+              )}
+
+              {/* What's Not Included */}
+              {quote.exclusions && quote.exclusions.length > 0 && (
+                <div className="border-t pt-6">
+                  <h3 className="text-lg font-semibold text-[#8B4513] mb-4">What's Not Included</h3>
+                  <div className="bg-red-50 border border-red-200 rounded-lg p-4">
+                    <ul className="space-y-2">
+                      {quote.exclusions.map((exclusion, index) => (
+                        <li key={index} className="flex items-start">
+                          <svg className="w-5 h-5 text-red-600 mr-3 mt-0.5 flex-shrink-0" fill="currentColor" viewBox="0 0 20 20">
+                            <path fillRule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zM8.707 7.293a1 1 0 00-1.414 1.414L8.586 10l-1.293 1.293a1 1 0 101.414 1.414L10 11.414l1.293 1.293a1 1 0 001.414-1.414L11.414 10l1.293-1.293a1 1 0 00-1.414-1.414L10 8.586 8.707 7.293z" clipRule="evenodd" />
+                          </svg>
+                          <span className="text-gray-700">{exclusion}</span>
+                        </li>
+                      ))}
+                    </ul>
+                  </div>
+                </div>
+              )}
+
               {/* Admin Notes */}
               {quote.admin_notes && (
                 <div className="border-t pt-6">
@@ -311,24 +415,63 @@ export default function QuoteDetails() {
                 {quote.quoted_price && (
                   <>
                     <div className="border-t pt-3">
-                      <div className="flex justify-between mb-2">
-                        <span className="text-gray-900 font-medium">Price Per Person:</span>
-                        <span className="font-medium text-[#8B4513]">
-                          {new Intl.NumberFormat('en-US', {
-                            style: 'currency',
-                            currency: quote.quoted_currency || 'USD',
-                          }).format(parseFloat(quote.quoted_price.toString()))}
-                        </span>
-                      </div>
-                      <div className="flex justify-between text-lg font-semibold">
-                        <span className='text-gray-900'>Total ({quote.participants} {quote.participants === 1 ? 'person' : 'people'}):</span>
-                        <span className="text-[#8B4513]">
-                          {new Intl.NumberFormat('en-US', {
-                            style: 'currency',
-                            currency: quote.quoted_currency || 'USD',
-                          }).format(parseFloat(quote.quoted_price.toString()) * quote.participants)}
-                        </span>
-                      </div>
+                      {/* Show breakdown if we have detailed pricing */}
+                      {quote.adult_price || quote.child_price ? (
+                        <div className="space-y-2">
+                          {quote.adult_count && quote.adult_count > 0 && (
+                            <div className="flex justify-between text-sm">
+                              <span className="text-gray-700">Adults ({quote.adult_count}):</span>
+                              <span className="text-[#8B4513]">
+                                {new Intl.NumberFormat('en-US', {
+                                  style: 'currency',
+                                  currency: quote.quoted_currency || 'USD',
+                                }).format((quote.adult_price || 0) * quote.adult_count)}
+                              </span>
+                            </div>
+                          )}
+                          {quote.child_count && quote.child_count > 0 && (
+                            <div className="flex justify-between text-sm">
+                              <span className="text-gray-700">Children ({quote.child_count}):</span>
+                              <span className="text-[#8B4513]">
+                                {new Intl.NumberFormat('en-US', {
+                                  style: 'currency',
+                                  currency: quote.quoted_currency || 'USD',
+                                }).format((quote.child_price || 0) * quote.child_count)}
+                              </span>
+                            </div>
+                          )}
+                          <div className="flex justify-between text-lg font-semibold border-t pt-2">
+                            <span className='text-gray-900'>Total:</span>
+                            <span className="text-[#8B4513]">
+                              {new Intl.NumberFormat('en-US', {
+                                style: 'currency',
+                                currency: quote.quoted_currency || 'USD',
+                              }).format(calculateQuoteTotal())}
+                            </span>
+                          </div>
+                        </div>
+                      ) : (
+                        <div>
+                          <div className="flex justify-between mb-2">
+                            <span className="text-gray-900 font-medium">Price Per Person:</span>
+                            <span className="font-medium text-[#8B4513]">
+                              {new Intl.NumberFormat('en-US', {
+                                style: 'currency',
+                                currency: quote.quoted_currency || 'USD',
+                              }).format(parseFloat(quote.quoted_price.toString()))}
+                            </span>
+                          </div>
+                          <div className="flex justify-between text-lg font-semibold">
+                            <span className='text-gray-900'>Total ({quote.participants} {quote.participants === 1 ? 'person' : 'people'}):</span>
+                            <span className="text-[#8B4513]">
+                              {new Intl.NumberFormat('en-US', {
+                                style: 'currency',
+                                currency: quote.quoted_currency || 'USD',
+                              }).format(calculateQuoteTotal())}
+                            </span>
+                          </div>
+                        </div>
+                      )}
                     </div>
                   </>
                 )}

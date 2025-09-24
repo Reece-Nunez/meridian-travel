@@ -1,5 +1,6 @@
 import { NextResponse } from 'next/server';
 import { createSupabaseAdmin } from '@/lib/supabase';
+import { generateItineraryPDF } from '@/utils/pdfGenerator';
 
 export async function POST(request: Request) {
   try {
@@ -64,18 +65,61 @@ export async function POST(request: Request) {
       console.log('Continuing without token storage for testing...');
     }
 
+    // Fetch itinerary data for PDF generation
+    let itineraryPdfBuffer = null;
+    try {
+      const { data: itineraryDays, error: itineraryError } = await supabaseAdmin
+        .from('itinerary_days')
+        .select(`
+          *,
+          activities:itinerary_activities(*),
+          images:itinerary_images(*)
+        `)
+        .eq('quote_id', quoteId)
+        .order('display_order', { ascending: true });
+
+      if (!itineraryError && itineraryDays) {
+        const processedDays = itineraryDays.map(day => ({
+          ...day,
+          activities: day.activities?.sort((a: any, b: any) => a.display_order - b.display_order) || [],
+          images: day.images?.sort((a: any, b: any) => a.display_order - b.display_order) || []
+        }));
+
+        // Generate PDF
+        itineraryPdfBuffer = await generateItineraryPDF(quote, processedDays);
+        console.log('Successfully generated itinerary PDF');
+      } else {
+        console.log('No itinerary data found or error fetching itinerary:', itineraryError);
+      }
+    } catch (pdfError) {
+      console.error('Error generating itinerary PDF:', pdfError);
+      // Continue without PDF if generation fails
+    }
+
     // Create signup link with token
     const baseUrl = process.env.NEXT_PUBLIC_SITE_URL || 'http://localhost:3000';
     const signupLink = `${baseUrl}/auth/signup?quote_token=${token}`;
 
-    // Format quoted price
-    const formattedPrice = new Intl.NumberFormat('en-US', {
+    // Calculate total amount
+    const calculateTotal = () => {
+      if (quote.adult_price || quote.child_price) {
+        const adultTotal = (quote.adult_price || 0) * (quote.adult_count || 0);
+        const childTotal = (quote.child_price || 0) * (quote.child_count || 0);
+        return adultTotal + childTotal;
+      }
+      return quote.quoted_price * quote.participants;
+    };
+
+    const totalAmount = calculateTotal();
+
+    // Format prices
+    const formatCurrency = (amount: number) => new Intl.NumberFormat('en-US', {
       style: 'currency',
       currency: quote.quoted_currency || 'USD',
       minimumFractionDigits: 0,
-    }).format(quote.quoted_price);
+    }).format(amount);
 
-    // Prepare email content
+    // Prepare email content (moved after PDF generation to reference itineraryPdfBuffer)
     const emailSubject = 'Your Peru Travel Quote Has Been Approved! 🇵🇪';
     const emailContent = `
       <html>
@@ -116,11 +160,73 @@ export async function POST(request: Request) {
                     <span style="color: #666; font-weight: 500;">Travelers:</span>
                     <span style="color: #8B4513; font-weight: 600;">${quote.participants} people</span>
                   </div>
-                  <div style="display: flex; justify-content: space-between; padding: 20px 0; background: rgba(218, 165, 32, 0.1); margin: 15px -15px -15px -15px; padding: 20px 15px; border-radius: 8px;">
-                    <span style="color: #8B4513; font-weight: 600; font-size: 18px;">Price Per Person:</span>
-                    <span style="color: #DAA520; font-size: 28px; font-weight: bold;">${formattedPrice}</span>
-                  </div>
+
+                  <!-- Pricing Breakdown -->
+                  ${(quote.adult_price || quote.child_price) ? `
+                    <div style="padding: 20px 0; border-bottom: 1px solid #e0e0e0;">
+                      <h4 style="color: #8B4513; margin: 0 0 15px 0; font-size: 16px; font-weight: 600;">Pricing Breakdown:</h4>
+                      ${quote.adult_count && quote.adult_count > 0 ? `
+                        <div style="display: flex; justify-content: space-between; padding: 8px 0;">
+                          <span style="color: #666;">Adults (${quote.adult_count}):</span>
+                          <span style="color: #8B4513; font-weight: 500;">${formatCurrency(quote.adult_price)} × ${quote.adult_count} = ${formatCurrency((quote.adult_price || 0) * quote.adult_count)}</span>
+                        </div>
+                      ` : ''}
+                      ${quote.child_count && quote.child_count > 0 ? `
+                        <div style="display: flex; justify-content: space-between; padding: 8px 0;">
+                          <span style="color: #666;">Children under 12 (${quote.child_count}):</span>
+                          <span style="color: #8B4513; font-weight: 500;">${formatCurrency(quote.child_price)} × ${quote.child_count} = ${formatCurrency((quote.child_price || 0) * quote.child_count)}</span>
+                        </div>
+                      ` : ''}
+                    </div>
+                    <div style="display: flex; justify-content: space-between; padding: 20px 0; background: rgba(218, 165, 32, 0.1); margin: 15px -15px -15px -15px; padding: 20px 15px; border-radius: 8px;">
+                      <span style="color: #8B4513; font-weight: 600; font-size: 18px;">Total Amount:</span>
+                      <span style="color: #DAA520; font-size: 28px; font-weight: bold;">${formatCurrency(totalAmount)}</span>
+                    </div>
+                  ` : `
+                    <div style="display: flex; justify-content: space-between; padding: 20px 0; background: rgba(218, 165, 32, 0.1); margin: 15px -15px -15px -15px; padding: 20px 15px; border-radius: 8px;">
+                      <span style="color: #8B4513; font-weight: 600; font-size: 18px;">Price Per Person:</span>
+                      <span style="color: #DAA520; font-size: 28px; font-weight: bold;">${formatCurrency(quote.quoted_price)}</span>
+                    </div>
+                    <div style="display: flex; justify-content: space-between; padding: 12px 0; font-weight: 600; color: #8B4513;">
+                      <span>Total (${quote.participants} people):</span>
+                      <span>${formatCurrency(totalAmount)}</span>
+                    </div>
+                  `}
                 </div>
+                <!-- What's Included -->
+                ${quote.inclusions && quote.inclusions.length > 0 ? `
+                  <div style="margin-top: 25px; padding: 20px; background: rgba(34, 197, 94, 0.05); border-radius: 8px; border: 1px solid rgba(34, 197, 94, 0.2);">
+                    <h4 style="margin: 0 0 15px 0; color: #16a34a; font-weight: 600; display: flex; align-items: center;">
+                      <span style="margin-right: 8px;">✅</span> What's Included
+                    </h4>
+                    <ul style="margin: 0; padding-left: 0; list-style: none;">
+                      ${quote.inclusions.map((inclusion: string) => `
+                        <li style="margin-bottom: 8px; display: flex; align-items: flex-start;">
+                          <span style="color: #16a34a; margin-right: 8px; margin-top: 2px;">•</span>
+                          <span style="color: #666; line-height: 1.4;">${inclusion}</span>
+                        </li>
+                      `).join('')}
+                    </ul>
+                  </div>
+                ` : ''}
+
+                <!-- What's Not Included -->
+                ${quote.exclusions && quote.exclusions.length > 0 ? `
+                  <div style="margin-top: 25px; padding: 20px; background: rgba(239, 68, 68, 0.05); border-radius: 8px; border: 1px solid rgba(239, 68, 68, 0.2);">
+                    <h4 style="margin: 0 0 15px 0; color: #dc2626; font-weight: 600; display: flex; align-items: center;">
+                      <span style="margin-right: 8px;">❌</span> What's Not Included
+                    </h4>
+                    <ul style="margin: 0; padding-left: 0; list-style: none;">
+                      ${quote.exclusions.map((exclusion: string) => `
+                        <li style="margin-bottom: 8px; display: flex; align-items: flex-start;">
+                          <span style="color: #dc2626; margin-right: 8px; margin-top: 2px;">•</span>
+                          <span style="color: #666; line-height: 1.4;">${exclusion}</span>
+                        </li>
+                      `).join('')}
+                    </ul>
+                  </div>
+                ` : ''}
+
                 ${quote.admin_notes ? `
                   <div style="margin-top: 25px; padding: 20px; background: rgba(139, 69, 19, 0.05); border-radius: 8px; border: 1px solid rgba(139, 69, 19, 0.1);">
                     <p style="margin: 0; color: #8B4513; font-weight: 500; margin-bottom: 8px;">Special Notes:</p>
@@ -173,6 +279,9 @@ export async function POST(request: Request) {
               
               <div style="border-top: 1px solid #ddd; padding-top: 20px; font-size: 14px; color: #666; line-height: 1.5;">
                 <p style="margin: 0 0 8px 0;">🔒 This secure link will automatically attach your quote to your account.</p>
+                ${itineraryPdfBuffer ? `
+                  <p style="margin: 0 0 8px 0;">📋 Your detailed itinerary is attached as a PDF to this email.</p>
+                ` : ''}
                 <p style="margin: 0 0 15px 0;">💬 Questions? Simply reply to this email - we're here to help!</p>
                 <p style="margin: 0; font-size: 12px; color: #888;">
                   ✈️ Discover Peru • 🏔️ Luxury Experiences • 📸 Unforgettable Memories
@@ -199,18 +308,32 @@ export async function POST(request: Request) {
     console.log('Sending email to:', quote.contact_email);
     console.log('Email subject:', emailSubject);
 
+    // Prepare email payload
+    const emailPayload: any = {
+      from: 'quotes@meridianluxury.travel',
+      to: [quote.contact_email],
+      subject: emailSubject,
+      html: emailContent,
+    };
+
+    // Add PDF attachment if available
+    if (itineraryPdfBuffer) {
+      emailPayload.attachments = [{
+        filename: `${quote.destination}-Itinerary.pdf`,
+        content: itineraryPdfBuffer.toString('base64'),
+        type: 'application/pdf',
+        disposition: 'attachment'
+      }];
+      console.log('Adding itinerary PDF attachment to email');
+    }
+
     const emailResponse = await fetch('https://api.resend.com/emails', {
       method: 'POST',
       headers: {
         'Authorization': `Bearer ${resendApiKey}`,
         'Content-Type': 'application/json',
       },
-      body: JSON.stringify({
-        from: 'quotes@meridianluxury.travel',
-        to: [quote.contact_email],
-        subject: emailSubject,
-        html: emailContent,
-      }),
+      body: JSON.stringify(emailPayload),
     });
 
     if (!emailResponse.ok) {

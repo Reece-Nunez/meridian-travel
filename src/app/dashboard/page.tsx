@@ -35,13 +35,21 @@ function DashboardContent() {
     }
   }, [searchParams, router]);
 
-  // Fetch data when user is available
+  // Fetch data when user is available or when component mounts
   useEffect(() => {
-    if (user && !dataLoaded) {
+    if (user) {
       console.log('Dashboard: Fetching data for user:', user.id);
       fetchUserData();
     }
-  }, [user, dataLoaded]);
+  }, [user]);
+
+  // Reset data loaded state when component unmounts (navigation away)
+  useEffect(() => {
+    return () => {
+      console.log('Dashboard: Component unmounting, resetting dataLoaded state');
+      setDataLoaded(false);
+    };
+  }, []);
 
   // Handle tab visibility changes
   useEffect(() => {
@@ -63,13 +71,17 @@ function DashboardContent() {
 
     console.log('Dashboard: Starting to fetch data for user:', user.id);
     setLoading(true);
+    setDataLoaded(false); // Reset to ensure fresh data
     
     try {
       // First, get quote IDs from quote_tokens for this user
+      console.log('Dashboard: Querying quote_tokens for user_id:', user.id);
       const { data: userQuoteTokens, error: tokensError } = await supabase
         .from('quote_tokens')
         .select('quote_id')
         .eq('user_id', user.id);
+
+      console.log('Dashboard: Quote tokens query result:', { userQuoteTokens, tokensError });
 
       let quotesData = [];
       let quotesError = null;
@@ -80,24 +92,29 @@ function DashboardContent() {
       } else if (userQuoteTokens && userQuoteTokens.length > 0) {
         // Get unique quote IDs
         const quoteIds = [...new Set(userQuoteTokens.map(token => token.quote_id))];
+        console.log('Dashboard: Found quote IDs:', quoteIds);
 
         // Fetch quotes by IDs, plus any quotes directly assigned to user
+        console.log('Dashboard: Querying custom_quotes with query:', `id.in.(${quoteIds.join(',')}),user_id.eq.${user.id}`);
         const { data: fetchedQuotes, error: fetchError } = await supabase
           .from('custom_quotes')
           .select('*')
           .or(`id.in.(${quoteIds.join(',')}),user_id.eq.${user.id}`)
           .order('created_at', { ascending: false });
 
+        console.log('Dashboard: Custom quotes query result:', { fetchedQuotes, fetchError });
         quotesData = fetchedQuotes || [];
         quotesError = fetchError;
       } else {
         // No quote tokens, just fetch quotes directly assigned to user
+        console.log('Dashboard: No quote tokens found, checking quotes directly assigned to user');
         const { data: fetchedQuotes, error: fetchError } = await supabase
           .from('custom_quotes')
           .select('*')
           .eq('user_id', user.id)
           .order('created_at', { ascending: false });
 
+        console.log('Dashboard: Direct quotes query result:', { fetchedQuotes, fetchError });
         quotesData = fetchedQuotes || [];
         quotesError = fetchError;
       }

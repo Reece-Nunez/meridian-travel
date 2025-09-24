@@ -16,9 +16,13 @@
     "@supabase/auth-ui-react": "^0.4.7",
     "@supabase/auth-ui-shared": "^0.1.8",
     "@supabase/supabase-js": "^2.56.1",
+    "@types/puppeteer": "^5.4.7",
     "dotenv": "^17.2.2",
     "framer-motion": "^12.23.12",
+    "html2canvas": "^1.4.1",
+    "jspdf": "^3.0.3",
     "next": "15.5.2",
+    "puppeteer": "^24.22.2",
     "react": "19.1.0",
     "react-dom": "19.1.0",
     "stripe": "^18.5.0"

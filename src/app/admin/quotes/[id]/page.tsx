@@ -8,6 +8,11 @@ import { supabase } from '@/lib/supabase';
 import { CustomQuote } from '@/types/database';
 import { useSimpleAdminAuth } from '@/hooks/useSimpleAdminAuth';
 import ItineraryBuilder from '@/components/ItineraryBuilder';
+import PDFInvoiceGenerator from '@/components/PDFInvoiceGenerator';
+import Modal from '@/components/Modal';
+import CustomerItineraryPreview from '@/components/CustomerItineraryPreview';
+import CustomerInvoicePreview from '@/components/CustomerInvoicePreview';
+import { parseGroupDetails } from '@/utils/parseQuoteDetails';
 
 export default function QuoteDetail() {
   const { loading: authLoading, isAuthenticated } = useSimpleAdminAuth();
@@ -19,12 +24,20 @@ export default function QuoteDetail() {
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const [showItineraryPreview, setShowItineraryPreview] = useState(false);
+  const [showInvoicePreview, setShowInvoicePreview] = useState(false);
 
   const [formData, setFormData] = useState({
     status: 'pending',
     quoted_price: '',
     quoted_currency: 'USD',
-    admin_notes: ''
+    admin_notes: '',
+    adult_price: '',
+    child_price: '',
+    adult_count: 0,
+    child_count: 0,
+    inclusions: [] as string[],
+    exclusions: [] as string[]
   });
 
   useEffect(() => {
@@ -57,11 +70,21 @@ export default function QuoteDetail() {
       
       if (data) {
         setQuote(data);
+
+        // Parse group details from special_requirements
+        const groupDetails = parseGroupDetails(data.special_requirements);
+
         setFormData({
           status: data.status || 'pending',
           quoted_price: data.quoted_price?.toString() || '',
           quoted_currency: data.quoted_currency || 'USD',
-          admin_notes: data.admin_notes || ''
+          admin_notes: data.admin_notes || '',
+          adult_price: data.adult_price?.toString() || '',
+          child_price: data.child_price?.toString() || '',
+          adult_count: data.adult_count || groupDetails.adults,
+          child_count: data.child_count || groupDetails.children,
+          inclusions: data.inclusions || [],
+          exclusions: data.exclusions || []
         });
       }
     } catch (err) {
@@ -74,9 +97,65 @@ export default function QuoteDetail() {
 
   const handleInputChange = (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement | HTMLSelectElement>) => {
     const { name, value } = e.target;
+    setFormData(prev => {
+      const newData = { ...prev, [name]: value };
+
+      // Auto-calculate quoted_price when adult/child prices or counts change
+      if (['adult_price', 'child_price', 'adult_count', 'child_count'].includes(name)) {
+        const adultPrice = name === 'adult_price' ? parseFloat(value) || 0 : parseFloat(newData.adult_price) || 0;
+        const childPrice = name === 'child_price' ? parseFloat(value) || 0 : parseFloat(newData.child_price) || 0;
+        const adultCount = name === 'adult_count' ? parseInt(value) || 0 : newData.adult_count;
+        const childCount = name === 'child_count' ? parseInt(value) || 0 : newData.child_count;
+
+        const totalPrice = (adultPrice * adultCount) + (childPrice * childCount);
+        newData.quoted_price = totalPrice > 0 ? totalPrice.toString() : '';
+      }
+
+      return newData;
+    });
+  };
+
+  // Functions for managing inclusions
+  const addInclusion = () => {
     setFormData(prev => ({
       ...prev,
-      [name]: value
+      inclusions: [...prev.inclusions, '']
+    }));
+  };
+
+  const removeInclusion = (index: number) => {
+    setFormData(prev => ({
+      ...prev,
+      inclusions: prev.inclusions.filter((_, i) => i !== index)
+    }));
+  };
+
+  const updateInclusion = (index: number, value: string) => {
+    setFormData(prev => ({
+      ...prev,
+      inclusions: prev.inclusions.map((item, i) => i === index ? value : item)
+    }));
+  };
+
+  // Functions for managing exclusions
+  const addExclusion = () => {
+    setFormData(prev => ({
+      ...prev,
+      exclusions: [...prev.exclusions, '']
+    }));
+  };
+
+  const removeExclusion = (index: number) => {
+    setFormData(prev => ({
+      ...prev,
+      exclusions: prev.exclusions.filter((_, i) => i !== index)
+    }));
+  };
+
+  const updateExclusion = (index: number, value: string) => {
+    setFormData(prev => ({
+      ...prev,
+      exclusions: prev.exclusions.map((item, i) => i === index ? value : item)
     }));
   };
 
@@ -106,6 +185,12 @@ export default function QuoteDetail() {
           quoted_price: formData.quoted_price ? parseFloat(formData.quoted_price) : null,
           quoted_currency: formData.quoted_currency,
           admin_notes: formData.admin_notes,
+          adult_price: formData.adult_price ? parseFloat(formData.adult_price) : null,
+          child_price: formData.child_price ? parseFloat(formData.child_price) : null,
+          adult_count: formData.adult_count,
+          child_count: formData.child_count,
+          inclusions: formData.inclusions,
+          exclusions: formData.exclusions,
           adminEmail
         }),
       });
@@ -345,7 +430,8 @@ export default function QuoteDetail() {
           <h3 className="text-lg font-medium text-gray-900 mb-6">Admin Response</h3>
           
           <form onSubmit={handleSubmit} className="space-y-6">
-            <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+            {/* Status and Currency Row */}
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
               <div>
                 <label htmlFor="status" className="block text-sm font-medium text-gray-700 mb-2">
                   Status *
@@ -366,23 +452,6 @@ export default function QuoteDetail() {
               </div>
 
               <div>
-                <label htmlFor="quoted_price" className="block text-sm font-medium text-gray-700 mb-2">
-                  Price Per Person
-                </label>
-                <input
-                  type="number"
-                  id="quoted_price"
-                  name="quoted_price"
-                  min="0"
-                  step="0.01"
-                  value={formData.quoted_price}
-                  onChange={handleInputChange}
-                  className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-[#B8860B] focus:border-[#B8860B] text-gray-900"
-                  placeholder="e.g., 3500"
-                />
-              </div>
-
-              <div>
                 <label htmlFor="quoted_currency" className="block text-sm font-medium text-gray-700 mb-2">
                   Currency
                 </label>
@@ -400,6 +469,100 @@ export default function QuoteDetail() {
               </div>
             </div>
 
+            {/* Pricing Breakdown Section */}
+            <div className="bg-gray-50 p-6 rounded-lg">
+              <h4 className="text-lg font-medium text-gray-900 mb-4">Pricing Breakdown</h4>
+
+              {/* Traveler Counts Row */}
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-6 mb-4">
+                <div>
+                  <label htmlFor="adult_count" className="block text-sm font-medium text-gray-700 mb-2">
+                    Number of Adults
+                  </label>
+                  <input
+                    type="number"
+                    id="adult_count"
+                    name="adult_count"
+                    min="0"
+                    value={formData.adult_count}
+                    onChange={handleInputChange}
+                    className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-[#B8860B] focus:border-[#B8860B] text-gray-900"
+                  />
+                </div>
+                <div>
+                  <label htmlFor="child_count" className="block text-sm font-medium text-gray-700 mb-2">
+                    Number of Children (Under 12)
+                  </label>
+                  <input
+                    type="number"
+                    id="child_count"
+                    name="child_count"
+                    min="0"
+                    value={formData.child_count}
+                    onChange={handleInputChange}
+                    className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-[#B8860B] focus:border-[#B8860B] text-gray-900"
+                  />
+                </div>
+              </div>
+
+              {/* Pricing Row */}
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-6 mb-4">
+                <div>
+                  <label htmlFor="adult_price" className="block text-sm font-medium text-gray-700 mb-2">
+                    Price Per Adult ({formData.quoted_currency})
+                  </label>
+                  <input
+                    type="number"
+                    id="adult_price"
+                    name="adult_price"
+                    min="0"
+                    step="0.01"
+                    value={formData.adult_price}
+                    onChange={handleInputChange}
+                    className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-[#B8860B] focus:border-[#B8860B] text-gray-900"
+                    placeholder="e.g., 5000"
+                  />
+                </div>
+                <div>
+                  <label htmlFor="child_price" className="block text-sm font-medium text-gray-700 mb-2">
+                    Price Per Child Under 12 ({formData.quoted_currency})
+                  </label>
+                  <input
+                    type="number"
+                    id="child_price"
+                    name="child_price"
+                    min="0"
+                    step="0.01"
+                    value={formData.child_price}
+                    onChange={handleInputChange}
+                    className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-[#B8860B] focus:border-[#B8860B] text-gray-900"
+                    placeholder="e.g., 3000"
+                  />
+                </div>
+              </div>
+
+              {/* Total Price Display */}
+              <div className="bg-white p-4 rounded-lg border-2 border-[#B8860B]">
+                <div className="flex justify-between items-center text-lg font-semibold">
+                  <span className="text-gray-700">Total Price:</span>
+                  <span className="text-[#B8860B]">
+                    {formData.quoted_currency} ${formData.quoted_price || '0'}
+                  </span>
+                </div>
+                {(formData.adult_count > 0 || formData.child_count > 0) && (
+                  <div className="mt-2 text-sm text-gray-600">
+                    {formData.adult_count > 0 && (
+                      <span>Adults: {formData.adult_count} × ${formData.adult_price || 0} = ${((parseFloat(formData.adult_price) || 0) * formData.adult_count).toFixed(2)}</span>
+                    )}
+                    {formData.adult_count > 0 && formData.child_count > 0 && <span> + </span>}
+                    {formData.child_count > 0 && (
+                      <span>Children: {formData.child_count} × ${formData.child_price || 0} = ${((parseFloat(formData.child_price) || 0) * formData.child_count).toFixed(2)}</span>
+                    )}
+                  </div>
+                )}
+              </div>
+            </div>
+
             <div>
               <label htmlFor="admin_notes" className="block text-sm font-medium text-gray-700 mb-2">
                 Admin Notes
@@ -413,6 +576,94 @@ export default function QuoteDetail() {
                 className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-[#B8860B] focus:border-[#B8860B] text-gray-900"
                 placeholder="Internal notes about this quote request..."
               />
+            </div>
+
+            {/* What's Included Section */}
+            <div className="bg-green-50 p-6 rounded-lg">
+              <div className="flex items-center justify-between mb-4">
+                <h4 className="text-lg font-medium text-gray-900">What's Included</h4>
+                <button
+                  type="button"
+                  onClick={addInclusion}
+                  className="inline-flex items-center px-3 py-2 border border-transparent text-sm leading-4 font-medium rounded-md text-green-700 bg-green-100 hover:bg-green-200 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-green-500 transition-colors"
+                >
+                  <svg className="w-4 h-4 mr-1" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 4v16m8-8H4" />
+                  </svg>
+                  Add Item
+                </button>
+              </div>
+              <div className="space-y-3">
+                {formData.inclusions.length === 0 ? (
+                  <p className="text-gray-500 text-sm">No items added yet. Click "Add Item" to start.</p>
+                ) : (
+                  formData.inclusions.map((inclusion, index) => (
+                    <div key={index} className="flex items-center space-x-3">
+                      <input
+                        type="text"
+                        value={inclusion}
+                        onChange={(e) => updateInclusion(index, e.target.value)}
+                        placeholder="e.g., All meals and accommodation"
+                        className="flex-1 px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-[#B8860B] focus:border-[#B8860B] text-gray-900"
+                      />
+                      <button
+                        type="button"
+                        onClick={() => removeInclusion(index)}
+                        className="p-2 text-red-600 hover:text-red-800 hover:bg-red-100 rounded-md transition-colors"
+                        title="Remove item"
+                      >
+                        <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
+                        </svg>
+                      </button>
+                    </div>
+                  ))
+                )}
+              </div>
+            </div>
+
+            {/* What's Not Included Section */}
+            <div className="bg-red-50 p-6 rounded-lg">
+              <div className="flex items-center justify-between mb-4">
+                <h4 className="text-lg font-medium text-gray-900">What's Not Included</h4>
+                <button
+                  type="button"
+                  onClick={addExclusion}
+                  className="inline-flex items-center px-3 py-2 border border-transparent text-sm leading-4 font-medium rounded-md text-red-700 bg-red-100 hover:bg-red-200 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-red-500 transition-colors"
+                >
+                  <svg className="w-4 h-4 mr-1" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 4v16m8-8H4" />
+                  </svg>
+                  Add Item
+                </button>
+              </div>
+              <div className="space-y-3">
+                {formData.exclusions.length === 0 ? (
+                  <p className="text-gray-500 text-sm">No items added yet. Click "Add Item" to start.</p>
+                ) : (
+                  formData.exclusions.map((exclusion, index) => (
+                    <div key={index} className="flex items-center space-x-3">
+                      <input
+                        type="text"
+                        value={exclusion}
+                        onChange={(e) => updateExclusion(index, e.target.value)}
+                        placeholder="e.g., International flights"
+                        className="flex-1 px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-[#B8860B] focus:border-[#B8860B] text-gray-900"
+                      />
+                      <button
+                        type="button"
+                        onClick={() => removeExclusion(index)}
+                        className="p-2 text-red-600 hover:text-red-800 hover:bg-red-100 rounded-md transition-colors"
+                        title="Remove item"
+                      >
+                        <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
+                        </svg>
+                      </button>
+                    </div>
+                  ))
+                )}
+              </div>
             </div>
 
             <div className="flex justify-end space-x-4">
@@ -440,14 +691,80 @@ export default function QuoteDetail() {
           animate={{ opacity: 1, y: 0 }}
           transition={{ duration: 0.5, delay: 0.3 }}
         >
-          <ItineraryBuilder 
-            quoteId={quoteId} 
+          <div className="flex items-center justify-between mb-6">
+            <h3 className="text-lg font-medium text-gray-900">Itinerary Builder</h3>
+            <button
+              onClick={() => setShowItineraryPreview(true)}
+              className="inline-flex items-center px-4 py-2 border border-[#B8860B] text-[#B8860B] bg-white hover:bg-[#B8860B] hover:text-white font-medium rounded-md transition-colors"
+            >
+              <svg className="w-4 h-4 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" />
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z" />
+              </svg>
+              Preview Customer View
+            </button>
+          </div>
+
+          <ItineraryBuilder
+            quoteId={quoteId}
             onSave={() => {
               console.log('Itinerary saved successfully');
             }}
           />
         </motion.div>
+
+        {/* PDF Invoice Generator */}
+        {quote.status === 'approved' && quote.quoted_price && (
+          <motion.div
+            className="bg-white rounded-lg shadow-sm p-6 mt-8"
+            initial={{ opacity: 0, y: 20 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ duration: 0.5, delay: 0.4 }}
+          >
+            <div className="flex items-center justify-between mb-6">
+              <h3 className="text-lg font-medium text-gray-900">Professional Invoice</h3>
+              <div className="flex space-x-3">
+                <button
+                  onClick={() => setShowInvoicePreview(true)}
+                  className="inline-flex items-center px-4 py-2 border border-[#B8860B] text-[#B8860B] bg-white hover:bg-[#B8860B] hover:text-white font-medium rounded-md transition-colors"
+                >
+                  <svg className="w-4 h-4 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" />
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z" />
+                  </svg>
+                  Preview Customer View
+                </button>
+              </div>
+            </div>
+
+            <PDFInvoiceGenerator
+              quote={quote}
+              onGenerate={() => {
+                console.log('PDF invoice generated for quote:', quoteId);
+              }}
+            />
+          </motion.div>
+        )}
       </div>
+
+      {/* Preview Modals */}
+      <Modal
+        isOpen={showItineraryPreview}
+        onClose={() => setShowItineraryPreview(false)}
+        title="Itinerary Preview - Customer View"
+        size="full"
+      >
+        {quote && <CustomerItineraryPreview quote={quote} />}
+      </Modal>
+
+      <Modal
+        isOpen={showInvoicePreview}
+        onClose={() => setShowInvoicePreview(false)}
+        title="Invoice Preview - Customer View"
+        size="full"
+      >
+        {quote && <CustomerInvoicePreview quote={quote} />}
+      </Modal>
     </div>
   );
 }

@@ -70,7 +70,20 @@ export async function GET(request: Request) {
 export async function PATCH(request: Request) {
   try {
     const body = await request.json();
-    const { quoteId, status, quoted_price, quoted_currency, admin_notes, adminEmail } = body;
+    const {
+      quoteId,
+      status,
+      quoted_price,
+      quoted_currency,
+      admin_notes,
+      adult_price,
+      child_price,
+      adult_count,
+      child_count,
+      inclusions,
+      exclusions,
+      adminEmail
+    } = body;
 
     // Simple admin check
     if (adminEmail !== 'chris@meridianluxury.travel') {
@@ -83,11 +96,17 @@ export async function PATCH(request: Request) {
     // Use admin client to update quote
     const supabaseAdmin = createSupabaseAdmin();
     const updateData: any = { updated_at: new Date().toISOString() };
-    
+
     if (status) updateData.status = status;
     if (quoted_price !== undefined) updateData.quoted_price = quoted_price;
     if (quoted_currency) updateData.quoted_currency = quoted_currency;
     if (admin_notes !== undefined) updateData.admin_notes = admin_notes;
+    if (adult_price !== undefined) updateData.adult_price = adult_price;
+    if (child_price !== undefined) updateData.child_price = child_price;
+    if (adult_count !== undefined) updateData.adult_count = adult_count;
+    if (child_count !== undefined) updateData.child_count = child_count;
+    if (inclusions !== undefined) updateData.inclusions = inclusions;
+    if (exclusions !== undefined) updateData.exclusions = exclusions;
 
     const { data, error } = await supabaseAdmin
       .from('custom_quotes')

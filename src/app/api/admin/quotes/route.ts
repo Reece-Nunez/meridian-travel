@@ -80,8 +80,10 @@ export async function PATCH(request: Request) {
       child_price,
       adult_count,
       child_count,
+      participants,
       inclusions,
       exclusions,
+      pdf_title,
       adminEmail
     } = body;
 
@@ -105,8 +107,13 @@ export async function PATCH(request: Request) {
     if (child_price !== undefined) updateData.child_price = child_price;
     if (adult_count !== undefined) updateData.adult_count = adult_count;
     if (child_count !== undefined) updateData.child_count = child_count;
+    if (participants !== undefined) updateData.participants = participants;
     if (inclusions !== undefined) updateData.inclusions = inclusions;
     if (exclusions !== undefined) updateData.exclusions = exclusions;
+    if (pdf_title !== undefined) updateData.pdf_title = pdf_title;
+
+    console.log('Updating quote with data:', JSON.stringify(updateData, null, 2));
+    console.log('Quote ID:', quoteId);
 
     const { data, error } = await supabaseAdmin
       .from('custom_quotes')
@@ -114,6 +121,9 @@ export async function PATCH(request: Request) {
       .eq('id', quoteId)
       .select()
       .single();
+
+    console.log('Update result - Data:', data ? 'Success' : 'No data');
+    console.log('Update result - Error:', error);
 
     if (error) {
       console.error('Update error:', error);

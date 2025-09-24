@@ -78,18 +78,24 @@ export async function POST(request: Request) {
         .eq('quote_id', quoteId)
         .order('display_order', { ascending: true });
 
-      if (!itineraryError && itineraryDays) {
+      if (!itineraryError && itineraryDays && itineraryDays.length > 0) {
         const processedDays = itineraryDays.map(day => ({
           ...day,
           activities: day.activities?.sort((a: any, b: any) => a.display_order - b.display_order) || [],
           images: day.images?.sort((a: any, b: any) => a.display_order - b.display_order) || []
         }));
 
-        // Generate PDF
+        // Generate PDF with detailed itinerary
         itineraryPdfBuffer = await generateItineraryPDF(quote, processedDays);
-        console.log('Successfully generated itinerary PDF');
+        console.log(`Successfully generated itinerary PDF with ${processedDays.length} days`);
       } else {
-        console.log('No itinerary data found or error fetching itinerary:', itineraryError);
+        console.log('No detailed itinerary data found. Generating basic PDF...');
+        console.log('Itinerary error:', itineraryError);
+        console.log('Itinerary days found:', itineraryDays?.length || 0);
+
+        // Generate a basic PDF even without detailed itinerary data
+        itineraryPdfBuffer = await generateItineraryPDF(quote, []);
+        console.log('Generated basic itinerary PDF without detailed days');
       }
     } catch (pdfError) {
       console.error('Error generating itinerary PDF:', pdfError);
@@ -318,13 +324,16 @@ export async function POST(request: Request) {
 
     // Add PDF attachment if available
     if (itineraryPdfBuffer) {
+      const pdfSize = itineraryPdfBuffer.length;
       emailPayload.attachments = [{
         filename: `${quote.destination}-Itinerary.pdf`,
         content: itineraryPdfBuffer.toString('base64'),
         type: 'application/pdf',
         disposition: 'attachment'
       }];
-      console.log('Adding itinerary PDF attachment to email');
+      console.log(`Adding itinerary PDF attachment to email (${pdfSize} bytes)`);
+    } else {
+      console.log('No PDF buffer available - email will be sent without attachment');
     }
 
     const emailResponse = await fetch('https://api.resend.com/emails', {

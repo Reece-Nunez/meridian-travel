@@ -249,16 +249,16 @@ export default function Navigation() {
                 )}
             </div>
             <Link
+              href="/cruises"
+              className="text-[#8B4513] hover:text-[#B8860B] px-3 py-2 text-sm font-medium transition-colors duration-200"
+            >
+              Cruises
+            </Link>
+            <Link
               href="/packages"
               className="text-[#8B4513] hover:text-[#B8860B] px-3 py-2 text-sm font-medium transition-colors duration-200"
             >
               Packages
-            </Link>
-            <Link
-              href="/travel-styles"
-              className="text-[#8B4513] hover:text-[#B8860B] px-3 py-2 text-sm font-medium transition-colors duration-200"
-            >
-              Travel Styles
             </Link>
             <Link
               href="/about"

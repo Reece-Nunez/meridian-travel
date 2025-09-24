@@ -111,6 +111,7 @@ export interface Database {
           child_count: number | null
           inclusions: string[] | null
           exclusions: string[] | null
+          pdf_title: string | null
         }
         Insert: {
           id?: string
@@ -136,6 +137,7 @@ export interface Database {
           child_count?: number | null
           inclusions?: string[] | null
           exclusions?: string[] | null
+          pdf_title?: string | null
         }
         Update: {
           id?: string
@@ -161,6 +163,7 @@ export interface Database {
           child_count?: number | null
           inclusions?: string[] | null
           exclusions?: string[] | null
+          pdf_title?: string | null
         }
       }
       bookings: {

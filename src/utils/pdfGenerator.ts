@@ -85,7 +85,7 @@ export async function generateItineraryPDF(
       <html>
         <head>
           <meta charset="utf-8">
-          <title>${quote.destination} Itinerary</title>
+          <title>${quote.pdf_title || `${quote.destination} Itinerary`}</title>
           <style>
             body {
               font-family: 'Segoe UI', Arial, sans-serif;
@@ -153,9 +153,6 @@ export async function generateItineraryPDF(
               background: linear-gradient(135deg, #B8860B, #DAA520);
               color: white;
               padding: 20px;
-              display: flex;
-              justify-content: space-between;
-              align-items: center;
             }
             .day-title h3 {
               margin: 0;
@@ -164,13 +161,6 @@ export async function generateItineraryPDF(
             .day-title p {
               margin: 5px 0 0 0;
               opacity: 0.9;
-            }
-            .day-number {
-              background: rgba(255,255,255,0.2);
-              padding: 10px 15px;
-              border-radius: 25px;
-              font-size: 18px;
-              font-weight: bold;
             }
             .day-content {
               padding: 25px;
@@ -289,7 +279,7 @@ export async function generateItineraryPDF(
         <body>
           <!-- Header -->
           <div class="header">
-            <h1>Your ${quote.destination} Adventure</h1>
+            <h1>${quote.pdf_title || `Your ${quote.destination} Adventure`}</h1>
             <p>${quote.duration} Days of Luxury Travel</p>
             ${quote.travel_dates_start && quote.travel_dates_end ? `
               <p>📅 ${formatDate(quote.travel_dates_start)} - ${formatDate(quote.travel_dates_end)}</p>
@@ -328,7 +318,6 @@ export async function generateItineraryPDF(
                   <h3>${day.day_label}</h3>
                   <p>${formatDate(day.start_date)} • ${day.city}</p>
                 </div>
-                <div class="day-number">Day ${index + 1}</div>
               </div>
               <div class="day-content">
                 <div class="day-description">${day.description}</div>

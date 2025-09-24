@@ -37,7 +37,8 @@ export default function QuoteDetail() {
     adult_count: 0,
     child_count: 0,
     inclusions: [] as string[],
-    exclusions: [] as string[]
+    exclusions: [] as string[],
+    pdf_title: ''
   });
 
   useEffect(() => {
@@ -71,7 +72,7 @@ export default function QuoteDetail() {
       if (data) {
         setQuote(data);
 
-        // Parse group details from special_requirements
+        // Parse group details from special_requirements only as fallback for very old quotes
         const groupDetails = parseGroupDetails(data.special_requirements);
 
         setFormData({
@@ -81,10 +82,12 @@ export default function QuoteDetail() {
           admin_notes: data.admin_notes || '',
           adult_price: data.adult_price?.toString() || '',
           child_price: data.child_price?.toString() || '',
-          adult_count: data.adult_count || groupDetails.adults,
-          child_count: data.child_count || groupDetails.children,
+          // Use database values if they exist, only fallback to parsing if they're null/undefined
+          adult_count: data.adult_count !== null && data.adult_count !== undefined ? data.adult_count : groupDetails.adults,
+          child_count: data.child_count !== null && data.child_count !== undefined ? data.child_count : groupDetails.children,
           inclusions: data.inclusions || [],
-          exclusions: data.exclusions || []
+          exclusions: data.exclusions || [],
+          pdf_title: data.pdf_title || ''
         });
       }
     } catch (err) {
@@ -100,15 +103,21 @@ export default function QuoteDetail() {
     setFormData(prev => {
       const newData = { ...prev, [name]: value };
 
-      // Auto-calculate quoted_price when adult/child prices or counts change
+      // Auto-calculate quoted_price and participants when adult/child prices or counts change
       if (['adult_price', 'child_price', 'adult_count', 'child_count'].includes(name)) {
         const adultPrice = name === 'adult_price' ? parseFloat(value) || 0 : parseFloat(newData.adult_price) || 0;
         const childPrice = name === 'child_price' ? parseFloat(value) || 0 : parseFloat(newData.child_price) || 0;
-        const adultCount = name === 'adult_count' ? parseInt(value) || 0 : newData.adult_count;
-        const childCount = name === 'child_count' ? parseInt(value) || 0 : newData.child_count;
+        const adultCount = name === 'adult_count' ? parseInt(value) || 0 : parseInt(newData.adult_count?.toString()) || 0;
+        const childCount = name === 'child_count' ? parseInt(value) || 0 : parseInt(newData.child_count?.toString()) || 0;
 
         const totalPrice = (adultPrice * adultCount) + (childPrice * childCount);
         newData.quoted_price = totalPrice > 0 ? totalPrice.toString() : '';
+
+        // Auto-update participants count for immediate UI update
+        const totalParticipants = adultCount + childCount;
+        if (quote) {
+          setQuote(prev => prev ? { ...prev, participants: totalParticipants } : prev);
+        }
       }
 
       return newData;
@@ -189,8 +198,10 @@ export default function QuoteDetail() {
           child_price: formData.child_price ? parseFloat(formData.child_price) : null,
           adult_count: formData.adult_count,
           child_count: formData.child_count,
+          participants: parseInt(formData.adult_count.toString()) + parseInt(formData.child_count.toString()),
           inclusions: formData.inclusions,
           exclusions: formData.exclusions,
+          pdf_title: formData.pdf_title,
           adminEmail
         }),
       });
@@ -561,6 +572,24 @@ export default function QuoteDetail() {
                   </div>
                 )}
               </div>
+            </div>
+
+            <div>
+              <label htmlFor="pdf_title" className="block text-sm font-medium text-gray-700 mb-2">
+                Custom PDF Title
+              </label>
+              <input
+                type="text"
+                id="pdf_title"
+                name="pdf_title"
+                value={formData.pdf_title}
+                onChange={handleInputChange}
+                className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-[#B8860B] focus:border-[#B8860B] text-gray-900"
+                placeholder={`e.g., "Reece's Awesome ${quote?.destination || 'Peru'} Adventure"`}
+              />
+              <p className="mt-1 text-sm text-gray-500">
+                This will be the main title shown in the PDF itinerary. If left empty, defaults to "Your {quote?.destination || 'Peru'} Adventure".
+              </p>
             </div>
 
             <div>

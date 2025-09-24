@@ -16,7 +16,7 @@ export default function About() {
     servicesContent: 'At every stage, our mission is to elevate travel into an art form—where every journey reflects your unique story, and every detail whispers luxury.'
   });
 
-  const [isLoading, setIsLoading] = useState(true);
+  // Removed loading state - content shows immediately
 
   useEffect(() => {
     const fetchContent = async () => {
@@ -63,25 +63,14 @@ export default function About() {
           servicesContent: aboutServicesContent || content.servicesContent
         });
       } catch (error) {
-        console.log('Using fallback content for about page', error);
-      } finally {
-        setIsLoading(false);
+        console.log('CMS content unavailable for about page, using default content', error);
       }
     };
 
     fetchContent();
   }, []);
 
-  if (isLoading) {
-    return (
-      <div className="min-h-screen bg-white flex items-center justify-center">
-        <div className="text-center">
-          <div className="animate-spin rounded-full h-16 w-16 border-b-4 border-[#8B4513] mx-auto mb-4"></div>
-          <p className="text-[#8B4513] text-lg font-medium">Loading about page...</p>
-        </div>
-      </div>
-    );
-  }
+  // No loading check - content shows immediately
 
   return (
     <div className="min-h-screen bg-white">

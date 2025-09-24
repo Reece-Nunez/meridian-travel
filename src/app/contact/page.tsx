@@ -39,7 +39,7 @@ export default function Contact() {
     ctaButton2: 'Send an Email'
   });
 
-  const [isLoading, setIsLoading] = useState(true);
+  // Removed loading state - content shows immediately
 
   useEffect(() => {
     const fetchContent = async () => {
@@ -141,25 +141,14 @@ export default function Contact() {
           ctaButton2: ctaButton2 || content.ctaButton2
         });
       } catch (error) {
-        console.log('Using fallback content for contact page');
-      } finally {
-        setIsLoading(false);
+        console.log('CMS content unavailable for contact page, using default content');
       }
     };
 
     fetchContent();
   }, []);
 
-  if (isLoading) {
-    return (
-      <div className="min-h-screen bg-white flex items-center justify-center">
-        <div className="text-center">
-          <div className="animate-spin rounded-full h-16 w-16 border-b-4 border-[#8B4513] mx-auto mb-4"></div>
-          <p className="text-[#8B4513] text-lg font-medium">Loading contact information...</p>
-        </div>
-      </div>
-    );
-  }
+  // No loading check - content shows immediately
 
   return (
     <div className="min-h-screen bg-white">

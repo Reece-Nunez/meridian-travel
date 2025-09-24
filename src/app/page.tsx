@@ -37,7 +37,7 @@ export default function Home() {
     companyName: 'Meridian Luxury Travel'
   });
 
-  const [isLoading, setIsLoading] = useState(true);
+  // Removed loading state - content shows immediately
 
   useEffect(() => {
     const fetchContent = async () => {
@@ -94,52 +94,44 @@ export default function Home() {
           getSettingByKey('company_name')
         ]);
 
-        setContent({
-          heroTitle,
-          heroSubtitle,
-          heroCta,
-          heroCtaSecondary,
-          aboutTitle,
-          aboutContent,
-          feature1Title,
-          feature1Content,
-          feature2Title,
-          feature2Content,
-          feature3Title,
-          feature3Content,
-          featuredTitle,
-          featuredSubtitle,
-          dest1Title,
-          dest1Content,
-          dest2Title,
-          dest2Content,
-          dest3Title,
-          dest3Content,
-          ctaTitle,
-          ctaSubtitle,
-          ctaButton,
-          companyName
-        });
+        // Only update content if CMS data is available and different from defaults
+        const newContent = {
+          heroTitle: heroTitle || content.heroTitle,
+          heroSubtitle: heroSubtitle || content.heroSubtitle,
+          heroCta: heroCta || content.heroCta,
+          heroCtaSecondary: heroCtaSecondary || content.heroCtaSecondary,
+          aboutTitle: aboutTitle || content.aboutTitle,
+          aboutContent: aboutContent || content.aboutContent,
+          feature1Title: feature1Title || content.feature1Title,
+          feature1Content: feature1Content || content.feature1Content,
+          feature2Title: feature2Title || content.feature2Title,
+          feature2Content: feature2Content || content.feature2Content,
+          feature3Title: feature3Title || content.feature3Title,
+          feature3Content: feature3Content || content.feature3Content,
+          featuredTitle: featuredTitle || content.featuredTitle,
+          featuredSubtitle: featuredSubtitle || content.featuredSubtitle,
+          dest1Title: dest1Title || content.dest1Title,
+          dest1Content: dest1Content || content.dest1Content,
+          dest2Title: dest2Title || content.dest2Title,
+          dest2Content: dest2Content || content.dest2Content,
+          dest3Title: dest3Title || content.dest3Title,
+          dest3Content: dest3Content || content.dest3Content,
+          ctaTitle: ctaTitle || content.ctaTitle,
+          ctaSubtitle: ctaSubtitle || content.ctaSubtitle,
+          ctaButton: ctaButton || content.ctaButton,
+          companyName: companyName || content.companyName
+        };
+
+        setContent(newContent);
       } catch (error) {
-        console.log('Using fallback content');
-      } finally {
-        setIsLoading(false);
+        console.log('CMS content unavailable, using default content');
       }
     };
 
     fetchContent();
   }, []);
 
-  if (isLoading) {
-    return (
-      <div className="min-h-screen bg-white flex items-center justify-center">
-        <div className="text-center">
-          <div className="animate-spin rounded-full h-16 w-16 border-b-4 border-[#8B4513] mx-auto mb-4"></div>
-          <p className="text-[#8B4513] text-lg font-medium">Loading page content...</p>
-        </div>
-      </div>
-    );
-  }
+  // No loading check - content shows immediately
 
   return (
     <div className="min-h-screen bg-white">

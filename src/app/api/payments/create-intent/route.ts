@@ -32,7 +32,7 @@ export async function POST(request: Request) {
     const supabaseAdmin = createSupabaseAdmin();
     const { data: quote, error: quoteError } = await supabaseAdmin
       .from('custom_quotes')
-      .select('*')
+      .select('*, quote_version, payment_method')
       .eq('id', quoteId)
       .eq('status', 'approved')
       .single();
@@ -82,6 +82,7 @@ export async function POST(request: Request) {
         amount: amount / 100, // Store in dollars
         currency: currency,
         status: 'pending',
+        quote_version: quote.quote_version || 1,
         created_at: new Date().toISOString(),
       });
 

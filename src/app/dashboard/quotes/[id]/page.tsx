@@ -7,6 +7,8 @@ import { supabase } from '@/lib/supabase';
 import Link from 'next/link';
 import { CustomQuote } from '@/types/database';
 import ItineraryDisplay from '@/components/ItineraryDisplay';
+import PaymentMethodSelector, { PaymentMethod } from '@/components/PaymentMethodSelector';
+import PaymentInstructions from '@/components/PaymentInstructions';
 
 export default function QuoteDetails() {
   const { user, loading: authLoading } = useAuth();
@@ -14,6 +16,8 @@ export default function QuoteDetails() {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [paymentSuccess, setPaymentSuccess] = useState(false);
+  const [selectedPaymentMethod, setSelectedPaymentMethod] = useState<PaymentMethod>('stripe');
+  const [showPaymentInstructions, setShowPaymentInstructions] = useState(false);
   const router = useRouter();
   const params = useParams();
   const searchParams = useSearchParams();
@@ -87,6 +91,28 @@ export default function QuoteDetails() {
   const handlePayment = async () => {
     if (!quote || !quote.quoted_price) return;
 
+    // Handle non-Stripe payments
+    if (selectedPaymentMethod !== 'stripe') {
+      // Update quote with selected payment method
+      try {
+        const { error } = await supabase
+          .from('custom_quotes')
+          .update({ payment_method: selectedPaymentMethod })
+          .eq('id', quote.id);
+
+        if (error) throw error;
+
+        // Show payment instructions
+        setShowPaymentInstructions(true);
+        return;
+      } catch (err) {
+        console.error('Error updating payment method:', err);
+        setError('Failed to update payment method');
+        return;
+      }
+    }
+
+    // Handle Stripe payments
     try {
       setLoading(true);
 
@@ -103,6 +129,7 @@ export default function QuoteDetails() {
           amount: totalAmount * 100, // Convert to cents
           currency: quote.quoted_currency?.toLowerCase() || 'usd',
           userId: user?.id,
+          paymentMethod: selectedPaymentMethod
         }),
       });
 
@@ -478,13 +505,55 @@ export default function QuoteDetails() {
               </div>
 
               {quote.status === 'approved' && quote.quoted_price ? (
-                <button
-                  onClick={handlePayment}
-                  disabled={loading}
-                  className="w-full bg-[#B8860B] hover:bg-[#DAA520] text-white font-medium py-3 px-4 rounded-md transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
-                >
-                  {loading ? 'Processing...' : 'Book & Pay Now'}
-                </button>
+                <div className="space-y-6">
+                  {!showPaymentInstructions && (
+                    <PaymentMethodSelector
+                      selectedMethod={selectedPaymentMethod}
+                      onMethodChange={setSelectedPaymentMethod}
+                      disabled={loading}
+                    />
+                  )}
+
+                  {showPaymentInstructions && selectedPaymentMethod !== 'stripe' ? (
+                    <PaymentInstructions
+                      paymentMethod={selectedPaymentMethod}
+                      quote={quote}
+                      totalAmount={calculateQuoteTotal()}
+                    />
+                  ) : (
+                    <button
+                      onClick={handlePayment}
+                      disabled={loading}
+                      className="w-full bg-[#B8860B] hover:bg-[#DAA520] text-white font-medium py-3 px-4 rounded-md transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+                    >
+                      {loading ? 'Processing...' :
+                        selectedPaymentMethod === 'stripe' ? 'Book & Pay Now' :
+                        selectedPaymentMethod === 'ach' ? 'Get Bank Transfer Instructions' :
+                        'Get Check Payment Instructions'
+                      }
+                    </button>
+                  )}
+
+                  {showPaymentInstructions && (
+                    <div className="bg-green-50 border border-green-200 rounded-lg p-4 text-center">
+                      <div className="flex items-center justify-center mb-2">
+                        <svg className="w-5 h-5 text-green-600 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" />
+                        </svg>
+                        <p className="text-sm font-medium text-green-800">Payment Method Selected</p>
+                      </div>
+                      <p className="text-xs text-green-600 mb-4">
+                        Follow the instructions above to complete your payment. We'll confirm your booking once payment is received.
+                      </p>
+                      <button
+                        onClick={() => setShowPaymentInstructions(false)}
+                        className="text-sm text-blue-600 hover:text-blue-800 underline"
+                      >
+                        ← Choose Different Payment Method
+                      </button>
+                    </div>
+                  )}
+                </div>
               ) : quote.status === 'booked' ? (
                 <div className="text-center p-4 bg-green-50 rounded-lg border border-green-200">
                   <div className="flex items-center justify-center mb-2">

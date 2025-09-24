@@ -61,7 +61,7 @@ export default function PaymentInstructions({
         <div className="bg-yellow-50 border border-yellow-200 rounded-md p-4">
           <h4 className="font-medium text-yellow-800 mb-2">Important Notes:</h4>
           <ul className="text-sm text-yellow-700 space-y-1">
-            <li>• Transfer amount: <strong>{formatCurrency(totalAmount, quote.quoted_currency)}</strong></li>
+            <li>• Transfer amount: <strong>{formatCurrency(totalAmount, quote.quoted_currency || undefined)}</strong></li>
             <li>• Include reference: <strong>Quote #{quote.id.slice(-8).toUpperCase()}</strong></li>
             <li>• Processing time: 3-5 business days</li>
             <li>• Contact us at payments@meridiantravel.com once transfer is initiated</li>
@@ -96,7 +96,7 @@ export default function PaymentInstructions({
           <h4 className="font-medium text-yellow-800 mb-2">Check Requirements:</h4>
           <ul className="text-sm text-yellow-700 space-y-1">
             <li>• Make check payable to: <strong>"Meridian Travel LLC"</strong></li>
-            <li>• Check amount: <strong>{formatCurrency(totalAmount, quote.quoted_currency)}</strong></li>
+            <li>• Check amount: <strong>{formatCurrency(totalAmount, quote.quoted_currency || undefined)}</strong></li>
             <li>• Write in memo: <strong>Quote #{quote.id.slice(-8).toUpperCase()}</strong></li>
             <li>• Include your name and email: <strong>{quote.contact_email}</strong></li>
             <li>• Allow 7-10 business days for processing</li>

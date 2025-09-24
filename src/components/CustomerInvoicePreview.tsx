@@ -125,10 +125,10 @@ export default function CustomerInvoicePreview({ quote }: CustomerInvoicePreview
                         <td className="px-4 py-3 text-gray-800 font-medium">Adult Traveler</td>
                         <td className="px-4 py-3 text-center text-gray-700">{quote.adult_count}</td>
                         <td className="px-4 py-3 text-right text-gray-700">
-                          {quote.quoted_currency} ${quote.adult_price?.toLocaleString() || 0}
+                          {quote.quoted_currency || 'USD'} ${quote.adult_price?.toLocaleString() || 0}
                         </td>
                         <td className="px-4 py-3 text-right font-semibold text-gray-800">
-                          {quote.quoted_currency} ${((quote.adult_price || 0) * quote.adult_count).toLocaleString()}
+                          {quote.quoted_currency || 'USD'} ${((quote.adult_price || 0) * quote.adult_count).toLocaleString()}
                         </td>
                       </tr>
                     )}
@@ -137,10 +137,10 @@ export default function CustomerInvoicePreview({ quote }: CustomerInvoicePreview
                         <td className="px-4 py-3 text-gray-800 font-medium">Child Traveler (Under 12)</td>
                         <td className="px-4 py-3 text-center text-gray-700">{quote.child_count}</td>
                         <td className="px-4 py-3 text-right text-gray-700">
-                          {quote.quoted_currency} ${quote.child_price?.toLocaleString() || 0}
+                          {quote.quoted_currency || 'USD'} ${quote.child_price?.toLocaleString() || 0}
                         </td>
                         <td className="px-4 py-3 text-right font-semibold text-gray-800">
-                          {quote.quoted_currency} ${((quote.child_price || 0) * quote.child_count).toLocaleString()}
+                          {quote.quoted_currency || 'USD'} ${((quote.child_price || 0) * quote.child_count).toLocaleString()}
                         </td>
                       </tr>
                     )}
@@ -152,7 +152,7 @@ export default function CustomerInvoicePreview({ quote }: CustomerInvoicePreview
                   <div className="flex justify-between items-center">
                     <span className="text-lg font-semibold">Total Investment:</span>
                     <span className="text-2xl font-bold">
-                      {quote.quoted_currency} ${calculateTotal().toLocaleString()}
+                      {quote.quoted_currency || 'USD'} ${calculateTotal().toLocaleString()}
                     </span>
                   </div>
                 </div>

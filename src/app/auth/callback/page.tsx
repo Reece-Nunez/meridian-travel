@@ -19,7 +19,24 @@ export default function AuthCallback() {
       }
 
       if (data.session) {
-        // User is authenticated, redirect to dashboard or intended page
+        // Check if this is an admin user
+        const userEmail = data.session.user?.email;
+        const isAdmin = userEmail === 'chris@meridianluxury.travel';
+
+        if (isAdmin) {
+          // Set up admin session for the admin auth system
+          localStorage.setItem('admin_session', JSON.stringify({
+            email: userEmail,
+            loginTime: new Date().toISOString()
+          }));
+
+          // Clear any redirect and go to admin
+          sessionStorage.removeItem('redirectAfterLogin');
+          router.push('/admin');
+          return;
+        }
+
+        // Regular user flow - redirect to dashboard or intended page
         const redirectTo = sessionStorage.getItem('redirectAfterLogin') || '/dashboard';
         sessionStorage.removeItem('redirectAfterLogin');
         router.push(redirectTo);

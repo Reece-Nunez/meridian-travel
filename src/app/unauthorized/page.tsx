@@ -36,7 +36,7 @@ export default function Unauthorized() {
             
             <div className="text-center">
               <Link
-                href="/admin/login"
+                href="/auth/signin"
                 className="text-[#B8860B] hover:text-[#DAA520] font-medium"
               >
                 Try signing in with different credentials

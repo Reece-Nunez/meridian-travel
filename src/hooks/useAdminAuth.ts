@@ -17,7 +17,7 @@ export function useAdminAuth() {
         if (error) throw error;
 
         if (!session) {
-          router.push('/admin/login');
+          router.push('/auth/signin');
           return;
         }
 
@@ -36,7 +36,7 @@ export function useAdminAuth() {
         setIsAuthenticated(true);
       } catch (error) {
         console.error('Auth check error:', error);
-        router.push('/admin/login');
+        router.push('/auth/signin');
       } finally {
         setLoading(false);
       }
@@ -47,7 +47,7 @@ export function useAdminAuth() {
     // Listen for auth changes
     const { data: { subscription } } = supabase.auth.onAuthStateChange((event, session) => {
       if (event === 'SIGNED_OUT' || !session) {
-        router.push('/admin/login');
+        router.push('/auth/signin');
       }
     });
 

@@ -17,7 +17,7 @@ export function useSimpleAdminAuth() {
         console.warn('Auth check timeout, forcing login redirect');
         setIsAuthenticated(false);
         setLoading(false);
-        router.push('/admin/login');
+        router.push('/auth/signin');
       }
     }, 5000); // 5 second timeout
     
@@ -35,7 +35,7 @@ export function useSimpleAdminAuth() {
             clearTimeout(fallbackTimer);
             setIsAuthenticated(false);
             setLoading(false);
-            router.push('/admin/login');
+            router.push('/auth/signin');
           }
           return;
         }
@@ -52,7 +52,7 @@ export function useSimpleAdminAuth() {
             clearTimeout(fallbackTimer);
             setIsAuthenticated(false);
             setLoading(false);
-            router.push('/admin/login');
+            router.push('/auth/signin');
           }
           return;
         }
@@ -70,7 +70,7 @@ export function useSimpleAdminAuth() {
             clearTimeout(fallbackTimer);
             setIsAuthenticated(false);
             setLoading(false);
-            router.push('/admin/login');
+            router.push('/auth/signin');
           }
         }
       } catch (error) {
@@ -82,7 +82,7 @@ export function useSimpleAdminAuth() {
           clearTimeout(fallbackTimer);
           setIsAuthenticated(false);
           setLoading(false);
-          router.push('/admin/login');
+          router.push('/auth/signin');
         }
       }
     };

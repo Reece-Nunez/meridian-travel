@@ -5,311 +5,329 @@ import { motion } from 'framer-motion';
 import { useState, useEffect } from 'react';
 import { getContentByKey, getSettingByKey } from '@/lib/content';
 import { supabase } from '@/lib/supabase';
-import { TripPackage } from '@/types/database';
-import Slider from "react-slick";
-import "slick-carousel/slick/slick.css";
-import "slick-carousel/slick/slick-theme.css";
+import { TripPackage, Ship } from '@/types/database';
+
+// Helper function to map destinations to our location categories
+const mapDestinationToLocation = (destination: string): string => {
+  const dest = destination.toLowerCase();
+  if (dest.includes('galapagos')) return 'Galapagos';
+  if (dest.includes('amazon')) return 'Amazon';
+  if (dest.includes('antarctica') || dest.includes('antarctic')) return 'Antarctica';
+  if (dest.includes('chile') || dest.includes('patagonia') || dest.includes('fjord')) return 'Chile';
+  return dest; // fallback to original destination
+};
+
+// Helper function to determine boat type from package data
+const determineBoatType = (pkg: TripPackage): string => {
+  const highlights = pkg.luxury_highlights?.join(' ').toLowerCase() || '';
+  const description = pkg.description?.toLowerCase() || '';
+
+  if (highlights.includes('luxury') || highlights.includes('butler') || highlights.includes('suite')) {
+    return 'Luxury';
+  }
+  if (highlights.includes('adventure') || description.includes('adventure')) {
+    return 'Adventure';
+  }
+  if (highlights.includes('expedition') || description.includes('expedition')) {
+    return 'Expedition';
+  }
+  if (highlights.includes('boutique') || highlights.includes('intimate')) {
+    return 'Boutique';
+  }
+  return 'Expedition'; // default
+};
+
+// Interface for our processed boat data
+interface ProcessedBoat {
+  id: string;
+  name: string;
+  location: string;
+  capacity: number;
+  itineraryCount: number;
+  image: string;
+  startingPrice: number;
+  boatType: string;
+  features: string[];
+  ship: Ship;
+  itineraries: {
+    id: string;
+    name: string;
+    duration: string;
+    price: number;
+    description?: string;
+    highlights?: string[];
+  }[];
+}
+
+const locations = [
+  {
+    name: "Galapagos",
+    title: "Galapagos Discoveries",
+    description: "Follow Darwin's footsteps through the enchanted islands where evolution comes alive with unique wildlife found nowhere else.",
+    image: "/locations/galapagos-hero.webp",
+    boatCount: 4,
+    startingPrice: 3200,
+    features: ["Unique wildlife", "Snorkeling", "Educational tours", "Multiple itineraries"]
+  },
+  {
+    name: "Amazon",
+    title: "Amazon Explorations",
+    description: "Journey deep into the world's largest rainforest, discovering incredible biodiversity and indigenous cultures.",
+    image: "/locations/amazon-hero.png",
+    boatCount: 5,
+    startingPrice: 2400,
+    features: ["Rainforest wildlife", "Indigenous culture", "River expeditions", "Birdwatching"]
+  },
+  {
+    name: "Antarctica",
+    title: "Antarctic Expeditions",
+    description: "Experience the last pristine wilderness on Earth with encounters with penguins, whales, and dramatic ice formations.",
+    image: "/locations/antarctica-hero.jpg",
+    boatCount: 5,
+    startingPrice: 9800,
+    features: ["Emperor penguins", "Massive icebergs", "Zodiac landings", "Expert guides"]
+  },
+  {
+    name: "Chile",
+    title: "Chilean Adventures",
+    description: "Navigate the dramatic fjords and channels of Chilean Patagonia, discovering glaciers, wildlife, and remote landscapes.",
+    image: "/locations/chile-hero.webp",
+    boatCount: 6,
+    startingPrice: 3800,
+    features: ["Glacier viewing", "Fjord navigation", "Wildlife watching", "Hiking excursions"]
+  }
+];
+
+interface ItineraryModalProps {
+  boat: any;
+  isOpen: boolean;
+  onClose: () => void;
+}
+
+function ItineraryModal({ boat, isOpen, onClose }: ItineraryModalProps) {
+  if (!isOpen || !boat) return null;
+
+  return (
+    <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4">
+      <div className="bg-white rounded-lg shadow-xl max-w-4xl w-full max-h-[90vh] overflow-y-auto">
+        <div className="sticky top-0 bg-white border-b border-gray-200 px-6 py-4 flex justify-between items-center">
+          <h3 className="text-2xl font-bold text-[#8B4513]">{boat.name} - Itineraries</h3>
+          <button
+            onClick={onClose}
+            className="text-gray-400 hover:text-gray-600 transition-colors"
+          >
+            <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
+            </svg>
+          </button>
+        </div>
+
+        <div className="p-6">
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+            {boat.itineraries.map((itinerary: any, index: number) => (
+              <div key={index} className="border border-gray-200 rounded-lg p-6 hover:shadow-lg transition-shadow">
+                <h4 className="text-xl font-bold text-[#8B4513] mb-2">{itinerary.name}</h4>
+                <p className="text-[#B8860B] font-semibold mb-2">{itinerary.duration}</p>
+                <p className="text-2xl font-bold text-[#8B4513] mb-4">
+                  From ${itinerary.price.toLocaleString()} per person
+                </p>
+
+                {/* Itinerary Description */}
+                {itinerary.description && (
+                  <div className="mb-4">
+                    <h5 className="font-semibold text-gray-900 mb-2">Description:</h5>
+                    <p className="text-sm text-gray-600">{itinerary.description}</p>
+                  </div>
+                )}
+
+                {/* Itinerary Highlights */}
+                {itinerary.highlights && itinerary.highlights.length > 0 && (
+                  <div className="mb-4">
+                    <h5 className="font-semibold text-gray-900 mb-2">Highlights:</h5>
+                    <div className="space-y-1">
+                      {itinerary.highlights.map((highlight: string, hIndex: number) => (
+                        <div key={hIndex} className="flex items-start text-sm text-gray-600">
+                          <svg className="w-4 h-4 text-[#B8860B] mr-2 mt-0.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" />
+                          </svg>
+                          {highlight}
+                        </div>
+                      ))}
+                    </div>
+                  </div>
+                )}
+
+                <div className="space-y-2 mb-6">
+                  <h5 className="font-semibold text-gray-900">Boat Features:</h5>
+                  {boat.features.map((feature: string, fIndex: number) => (
+                    <div key={fIndex} className="flex items-center text-sm text-gray-600">
+                      <svg className="w-4 h-4 text-[#B8860B] mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" />
+                      </svg>
+                      {feature}
+                    </div>
+                  ))}
+                </div>
+
+                <Link
+                  href={`/quote?packageId=${itinerary.id}&boat=${boat.name}&itinerary=${itinerary.name}&location=${boat.location}`}
+                  className="block w-full bg-[#B8860B] hover:bg-[#DAA520] text-white text-center py-3 rounded-md font-medium transition-colors"
+                  onClick={onClose}
+                >
+                  Request Quote
+                </Link>
+              </div>
+            ))}
+          </div>
+        </div>
+      </div>
+    </div>
+  );
+}
 
 export default function Cruises() {
   const [content, setContent] = useState({
-    cruisesTitle: '',
-    cruisesContent: '',
-    companyName: '',
-    accommodationsTitle: '',
-    accommodationsSubtitle: '',
-    itinerariesTitle: '',
-    itinerariesSubtitle: '',
-    pricingTitle: '',
-    pricingSubtitle: '',
-    includedTitle: '',
-    additionalTitle: '',
-    bookingTitle: '',
-    bookingSubtitle: '',
-    bookingButton: ''
+    cruisesTitle: 'Luxury South American Cruises',
+    cruisesContent: 'Discover the pristine wilderness of Antarctica, the dramatic fjords of Patagonia, the unique wildlife of the Galapagos, and the incredible biodiversity of the Amazon aboard our carefully selected fleet of luxury expedition vessels.',
+    companyName: 'Meridian Luxury Travel'
   });
 
-  const [currentSlide, setCurrentSlide] = useState(0);
+  const [selectedLocation, setSelectedLocation] = useState<string | null>(null);
+  const [selectedBoat, setSelectedBoat] = useState<any>(null);
+  const [isModalOpen, setIsModalOpen] = useState(false);
   const [cruisePackages, setCruisePackages] = useState<TripPackage[]>([]);
+  const [processedBoats, setProcessedBoats] = useState<ProcessedBoat[]>([]);
   const [loading, setLoading] = useState(true);
 
-  const slideImages = [
-    {
-      src: '/galapagos-1.jpg',
-      alt: 'Sea lions basking on volcanic rocks',
-      caption: 'Meet the Galapagos sea lions up close'
-    },
-    {
-      src: '/galapagos-2.jpg',
-      alt: 'Giant tortoise in natural habitat',
-      caption: 'Encounter the famous Galapagos giant tortoises'
-    },
-    {
-      src: '/galapagos-3.jpg',
-      alt: 'Blue-footed booby birds',
-      caption: 'Observe unique bird species like the blue-footed booby'
-    },
-    {
-      src: '/galapagos-4.webp',
-      alt: 'Volcanic landscape of the islands',
-      caption: 'Explore dramatic volcanic landscapes'
-    },
-    {
-      src: '/galapagos-5.jpg',
-      alt: 'Snorkeling with marine life',
-      caption: 'Snorkel with incredible marine wildlife'
-    }
-  ];
+  const filteredBoats = selectedLocation
+    ? processedBoats.filter(boat => boat.location === selectedLocation)
+    : processedBoats;
 
-  const cabinTypes = [
-    {
-      name: 'Standard Plus',
-      image: '/cabin-standard-plus.jpg',
-      size: '160 sq ft',
-      features: ['Ocean view porthole', 'Twin or double bed', 'Private bathroom', 'Air conditioning', 'Storage space'],
-      description: 'Comfortable and well-appointed cabins with ocean views through portholes.'
-    },
-    {
-      name: 'Superior',
-      image: '/cabin-superior.jpg',
-      size: '200 sq ft',
-      features: ['Large panoramic window', 'Queen bed', 'Sitting area', 'Premium amenities', 'Mini-bar'],
-      description: 'Spacious cabins with large windows offering stunning ocean panoramas.'
-    },
-    {
-      name: 'Premium',
-      image: '/cabin-premium.jpg',
-      size: '240 sq ft',
-      features: ['Floor-to-ceiling windows', 'King bed', 'Separate seating area', 'Premium bath amenities', 'Room service'],
-      description: 'Luxurious cabins with expansive windows and premium appointments.'
-    },
-    {
-      name: 'Premium Plus',
-      image: '/cabin-premium-plus.jpg',
-      size: '280 sq ft',
-      features: ['Private balcony', 'King bed', 'Living area', 'Marble bathroom', 'Butler service'],
-      description: 'Elegant cabins featuring private balconies for ultimate privacy and comfort.'
-    },
-    {
-      name: 'Junior Suite',
-      image: '/cabin-junior-suite.jpg',
-      size: '320 sq ft',
-      features: ['Large private balcony', 'Separate bedroom', 'Living room', 'Marble bathroom with tub', 'Concierge service'],
-      description: 'Spacious suites with separate living areas and oversized balconies.'
-    },
-    {
-      name: 'Master Suite',
-      image: '/cabin-master-suite.jpg',
-      size: '400 sq ft',
-      features: ['Wraparound balcony', 'King bedroom suite', 'Separate living room', 'Luxury bathroom', 'Personal butler'],
-      description: 'Our most luxurious accommodations with wraparound balconies and premium services.'
-    },
-    {
-      name: 'Owner\'s Suite',
-      image: '/cabin-owners-suite.jpg',
-      size: '500 sq ft',
-      features: ['Private deck', 'Master bedroom', 'Full living room', 'Dining area', 'Dedicated butler service'],
-      description: 'The pinnacle of luxury with private decks and unparalleled space and service.'
-    }
-  ];
-
-  // React Slick settings for cabin carousel
-  const cabinSliderSettings = {
-    dots: true,
-    infinite: true,
-    speed: 500,
-    slidesToShow: 2,
-    slidesToScroll: 1,
-    responsive: [
-      {
-        breakpoint: 1024,
-        settings: {
-          slidesToShow: 1,
-          slidesToScroll: 1,
-        }
-      }
-    ],
-    nextArrow: <NextArrow />,
-    prevArrow: <PrevArrow />,
+  const openItineraryModal = (boat: any) => {
+    setSelectedBoat(boat);
+    setIsModalOpen(true);
   };
 
-  // Custom arrow components
-  function NextArrow(props: any) {
-    const { onClick } = props;
-    return (
-      <button
-        onClick={onClick}
-        className="absolute -right-12 top-1/2 transform -translate-y-1/2 text-[#B8860B] hover:text-[#DAA520] transition-all duration-200 z-10"
-        style={{ display: 'block' }}
-      >
-        <svg className="w-8 h-8" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5l7 7-7 7" />
-        </svg>
-      </button>
-    );
-  }
+  const closeItineraryModal = () => {
+    setSelectedBoat(null);
+    setIsModalOpen(false);
+  };
 
-  function PrevArrow(props: any) {
-    const { onClick } = props;
-    return (
-      <button
-        onClick={onClick}
-        className="absolute -left-12 top-1/2 transform -translate-y-1/2 text-[#B8860B] hover:text-[#DAA520] transition-all duration-200 z-10"
-        style={{ display: 'block' }}
-      >
-        <svg className="w-8 h-8" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 19l-7-7 7-7" />
-        </svg>
-      </button>
-    );
-  }
-
-  const cruiseItineraries = [
-    {
-      name: '4-Day Western Islands',
-      duration: '4 Days / 3 Nights',
-      image: '/itinerary-western.jpg',
-      highlights: [
-        'Santa Cruz Island - Darwin Research Station',
-        'Isabela Island - Sierra Negra Volcano',
-        'Fernandina Island - Marine iguana colony',
-        'Tagus Cove - Historical site and wildlife viewing'
-      ],
-      description: 'Explore the western islands of the Galapagos, known for their volcanic activity and unique wildlife.',
-      price: 'From $3,200 per person'
-    },
-    {
-      name: '5-Day Eastern Islands',
-      duration: '5 Days / 4 Nights',
-      image: '/itinerary-eastern.jpg',
-      highlights: [
-        'San Cristóbal - Sea Lion Colony',
-        'Española Island - Waved albatross nesting',
-        'Floreana Island - Flamingo Lagoon',
-        'Santa Fe Island - Land iguana sanctuary',
-        'North Seymour - Blue-footed booby colony'
-      ],
-      description: 'Discover the eastern archipelago with its diverse bird life and pristine beaches.',
-      price: 'From $4,000 per person'
-    },
-    {
-      name: '8-Day Complete Circuit',
-      duration: '8 Days / 7 Nights',
-      image: '/itinerary-complete.jpg',
-      highlights: [
-        'All major islands and wildlife sites',
-        'Darwin and Wolf Islands diving',
-        'Genovesa Island - Bird watching paradise',
-        'Santiago Island - Fur seal grotto',
-        'Bartolomé Island - Iconic pinnacle rock',
-        'Plaza Sur - Land and marine iguana interaction'
-      ],
-      description: 'The ultimate Galapagos experience covering all major islands and wildlife encounters.',
-      price: 'From $7,500 per person'
-    }
-  ];
-
-  useEffect(() => {
-    const interval = setInterval(() => {
-      setCurrentSlide((prev) => (prev + 1) % slideImages.length);
-    }, 5000);
-
-    return () => clearInterval(interval);
-  }, [slideImages.length]);
-
-  const fetchCruisePackages = async () => {
+  // Fetch cruise packages and process them into boats
+  const fetchCruiseData = async () => {
     try {
-      const { data, error } = await supabase
+      // Join trip_packages with ships table to get rich ship data
+      const { data: packagesWithShips, error } = await supabase
         .from('trip_packages')
-        .select('*')
+        .select(`
+          *,
+          ship:ships(*)
+        `)
         .eq('type', 'cruise')
         .eq('is_active', true)
-        .order('created_at', { ascending: false });
+        .not('ship_id', 'is', null)
+        .order('ship_id', { ascending: true });
 
       if (error) throw error;
-      setCruisePackages(data || []);
+
+      setCruisePackages(packagesWithShips || []);
+
+      // Group packages by ship_id to create boats
+      const boatsMap = new Map<string, ProcessedBoat>();
+
+      packagesWithShips?.forEach((pkg: any) => {
+        if (!pkg.ship || !pkg.ship_id) return; // Skip packages without ship data
+
+        const ship = pkg.ship;
+        const shipId = pkg.ship_id;
+        const location = mapDestinationToLocation(pkg.destination);
+
+        if (!boatsMap.has(shipId)) {
+          // Create new boat entry using ship data
+          boatsMap.set(shipId, {
+            id: shipId,
+            name: ship.name,
+            location: location,
+            capacity: ship.capacity,
+            itineraryCount: 0,
+            image: ship.images && ship.images[0] ? ship.images[0] : '/cruise-default.jpg',
+            startingPrice: 0,
+            boatType: ship.ship_type || 'Expedition',
+            features: ship.luxury_highlights?.slice(0, 3) || ship.ship_features?.slice(0, 3) || ['Professional crew', 'Naturalist guides', 'Premium amenities'],
+            ship: ship,
+            itineraries: []
+          });
+        }
+
+        const boat = boatsMap.get(shipId)!;
+
+        // Add this package as an itinerary
+        boat.itineraries.push({
+          id: pkg.id,
+          name: pkg.title,
+          duration: `${pkg.duration} days`,
+          price: 0, // We'll need to add pricing fields to the database
+          description: pkg.description || undefined,
+          highlights: pkg.luxury_highlights || undefined
+        });
+
+        // Update boat stats
+        boat.itineraryCount = boat.itineraries.length;
+
+        // Use the lowest price as starting price (placeholder since we don't have pricing yet)
+        // For now, we'll use a base price calculation based on duration and destination
+        const basePrice = calculateBasePrice(pkg.duration, location);
+        if (boat.startingPrice === 0 || basePrice < boat.startingPrice) {
+          boat.startingPrice = basePrice;
+        }
+      });
+
+      // Convert map to array
+      const processedBoatsArray = Array.from(boatsMap.values());
+      setProcessedBoats(processedBoatsArray);
+
     } catch (error) {
-      console.error('Error fetching cruise packages:', error);
+      console.error('Error fetching cruise data:', error);
+      setProcessedBoats([]); // Fallback to empty array
     } finally {
       setLoading(false);
     }
   };
 
+  // Helper function to calculate base price (temporary until pricing is added to DB)
+  const calculateBasePrice = (duration: number, location: string): number => {
+    const basePrices: { [key: string]: number } = {
+      'Antarctica': 1000,
+      'Chile': 400,
+      'Galapagos': 500,
+      'Amazon': 350
+    };
+
+    const baseRate = basePrices[location] || 400;
+    return duration * baseRate;
+  };
+
   useEffect(() => {
     const fetchContent = async () => {
       try {
-        const [
-          cruisesTitle,
-          cruisesContent,
-          companyName,
-          accommodationsTitle,
-          accommodationsSubtitle,
-          itinerariesTitle,
-          itinerariesSubtitle,
-          pricingTitle,
-          pricingSubtitle,
-          includedTitle,
-          additionalTitle,
-          bookingTitle,
-          bookingSubtitle,
-          bookingButton
-        ] = await Promise.all([
+        const [cruisesTitle, cruisesContent, companyName] = await Promise.all([
           getContentByKey('cruises_page_title'),
           getContentByKey('cruises_page_content'),
-          getSettingByKey('company_name'),
-          getContentByKey('cruises_accommodations_title'),
-          getContentByKey('cruises_accommodations_subtitle'),
-          getContentByKey('cruises_itineraries_title'),
-          getContentByKey('cruises_itineraries_subtitle'),
-          getContentByKey('cruises_pricing_title'),
-          getContentByKey('cruises_pricing_subtitle'),
-          getContentByKey('cruises_included_title'),
-          getContentByKey('cruises_additional_title'),
-          getContentByKey('cruises_booking_title'),
-          getContentByKey('cruises_booking_subtitle'),
-          getContentByKey('cruises_booking_button')
+          getSettingByKey('company_name')
         ]);
 
-        // Set content from CMS or fallbacks - the getContentByKey function handles fallbacks
         setContent({
-          cruisesTitle: cruisesTitle,
-          cruisesContent: cruisesContent,
-          companyName: companyName,
-          accommodationsTitle: accommodationsTitle,
-          accommodationsSubtitle: accommodationsSubtitle,
-          itinerariesTitle: itinerariesTitle,
-          itinerariesSubtitle: itinerariesSubtitle,
-          pricingTitle: pricingTitle,
-          pricingSubtitle: pricingSubtitle,
-          includedTitle: includedTitle,
-          additionalTitle: additionalTitle,
-          bookingTitle: bookingTitle,
-          bookingSubtitle: bookingSubtitle,
-          bookingButton: bookingButton
+          cruisesTitle: cruisesTitle || 'Luxury South American Cruises',
+          cruisesContent: cruisesContent || 'Discover the pristine wilderness of Antarctica, the dramatic fjords of Patagonia, the unique wildlife of the Galapagos, and the incredible biodiversity of the Amazon aboard our carefully selected fleet of luxury expedition vessels.',
+          companyName: companyName || 'Meridian Luxury Travel'
         });
       } catch (error) {
-        console.log('CMS content unavailable for cruises page, using fallback content', error);
-        // Set fallback content directly from the content system
-        setContent({
-          cruisesTitle: await getContentByKey('cruises_page_title'),
-          cruisesContent: await getContentByKey('cruises_page_content'),
-          companyName: await getSettingByKey('company_name'),
-          accommodationsTitle: await getContentByKey('cruises_accommodations_title'),
-          accommodationsSubtitle: await getContentByKey('cruises_accommodations_subtitle'),
-          itinerariesTitle: await getContentByKey('cruises_itineraries_title'),
-          itinerariesSubtitle: await getContentByKey('cruises_itineraries_subtitle'),
-          pricingTitle: await getContentByKey('cruises_pricing_title'),
-          pricingSubtitle: await getContentByKey('cruises_pricing_subtitle'),
-          includedTitle: await getContentByKey('cruises_included_title'),
-          additionalTitle: await getContentByKey('cruises_additional_title'),
-          bookingTitle: await getContentByKey('cruises_booking_title'),
-          bookingSubtitle: await getContentByKey('cruises_booking_subtitle'),
-          bookingButton: await getContentByKey('cruises_booking_button')
-        });
+        console.log('CMS content unavailable for cruises page, using fallback content');
       }
     };
 
     fetchContent();
-    fetchCruisePackages();
+    fetchCruiseData(); // Fetch cruise data from database
   }, []);
 
   return (
@@ -318,7 +336,7 @@ export default function Cruises() {
       <div className="relative h-[600px] overflow-hidden">
         <img
           src="/cruise-ship.png"
-          alt="Luxury cruise ship in the Galapagos Islands"
+          alt="Luxury cruise ship"
           className="w-full h-full object-cover"
           onError={(e) => {
             console.error('Failed to load cruise-ship.jpg');
@@ -336,471 +354,341 @@ export default function Cruises() {
             >
               {content.cruisesTitle}
             </motion.h1>
+            <motion.p
+              className="text-xl sm:text-2xl mb-8"
+              initial={{ opacity: 0, y: 30 }}
+              animate={{ opacity: 1, y: 0 }}
+              transition={{ duration: 0.8, delay: 0.4 }}
+            >
+              {content.cruisesContent}
+            </motion.p>
           </div>
         </div>
       </div>
 
-      {/* Title and Description Section */}
-      <div className="py-16 px-4 sm:px-6 lg:px-8 max-w-7xl mx-auto">
-        <div className="max-w-4xl mx-auto text-center">
-          <motion.h2
-            className="text-3xl sm:text-4xl font-bold text-[#8B4513] mb-8"
-            initial={{ opacity: 0, y: 20 }}
-            whileInView={{ opacity: 1, y: 0 }}
-            viewport={{ once: true }}
-            transition={{ duration: 0.6 }}
-          >
-            {content.cruisesTitle}
-          </motion.h2>
-          <motion.p
-            className="text-lg text-gray-600 leading-relaxed"
-            initial={{ opacity: 0, y: 20 }}
-            whileInView={{ opacity: 1, y: 0 }}
-            viewport={{ once: true }}
-            transition={{ duration: 0.6, delay: 0.2 }}
-          >
-            {content.cruisesContent}
-          </motion.p>
+      {/* Location Navigation */}
+      <div className="bg-[#F5F5DC] py-8">
+        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+          <div className="flex flex-wrap justify-center gap-4">
+            <button
+              onClick={() => setSelectedLocation(null)}
+              className={`px-6 py-3 rounded-md font-medium transition-colors ${
+                selectedLocation === null
+                  ? 'bg-[#B8860B] text-white'
+                  : 'bg-white text-[#8B4513] hover:bg-gray-50'
+              }`}
+            >
+              All Locations
+            </button>
+            {locations.map((location) => (
+              <button
+                key={location.name}
+                onClick={() => setSelectedLocation(location.name)}
+                className={`px-6 py-3 rounded-md font-medium transition-colors ${
+                  selectedLocation === location.name
+                    ? 'bg-[#B8860B] text-white'
+                    : 'bg-white text-[#8B4513] hover:bg-gray-50'
+                }`}
+              >
+                {location.title}
+              </button>
+            ))}
+          </div>
         </div>
       </div>
 
-      {/* Image Slideshow Section */}
-      <div className="bg-[#F5F5DC]">
-        {/* Image Slideshow */}
-        <div className="relative h-[600px] overflow-hidden">
-            <div className="relative w-full h-full">
-              {slideImages.map((image, index) => (
-                <motion.div
-                  key={index}
-                  className="absolute inset-0"
-                  initial={{ opacity: 0 }}
-                  animate={{
-                    opacity: index === currentSlide ? 1 : 0,
-                    scale: index === currentSlide ? 1 : 1.05
-                  }}
-                  transition={{
-                    opacity: { duration: 0.8 },
-                    scale: { duration: 8 }
-                  }}
-                >
+      {/* Location Overview Cards (when no specific location selected) */}
+      {!selectedLocation && (
+        <div className="py-16 px-4 sm:px-6 lg:px-8 max-w-7xl mx-auto">
+          <div className="text-center mb-12">
+            <h2 className="text-3xl sm:text-4xl font-bold text-[#8B4513] mb-4">
+              Choose Your Adventure
+            </h2>
+            <p className="text-lg text-gray-600 max-w-3xl mx-auto">
+              From the pristine wilderness of Antarctica to the incredible biodiversity of the Amazon,
+              each destination offers unique experiences aboard our carefully selected fleet.
+            </p>
+          </div>
+
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
+            {locations.map((location, index) => (
+              <motion.div
+                key={location.name}
+                className="bg-white rounded-lg shadow-lg overflow-hidden hover:shadow-xl transition-shadow cursor-pointer"
+                initial={{ opacity: 0, y: 30 }}
+                whileInView={{ opacity: 1, y: 0 }}
+                viewport={{ once: true }}
+                transition={{ duration: 0.6, delay: index * 0.1 }}
+                onClick={() => setSelectedLocation(location.name)}
+              >
+                <div className="h-64 relative overflow-hidden">
                   <img
-                    src={image.src}
-                    alt={image.alt}
-                    className="w-full h-full object-cover"
+                    src={location.image}
+                    alt={location.title}
+                    className="w-full h-full object-cover hover:scale-105 transition-transform duration-300"
                     onError={(e) => {
-                      console.error(`Failed to load ${image.src}`);
-                      e.currentTarget.style.display = 'none';
+                      e.currentTarget.src = '/cruise-default.jpg';
                     }}
                   />
-                </motion.div>
-              ))}
-            </div>
+                  <div className="absolute top-4 left-4 bg-[#B8860B] text-white px-3 py-1 rounded-full text-sm font-medium">
+                    {location.boatCount} boats available
+                  </div>
+                  <div className="absolute bottom-4 right-4 bg-black bg-opacity-75 text-white px-3 py-1 rounded-full text-sm">
+                    From ${location.startingPrice.toLocaleString()}
+                  </div>
+                </div>
 
-            {/* Navigation Arrows */}
-            <button
-              onClick={() => setCurrentSlide((prev) => (prev - 1 + slideImages.length) % slideImages.length)}
-              className="absolute left-4 top-1/2 transform -translate-y-1/2 text-white hover:text-gray-300 transition-all duration-200"
-              aria-label="Previous image"
-            >
-              <svg className="w-8 h-8" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={3} d="M15 19l-7-7 7-7" />
-              </svg>
-            </button>
+                <div className="p-6">
+                  <h3 className="text-2xl font-bold text-[#8B4513] mb-3">{location.title}</h3>
+                  <p className="text-gray-600 mb-4">{location.description}</p>
 
-            <button
-              onClick={() => setCurrentSlide((prev) => (prev + 1) % slideImages.length)}
-              className="absolute right-4 top-1/2 transform -translate-y-1/2 text-white hover:text-gray-300 transition-all duration-200"
-              aria-label="Next image"
-            >
-              <svg className="w-8 h-8" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={3} d="M9 5l7 7-7 7" />
-              </svg>
-            </button>
+                  <div className="grid grid-cols-2 gap-2 mb-4">
+                    {location.features.map((feature, fIndex) => (
+                      <div key={fIndex} className="flex items-center text-sm text-gray-600">
+                        <svg className="w-4 h-4 text-[#B8860B] mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" />
+                        </svg>
+                        {feature}
+                      </div>
+                    ))}
+                  </div>
 
-            {/* Custom Line Indicators */}
-            <div className="absolute bottom-4 left-1/2 transform -translate-x-1/2 flex space-x-2">
-              {slideImages.map((_, index) => (
-                <button
-                  key={index}
-                  onClick={() => setCurrentSlide(index)}
-                  className={`h-1 transition-all duration-300 ${
-                    index === currentSlide
-                      ? 'w-12 bg-white'
-                      : 'w-6 bg-white bg-opacity-50 hover:bg-opacity-75'
-                  }`}
-                  aria-label={`Go to slide ${index + 1}`}
-                />
-              ))}
-            </div>
+                  <button className="w-full bg-[#B8860B] hover:bg-[#DAA520] text-white py-3 rounded-md font-medium transition-colors">
+                    Explore {location.title}
+                  </button>
+                </div>
+              </motion.div>
+            ))}
           </div>
-      </div>
+        </div>
+      )}
 
-      {/* Cabins Section */}
-      <div className="py-16">
-        <div className="px-4 sm:px-6 lg:px-8 max-w-7xl mx-auto">
+      {/* Boat Cards - Specific Location View */}
+      {selectedLocation && (
+        <div className="py-16 px-4 sm:px-6 lg:px-8 max-w-7xl mx-auto">
           <div className="text-center mb-12">
-            <h3 className="text-3xl font-bold text-[#8B4513] mb-4">
-              {content.accommodationsTitle}
-            </h3>
-            <p className="text-lg text-gray-600 max-w-2xl mx-auto">
-              {content.accommodationsSubtitle}
+            <h2 className="text-3xl sm:text-4xl font-bold text-[#8B4513] mb-4">
+              {locations.find(l => l.name === selectedLocation)?.title} Fleet
+            </h2>
+            <p className="text-lg text-gray-600">
+              {locations.find(l => l.name === selectedLocation)?.description}
             </p>
           </div>
 
-          {/* Cabins Carousel with React Slick */}
-          <div className="relative cabin-slider">
-            <style jsx global>{`
-              .cabin-slider .slick-dots {
-                bottom: -50px !important;
-                display: flex !important;
-                justify-content: center !important;
-                align-items: center !important;
-                gap: 8px !important;
-                list-style: none !important;
-                padding: 0 !important;
-                margin: 0 !important;
-              }
-              .cabin-slider .slick-dots li {
-                margin: 0 !important;
-                width: auto !important;
-                height: auto !important;
-                display: block !important;
-              }
-              .cabin-slider .slick-dots li button {
-                width: 24px !important;
-                height: 4px !important;
-                padding: 0 !important;
-                background-color: #d1d5db !important;
-                border-radius: 2px !important;
-                border: none !important;
-                transition: all 0.3s ease !important;
-                cursor: pointer !important;
-                display: block !important;
-                outline: none !important;
-                text-indent: -9999px !important;
-              }
-              .cabin-slider .slick-dots li button:before {
-                display: none !important;
-              }
-              .cabin-slider .slick-dots li.slick-active button {
-                width: 48px !important;
-                background-color: #B8860B !important;
-              }
-              .cabin-slider .slick-dots li button:hover {
-                background-color: #9ca3af !important;
-              }
-              .cabin-slider .slick-dots li.slick-active button:hover {
-                background-color: #DAA520 !important;
-              }
-              .cabin-slider .slick-arrow {
-                z-index: 10 !important;
-              }
-              .cabin-slider .slick-arrow:before {
-                display: none !important;
-              }
-            `}</style>
-            <Slider {...cabinSliderSettings}>
-              {cabinTypes.map((cabin, index) => (
-                <div key={cabin.name} className="px-4">
-                  <motion.div
-                    className="bg-white rounded-lg shadow-lg overflow-hidden"
-                    initial={{ opacity: 0, y: 30 }}
-                    whileInView={{ opacity: 1, y: 0 }}
-                    viewport={{ once: true }}
-                    transition={{ duration: 0.6, delay: index * 0.1 }}
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
+            {filteredBoats.map((boat, index) => (
+              <motion.div
+                key={boat.id}
+                className="bg-white rounded-lg shadow-lg overflow-hidden hover:shadow-xl transition-shadow"
+                initial={{ opacity: 0, y: 30 }}
+                whileInView={{ opacity: 1, y: 0 }}
+                viewport={{ once: true }}
+                transition={{ duration: 0.6, delay: index * 0.1 }}
+              >
+                <div className="h-48 relative overflow-hidden">
+                  <img
+                    src={boat.image}
+                    alt={boat.name}
+                    className="w-full h-full object-cover hover:scale-105 transition-transform duration-300"
+                    onError={(e) => {
+                      e.currentTarget.src = '/cruise-default.jpg';
+                    }}
+                  />
+                  <div className="absolute top-4 left-4 bg-[#B8860B] text-white px-3 py-1 rounded-full text-sm font-medium">
+                    {boat.capacity} guests
+                  </div>
+                  <div className="absolute top-4 right-4 bg-blue-100 text-blue-800 px-3 py-1 rounded-full text-xs font-medium">
+                    {boat.boatType}
+                  </div>
+                  <div className="absolute bottom-4 left-4 bg-black bg-opacity-75 text-white px-3 py-1 rounded-full text-sm">
+                    {boat.location}
+                  </div>
+                  <div className="absolute bottom-4 right-4 bg-green-100 text-green-800 px-3 py-1 rounded-full text-xs font-medium">
+                    {boat.itineraryCount} itinerary{boat.itineraryCount > 1 ? 'ies' : ''}
+                  </div>
+                </div>
+
+                <div className="p-6">
+                  <h3 className="text-xl font-bold text-[#8B4513] mb-2">{boat.name}</h3>
+                  <p className="text-2xl font-bold text-[#B8860B] mb-4">
+                    From ${boat.startingPrice.toLocaleString()}
+                  </p>
+
+                  <div className="space-y-2 mb-6">
+                    <h4 className="font-semibold text-gray-900">Features:</h4>
+                    {boat.features.slice(0, 3).map((feature: string, fIndex: number) => (
+                      <div key={fIndex} className="flex items-center text-sm text-gray-600">
+                        <svg className="w-4 h-4 text-[#B8860B] mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" />
+                        </svg>
+                        {feature}
+                      </div>
+                    ))}
+                  </div>
+
+                  <button
+                    onClick={() => openItineraryModal(boat)}
+                    className="w-full bg-[#B8860B] hover:bg-[#DAA520] text-white py-3 rounded-md font-medium transition-colors"
                   >
-                    <div className="h-64 relative overflow-hidden">
-                      <img
-                        src={cabin.image}
-                        alt={`${cabin.name} cabin interior`}
-                        className="w-full h-full object-cover hover:scale-105 transition-transform duration-300"
-                        onError={(e) => {
-                          console.error(`Failed to load ${cabin.image}`);
-                          e.currentTarget.style.display = 'none';
-                        }}
-                      />
-                      <div className="absolute top-4 right-4 bg-[#B8860B] text-[#F5F5DC] px-3 py-1 rounded-full text-sm font-medium">
-                        {cabin.size}
-                      </div>
-                    </div>
-
-                    <div className="p-6">
-                      <h4 className="text-xl font-bold text-[#8B4513] mb-2">
-                        {cabin.name}
-                      </h4>
-                      <p className="text-gray-600 mb-4">
-                        {cabin.description}
-                      </p>
-
-                      <h5 className="font-semibold text-[#8B4513] mb-2">Features:</h5>
-                      <ul className="space-y-1">
-                        {cabin.features.map((feature, featureIndex) => (
-                          <li key={featureIndex} className="text-gray-600 flex items-center">
-                            <svg className="w-4 h-4 text-[#B8860B] mr-2 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" />
-                            </svg>
-                            {feature}
-                          </li>
-                        ))}
-                      </ul>
-                    </div>
-                  </motion.div>
+                    View Itineraries ({boat.itineraryCount})
+                  </button>
                 </div>
-              ))}
-            </Slider>
+              </motion.div>
+            ))}
           </div>
         </div>
-      </div>
+      )}
 
-      {/* Itineraries Section */}
-      <div className="py-16 bg-[#F5F5DC]">
-        <div className="px-4 sm:px-6 lg:px-8 max-w-7xl mx-auto">
-          <div className="text-center mb-12">
-            <h3 className="text-3xl font-bold text-[#8B4513] mb-4">
-              {content.itinerariesTitle}
-            </h3>
-            <p className="text-lg text-gray-600 max-w-2xl mx-auto">
-              {content.itinerariesSubtitle}
-            </p>
-          </div>
+      {/* All Locations View - Boats Grouped by Location */}
+      {!selectedLocation && (
+        <div className="py-16">
+          {locations.map((location, locationIndex) => {
+            const locationBoats = processedBoats.filter(boat => boat.location === location.name);
 
-          {/* Cruise Packages */}
-          {loading ? (
-            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
-              {[1, 2, 3].map((i) => (
-                <div key={i} className="bg-white rounded-lg shadow-lg overflow-hidden animate-pulse">
-                  <div className="h-48 bg-gray-200"></div>
-                  <div className="p-6">
-                    <div className="h-6 bg-gray-200 rounded mb-2"></div>
-                    <div className="h-4 bg-gray-200 rounded mb-4"></div>
-                    <div className="space-y-2 mb-4">
-                      <div className="h-3 bg-gray-200 rounded"></div>
-                      <div className="h-3 bg-gray-200 rounded"></div>
-                      <div className="h-3 bg-gray-200 rounded"></div>
-                    </div>
-                    <div className="h-10 bg-gray-200 rounded"></div>
-                  </div>
-                </div>
-              ))}
-            </div>
-          ) : cruisePackages.length > 0 ? (
-            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
-              {cruisePackages.map((cruise, index) => (
-                <motion.div
-                  key={cruise.id}
-                  className="bg-white rounded-lg shadow-lg overflow-hidden hover:shadow-xl transition-shadow duration-300"
-                  initial={{ opacity: 0, y: 30 }}
-                  whileInView={{ opacity: 1, y: 0 }}
-                  viewport={{ once: true }}
-                  transition={{ duration: 0.6, delay: index * 0.2 }}
-                >
-                  <div className="h-48 relative overflow-hidden">
-                    <img
-                      src={cruise.images && cruise.images[0] ? cruise.images[0] : '/cruise-default.jpg'}
-                      alt={cruise.title}
-                      className="w-full h-full object-cover hover:scale-105 transition-transform duration-300"
-                      onError={(e) => {
-                        console.error(`Failed to load image for ${cruise.title}`);
-                        e.currentTarget.src = '/cruise-default.jpg';
-                      }}
-                    />
-                    <div className="absolute top-4 left-4 bg-[#B8860B] text-[#F5F5DC] px-3 py-1 rounded-full text-sm font-medium">
-                      {cruise.duration} days
-                    </div>
-                    <div className="absolute top-4 right-4 bg-blue-100 text-blue-800 px-3 py-1 rounded-full text-xs font-medium">
-                      Cruise
-                    </div>
-                    {cruise.destination && (
-                      <div className="absolute bottom-4 left-4 bg-black bg-opacity-75 text-white px-3 py-1 rounded-full text-sm">
-                        {cruise.destination}
-                      </div>
-                    )}
-                  </div>
-
-                  <div className="p-6">
-                    <h4 className="text-xl font-bold text-[#8B4513] mb-2">
-                      {cruise.title}
-                    </h4>
-                    {cruise.description && (
-                      <p className="text-gray-600 mb-4">
-                        {cruise.description}
-                      </p>
-                    )}
-
-                    {/* Cruise Details */}
-                    {(cruise.cruise_line || cruise.ship_name) && (
-                      <div className="mb-4">
-                        <h5 className="font-semibold text-[#8B4513] mb-2">Cruise Details:</h5>
-                        <div className="space-y-1 text-sm text-gray-600">
-                          {cruise.cruise_line && (
-                            <div className="flex items-center">
-                              <svg className="w-4 h-4 text-[#B8860B] mr-2 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 21V5a2 2 0 00-2-2H7a2 2 0 00-2 2v16m14 0h2m-2 0h-5m-9 0H3m2 0h5M9 7h1m-1 4h1m4-4h1m-1 4h1m-5 10v-5a1 1 0 011-1h2a1 1 0 011 1v5m-4 0h4" />
-                              </svg>
-                              <span>Cruise Line: {cruise.cruise_line}</span>
-                            </div>
-                          )}
-                          {cruise.ship_name && (
-                            <div className="flex items-center">
-                              <svg className="w-4 h-4 text-[#B8860B] mr-2 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 2l3.09 6.26L22 9.27l-5 4.87 1.18 6.88L12 17.77l-6.18 3.25L7 14.14 2 9.27l6.91-1.01L12 2z" />
-                              </svg>
-                              <span>Ship: {cruise.ship_name}</span>
-                            </div>
-                          )}
-                          {cruise.cabin_category && (
-                            <div className="flex items-center">
-                              <svg className="w-4 h-4 text-[#B8860B] mr-2 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8 14v3m4-3v3m4-3v3M3 21h18M3 10h18M3 7l9-4 9 4M4 10h16v11H4V10z" />
-                              </svg>
-                              <span>Cabin: {cruise.cabin_category}</span>
-                            </div>
-                          )}
-                          {(cruise.departure_port || cruise.arrival_port) && (
-                            <div className="flex items-center">
-                              <svg className="w-4 h-4 text-[#B8860B] mr-2 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M17.657 16.657L13.414 20.9a1.998 1.998 0 01-2.827 0l-4.244-4.243a8 8 0 1111.314 0z" />
-                                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 11a3 3 0 11-6 0 3 3 0 016 0z" />
-                              </svg>
-                              <span>{cruise.departure_port}{cruise.departure_port && cruise.arrival_port ? ' → ' : ''}{cruise.arrival_port}</span>
-                            </div>
-                          )}
-                        </div>
-                      </div>
-                    )}
-
-                    {/* Luxury Highlights */}
-                    {cruise.luxury_highlights && cruise.luxury_highlights.length > 0 && (
-                      <div className="mb-4">
-                        <h5 className="font-semibold text-[#8B4513] mb-2">Highlights:</h5>
-                        <ul className="space-y-1">
-                          {cruise.luxury_highlights.slice(0, 3).map((highlight, highlightIndex) => (
-                            <li key={highlightIndex} className="text-gray-600 flex items-start">
-                              <svg className="w-4 h-4 text-[#B8860B] mr-2 mt-0.5 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" />
-                              </svg>
-                              <span className="text-sm">{highlight}</span>
-                            </li>
-                          ))}
-                        </ul>
-                      </div>
-                    )}
-
-                    <Link
-                      href="/quote"
-                      className="inline-block bg-[#B8860B] hover:bg-[#DAA520] text-[#F5F5DC] px-4 py-2 rounded-md text-sm font-medium transition-colors duration-200 w-full text-center"
+            return (
+              <div key={location.name} className="mb-20">
+                <div className="px-4 sm:px-6 lg:px-8 max-w-7xl mx-auto">
+                  {/* Location Section Header */}
+                  <div className="text-center mb-12">
+                    <motion.h2
+                      className="text-3xl sm:text-4xl font-bold text-[#8B4513] mb-4"
+                      initial={{ opacity: 0, y: 20 }}
+                      whileInView={{ opacity: 1, y: 0 }}
+                      viewport={{ once: true }}
+                      transition={{ duration: 0.6, delay: locationIndex * 0.1 }}
                     >
-                      Book This Cruise
-                    </Link>
+                      {location.title}
+                    </motion.h2>
+                    <motion.p
+                      className="text-lg text-gray-600 max-w-3xl mx-auto mb-6"
+                      initial={{ opacity: 0, y: 20 }}
+                      whileInView={{ opacity: 1, y: 0 }}
+                      viewport={{ once: true }}
+                      transition={{ duration: 0.6, delay: locationIndex * 0.1 + 0.1 }}
+                    >
+                      {location.description}
+                    </motion.p>
+                    <motion.div
+                      className="inline-flex items-center space-x-4 text-sm text-[#B8860B]"
+                      initial={{ opacity: 0, y: 20 }}
+                      whileInView={{ opacity: 1, y: 0 }}
+                      viewport={{ once: true }}
+                      transition={{ duration: 0.6, delay: locationIndex * 0.1 + 0.2 }}
+                    >
+                      <span>{locationBoats.length} boats available</span>
+                      <span>•</span>
+                      <span>Starting from ${locationBoats.length > 0 ? Math.min(...locationBoats.map(b => b.startingPrice)).toLocaleString() : location.startingPrice.toLocaleString()}</span>
+                    </motion.div>
                   </div>
-                </motion.div>
-              ))}
-            </div>
-          ) : (
-            <div className="text-center py-12">
-              <div className="w-24 h-24 mx-auto mb-4 bg-gray-100 rounded-full flex items-center justify-center">
-                <svg className="w-12 h-12 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 2l3.09 6.26L22 9.27l-5 4.87 1.18 6.88L12 17.77l-6.18 3.25L7 14.14 2 9.27l6.91-1.01L12 2z" />
-                </svg>
-              </div>
-              <h3 className="text-xl font-medium text-gray-900 mb-2">No cruises available</h3>
-              <p className="text-gray-600">Check back soon for exciting cruise adventures!</p>
-            </div>
-          )}
-        </div>
-      </div>
 
-      {/* Booking Banner */}
+                  {/* Location Boats Grid */}
+                  <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
+                    {locationBoats.map((boat, boatIndex) => (
+                      <motion.div
+                        key={boat.id}
+                        className="bg-white rounded-lg shadow-lg overflow-hidden hover:shadow-xl transition-shadow"
+                        initial={{ opacity: 0, y: 30 }}
+                        whileInView={{ opacity: 1, y: 0 }}
+                        viewport={{ once: true }}
+                        transition={{ duration: 0.6, delay: boatIndex * 0.1 }}
+                      >
+                        <div className="h-48 relative overflow-hidden">
+                          <img
+                            src={boat.image}
+                            alt={boat.name}
+                            className="w-full h-full object-cover hover:scale-105 transition-transform duration-300"
+                            onError={(e) => {
+                              e.currentTarget.src = '/cruise-default.jpg';
+                            }}
+                          />
+                          <div className="absolute top-4 left-4 bg-[#B8860B] text-white px-3 py-1 rounded-full text-sm font-medium">
+                            {boat.capacity} guests
+                          </div>
+                          <div className="absolute top-4 right-4 bg-blue-100 text-blue-800 px-3 py-1 rounded-full text-xs font-medium">
+                            {boat.boatType}
+                          </div>
+                          <div className="absolute bottom-4 right-4 bg-green-100 text-green-800 px-3 py-1 rounded-full text-xs font-medium">
+                            {boat.itineraryCount} itinerary{boat.itineraryCount > 1 ? 'ies' : ''}
+                          </div>
+                        </div>
+
+                        <div className="p-6">
+                          <h3 className="text-xl font-bold text-[#8B4513] mb-2">{boat.name}</h3>
+                          <p className="text-2xl font-bold text-[#B8860B] mb-4">
+                            From ${boat.startingPrice.toLocaleString()}
+                          </p>
+
+                          <div className="space-y-2 mb-6">
+                            <h4 className="font-semibold text-gray-900">Features:</h4>
+                            {boat.features.slice(0, 3).map((feature: string, fIndex: number) => (
+                              <div key={fIndex} className="flex items-center text-sm text-gray-600">
+                                <svg className="w-4 h-4 text-[#B8860B] mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" />
+                                </svg>
+                                {feature}
+                              </div>
+                            ))}
+                          </div>
+
+                          <button
+                            onClick={() => openItineraryModal(boat)}
+                            className="w-full bg-[#B8860B] hover:bg-[#DAA520] text-white py-3 rounded-md font-medium transition-colors"
+                          >
+                            View Itineraries ({boat.itineraryCount})
+                          </button>
+                        </div>
+                      </motion.div>
+                    ))}
+                  </div>
+
+                  {/* View All Location Button */}
+                  <div className="text-center mt-8">
+                    <button
+                      onClick={() => setSelectedLocation(location.name)}
+                      className="inline-flex items-center px-6 py-3 border border-[#B8860B] text-[#B8860B] hover:bg-[#B8860B] hover:text-white rounded-md font-medium transition-colors"
+                    >
+                      View All {location.title}
+                      <svg className="ml-2 w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5l7 7-7 7" />
+                      </svg>
+                    </button>
+                  </div>
+                </div>
+
+                {/* Separator line between sections */}
+                {locationIndex < locations.length - 1 && (
+                  <div className="mt-16 border-t border-gray-200"></div>
+                )}
+              </div>
+            );
+          })}
+        </div>
+      )}
+
+      {/* CTA Section */}
       <div className="py-16 bg-[#2D5016]">
         <div className="px-4 sm:px-6 lg:px-8 max-w-4xl mx-auto text-center">
           <h3 className="text-3xl sm:text-4xl font-bold text-white mb-4">
-            {content.bookingTitle}
+            Ready to Plan Your Cruise Adventure?
           </h3>
           <p className="text-xl text-[#F5F5DC] mb-8">
-            {content.bookingSubtitle}
+            Let our experts help you choose the perfect vessel and itinerary for your South American cruise experience.
           </p>
           <Link
             href="/quote"
             className="bg-[#B8860B] text-[#F5F5DC] px-8 py-4 rounded-md text-lg font-medium hover:bg-[#DAA520] transition-colors duration-200"
           >
-            {content.bookingButton}
+            Get Your Custom Quote
           </Link>
         </div>
       </div>
 
-      {/* Pricing Section */}
-      <div className="py-16">
-        <div className="px-4 sm:px-6 lg:px-8 max-w-7xl mx-auto">
-          <div className="text-center mb-12">
-            <h3 className="text-3xl font-bold text-[#8B4513] mb-4">
-              {content.pricingTitle}
-            </h3>
-            <p className="text-lg text-gray-600 max-w-2xl mx-auto">
-              {content.pricingSubtitle}
-            </p>
-          </div>
-
-          {/* Pricing Information */}
-          <div className="grid grid-cols-1 lg:grid-cols-2 gap-12 items-center">
-            <motion.div
-              initial={{ opacity: 0, x: -30 }}
-              whileInView={{ opacity: 1, x: 0 }}
-              viewport={{ once: true }}
-              transition={{ duration: 0.6 }}
-            >
-              <h4 className="text-2xl font-bold text-[#8B4513] mb-6">{content.includedTitle}</h4>
-              <div className="space-y-3">
-                {[
-                  'All meals and beverages (excluding premium spirits)',
-                  'Professional naturalist guide',
-                  'All excursions and activities',
-                  'Snorkeling equipment',
-                  'Kayaking and panga rides',
-                  'Airport transfers in Galapagos',
-                  'Galapagos National Park entrance fee',
-                  'Wet suits and snorkeling gear'
-                ].map((item, index) => (
-                  <div key={index} className="flex items-start">
-                    <svg className="w-5 h-5 text-[#B8860B] mr-3 mt-0.5 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" />
-                    </svg>
-                    <span className="text-gray-600">{item}</span>
-                  </div>
-                ))}
-              </div>
-            </motion.div>
-
-            <motion.div
-              initial={{ opacity: 0, x: 30 }}
-              whileInView={{ opacity: 1, x: 0 }}
-              viewport={{ once: true }}
-              transition={{ duration: 0.6, delay: 0.2 }}
-            >
-              <h4 className="text-2xl font-bold text-[#8B4513] mb-6">{content.additionalTitle}</h4>
-              <div className="bg-[#F5F5DC] p-6 rounded-lg">
-                <div className="space-y-4">
-                  <div>
-                    <h5 className="font-semibold text-[#8B4513] mb-2">Group Size</h5>
-                    <p className="text-gray-600">Maximum 16 passengers for intimate wildlife encounters</p>
-                  </div>
-                  <div>
-                    <h5 className="font-semibold text-[#8B4513] mb-2">Best Time to Visit</h5>
-                    <p className="text-gray-600">Year-round destination with unique wildlife activity each season</p>
-                  </div>
-                  <div>
-                    <h5 className="font-semibold text-[#8B4513] mb-2">Booking</h5>
-                    <p className="text-gray-600">Reserve with 25% deposit, full payment 90 days prior to departure</p>
-                  </div>
-                  <div>
-                    <h5 className="font-semibold text-[#8B4513] mb-2">Cancellation</h5>
-                    <p className="text-gray-600">Flexible cancellation policy with cruise insurance options</p>
-                  </div>
-                </div>
-              </div>
-            </motion.div>
-          </div>
-        </div>
-      </div>
+      {/* Itinerary Modal */}
+      <ItineraryModal
+        boat={selectedBoat}
+        isOpen={isModalOpen}
+        onClose={closeItineraryModal}
+      />
     </div>
   );
 }

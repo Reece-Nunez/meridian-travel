@@ -3,12 +3,14 @@
 import Link from 'next/link';
 import { useState, useEffect } from 'react';
 import { useAuth } from '@/contexts/AuthContext';
+import { isAdmin, isUserAdmin } from '@/lib/adminUtils';
 
 export default function Navigation() {
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
   const [isDestinationsOpen, setIsDestinationsOpen] = useState(false);
   const [isScrolled, setIsScrolled] = useState(false);
   const [isAccountMenuOpen, setIsAccountMenuOpen] = useState(false);
+  const [userIsAdmin, setUserIsAdmin] = useState(false);
   const { user, profile, signOut, loading } = useAuth();
 
   // Close dropdown menus when tab visibility changes to prevent state issues
@@ -35,6 +37,33 @@ export default function Navigation() {
       return () => window.removeEventListener('scroll', handleScroll);
     }
   }, []);
+
+  // Check if user is admin whenever user or auth state changes
+  useEffect(() => {
+    const checkAdminStatus = () => {
+      if (user?.email) {
+        // Check both admin session and email
+        const isAdminSession = isAdmin();
+        const isAdminEmail = isUserAdmin(user.email);
+        setUserIsAdmin(isAdminSession || isAdminEmail);
+      } else {
+        setUserIsAdmin(false);
+      }
+    };
+
+    checkAdminStatus();
+
+    // Also check on localStorage changes (in case admin session is set/removed)
+    const handleStorageChange = () => {
+      checkAdminStatus();
+    };
+
+    window.addEventListener('storage', handleStorageChange);
+
+    return () => {
+      window.removeEventListener('storage', handleStorageChange);
+    };
+  }, [user, loading]);
 
   return (
     <nav className={`${isScrolled ? 'bg-[#F5F5DC]/80 backdrop-blur-md' : 'bg-[#F5F5DC]'} shadow-sm border-b border-gray-200 sticky top-0 z-50 transition-all duration-300`}>
@@ -95,14 +124,14 @@ export default function Navigation() {
                             {user.email}
                           </div>
                           <Link
-                            href="/dashboard"
+                            href={userIsAdmin ? "/admin" : "/dashboard"}
                             onClick={() => setIsAccountMenuOpen(false)}
                             className="flex items-center px-4 py-2 text-sm text-[#8B4513] hover:bg-gray-50 hover:text-[#B8860B]"
                           >
                             <svg className="w-4 h-4 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                               <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M3 7v10a2 2 0 002 2h14a2 2 0 002-2V9a2 2 0 00-2-2H5a2 2 0 00-2-2z" />
                             </svg>
-                            Dashboard
+                            {userIsAdmin ? "Admin Dashboard" : "Dashboard"}
                           </Link>
                           <Link
                             href="/profile"
@@ -382,11 +411,11 @@ export default function Navigation() {
                     {profile?.first_name ? `Hello, ${profile.first_name}` : 'Welcome!'}
                   </div>
                   <Link
-                    href="/dashboard"
+                    href={userIsAdmin ? "/admin" : "/dashboard"}
                     className="text-[#8B4513] hover:text-[#B8860B] block px-3 py-2 text-base font-medium"
                     onClick={() => setIsMobileMenuOpen(false)}
                   >
-                    Dashboard
+                    {userIsAdmin ? "Admin Dashboard" : "Dashboard"}
                   </Link>
                   <Link
                     href="/profile"

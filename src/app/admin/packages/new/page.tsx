@@ -7,6 +7,7 @@ import { useRouter, useSearchParams } from 'next/navigation';
 import { supabase } from '@/lib/supabase';
 import { useSimpleAdminAuth } from '@/hooks/useSimpleAdminAuth';
 import ImageUpload from '@/components/admin/ImageUpload';
+import { Ship } from '@/types/database';
 
 interface PendingImage {
   id: string;
@@ -35,6 +36,8 @@ function NewPackageContent() {
   const searchParams = useSearchParams();
   const [loading, setLoading] = useState(false);
   const [packageType, setPackageType] = useState<'package' | 'cruise'>('package');
+  const [ships, setShips] = useState<Ship[]>([]);
+  const [shipsLoading, setShipsLoading] = useState(false);
 
   const [formData, setFormData] = useState({
     title: '',
@@ -49,11 +52,9 @@ function NewPackageContent() {
     images: [] as string[],
     type: 'package' as 'package' | 'cruise',
     // Cruise-specific fields
+    ship_id: '',
     ship_name: '',
-    cruise_line: '',
-    cabin_category: '',
-    departure_port: '',
-    arrival_port: ''
+    cabin_category: ''
   });
   const [pendingPackageImages, setPendingPackageImages] = useState<PendingImage[]>([]);
   const [packageImagesToDelete, setPackageImagesToDelete] = useState<string[]>([]);
@@ -69,6 +70,50 @@ function NewPackageContent() {
       setFormData(prev => ({ ...prev, type }));
     }
   }, [searchParams]);
+
+  // Fetch ships when package type is cruise
+  useEffect(() => {
+    if (packageType === 'cruise') {
+      fetchShips();
+    }
+  }, [packageType]);
+
+  const fetchShips = async () => {
+    setShipsLoading(true);
+    try {
+      const { data, error } = await supabase
+        .from('ships')
+        .select('*')
+        .eq('is_active', true)
+        .order('name', { ascending: true });
+
+      if (error) throw error;
+      setShips(data || []);
+    } catch (error) {
+      console.error('Error fetching ships:', error);
+      setShips([]);
+    } finally {
+      setShipsLoading(false);
+    }
+  };
+
+  const handleShipChange = (shipId: string) => {
+    const selectedShip = ships.find(ship => ship.id === shipId);
+    if (selectedShip) {
+      setFormData(prev => ({
+        ...prev,
+        ship_id: shipId,
+        ship_name: selectedShip.name,
+        max_participants: selectedShip.capacity || 50
+      }));
+    } else {
+      setFormData(prev => ({
+        ...prev,
+        ship_id: '',
+        ship_name: ''
+      }));
+    }
+  };
 
   const handleInputChange = (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement | HTMLSelectElement>) => {
     const { name, value, type } = e.target;
@@ -234,6 +279,13 @@ function NewPackageContent() {
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setLoading(true);
+
+    // Validate cruise packages require a ship
+    if (formData.type === 'cruise' && !formData.ship_id) {
+      alert('Please select a ship for cruise packages.');
+      setLoading(false);
+      return;
+    }
 
     try {
       console.log('Starting form submission...');
@@ -431,86 +483,75 @@ function NewPackageContent() {
               <h3 className="text-lg font-medium text-gray-900 mb-6">Cruise Information</h3>
 
               <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                <div>
-                  <label htmlFor="cruise_line" className="block text-sm font-medium text-gray-700 mb-2">
-                    Cruise Line
-                  </label>
-                  <input
-                    type="text"
-                    id="cruise_line"
-                    name="cruise_line"
-                    value={formData.cruise_line}
-                    onChange={handleInputChange}
-                    className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-[#B8860B] focus:border-[#B8860B] text-gray-900"
-                    placeholder="e.g., Celebrity Cruises"
-                  />
-                </div>
 
                 <div>
-                  <label htmlFor="ship_name" className="block text-sm font-medium text-gray-700 mb-2">
-                    Ship Name
+                  <label htmlFor="ship_id" className="block text-sm font-medium text-gray-700 mb-2">
+                    Select Ship *
                   </label>
-                  <input
-                    type="text"
-                    id="ship_name"
-                    name="ship_name"
-                    value={formData.ship_name}
-                    onChange={handleInputChange}
-                    className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-[#B8860B] focus:border-[#B8860B] text-gray-900"
-                    placeholder="e.g., Celebrity Eclipse"
-                  />
+                  {shipsLoading ? (
+                    <div className="w-full px-3 py-2 border border-gray-300 rounded-md bg-gray-50 text-gray-500">
+                      Loading ships...
+                    </div>
+                  ) : ships.length === 0 ? (
+                    <div className="space-y-2">
+                      <div className="w-full px-3 py-2 border border-gray-300 rounded-md bg-gray-50 text-gray-500">
+                        No ships available
+                      </div>
+                      <p className="text-sm text-gray-600">
+                        You need to{' '}
+                        <Link href="/admin/ships/new" className="text-[#B8860B] hover:text-[#DAA520] underline">
+                          create ships
+                        </Link>{' '}
+                        before you can create cruise packages.
+                      </p>
+                    </div>
+                  ) : (
+                    <select
+                      id="ship_id"
+                      name="ship_id"
+                      value={formData.ship_id}
+                      onChange={(e) => handleShipChange(e.target.value)}
+                      required
+                      className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-[#B8860B] focus:border-[#B8860B] text-gray-900"
+                    >
+                      <option value="">Select a ship...</option>
+                      {ships.map(ship => (
+                        <option key={ship.id} value={ship.id}>
+                          {ship.name} ({ship.ship_type}, {ship.capacity} passengers)
+                        </option>
+                      ))}
+                    </select>
+                  )}
+
+                  {formData.ship_id && (
+                    <div className="mt-2 p-3 bg-blue-50 rounded-md">
+                      <div className="text-sm text-blue-800">
+                        <strong>Selected Ship Details:</strong>
+                        <div className="mt-1 space-y-1">
+                          <div>Name: {formData.ship_name}</div>
+                          <div>Type: {ships.find(s => s.id === formData.ship_id)?.ship_type}</div>
+                          <div>Capacity: {formData.max_participants} passengers</div>
+                        </div>
+                      </div>
+                    </div>
+                  )}
                 </div>
 
                 <div>
                   <label htmlFor="cabin_category" className="block text-sm font-medium text-gray-700 mb-2">
                     Cabin Category
                   </label>
-                  <select
+                  <input
+                    type="text"
                     id="cabin_category"
                     name="cabin_category"
                     value={formData.cabin_category}
                     onChange={handleInputChange}
                     className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-[#B8860B] focus:border-[#B8860B] text-gray-900"
-                  >
-                    <option value="">Select cabin category</option>
-                    <option value="Interior">Interior</option>
-                    <option value="Ocean View">Ocean View</option>
-                    <option value="Balcony">Balcony</option>
-                    <option value="Suite">Suite</option>
-                    <option value="Premium Suite">Premium Suite</option>
-                    <option value="Owner's Suite">Owner's Suite</option>
-                  </select>
-                </div>
-
-                <div>
-                  <label htmlFor="departure_port" className="block text-sm font-medium text-gray-700 mb-2">
-                    Departure Port
-                  </label>
-                  <input
-                    type="text"
-                    id="departure_port"
-                    name="departure_port"
-                    value={formData.departure_port}
-                    onChange={handleInputChange}
-                    className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-[#B8860B] focus:border-[#B8860B] text-gray-900"
-                    placeholder="e.g., Buenos Aires, Argentina"
+                    placeholder="e.g., Suite, Ocean View, Interior"
                   />
                 </div>
 
-                <div className="md:col-span-1">
-                  <label htmlFor="arrival_port" className="block text-sm font-medium text-gray-700 mb-2">
-                    Arrival Port
-                  </label>
-                  <input
-                    type="text"
-                    id="arrival_port"
-                    name="arrival_port"
-                    value={formData.arrival_port}
-                    onChange={handleInputChange}
-                    className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-[#B8860B] focus:border-[#B8860B] text-gray-900"
-                    placeholder="e.g., Valparaíso, Chile"
-                  />
-                </div>
               </div>
             </motion.div>
           )}

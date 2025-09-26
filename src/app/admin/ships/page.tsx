@@ -216,7 +216,7 @@ export default function AdminShips() {
                               </div>
                               <div className="ml-4">
                                 <div className="text-sm font-medium text-gray-900">{ship.name}</div>
-                                <div className="text-sm text-gray-500">{ship.cruise_line || 'No cruise line'}</div>
+                                <div className="text-sm text-gray-500">{ship.ship_type}</div>
                               </div>
                             </div>
                           </td>

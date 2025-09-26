@@ -488,10 +488,11 @@ function NewShipContent() {
           >
             <h3 className="text-lg font-medium text-gray-900 mb-6">Ship Images</h3>
             <ImageUpload
-              images={formData.images}
+              currentImages={formData.images}
+              pendingImages={pendingImages}
+              imagesToDelete={imagesToDelete}
               onImagesChange={handleImagesChange}
               maxImages={10}
-              label="Upload ship photos"
             />
           </motion.div>
 
@@ -504,10 +505,11 @@ function NewShipContent() {
           >
             <h3 className="text-lg font-medium text-gray-900 mb-6">Deck Plans</h3>
             <ImageUpload
-              images={formData.deck_plans}
+              currentImages={formData.deck_plans}
+              pendingImages={pendingDeckPlans}
+              imagesToDelete={deckPlansToDelete}
               onImagesChange={handleDeckPlansChange}
               maxImages={5}
-              label="Upload deck plan images"
             />
           </motion.div>
 

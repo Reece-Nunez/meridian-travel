@@ -53,6 +53,7 @@ export interface Database {
           luxury_highlights: string[] | null
           is_active: boolean | null
           type: 'package' | 'cruise' | null
+          ship_id: string | null
           ship_name: string | null
           cruise_line: string | null
           cabin_category: string | null
@@ -75,6 +76,7 @@ export interface Database {
           luxury_highlights?: string[] | null
           is_active?: boolean | null
           type?: 'package' | 'cruise' | null
+          ship_id?: string | null
           ship_name?: string | null
           cruise_line?: string | null
           cabin_category?: string | null
@@ -97,6 +99,7 @@ export interface Database {
           luxury_highlights?: string[] | null
           is_active?: boolean | null
           type?: 'package' | 'cruise' | null
+          ship_id?: string | null
           ship_name?: string | null
           cruise_line?: string | null
           cabin_category?: string | null
@@ -541,6 +544,62 @@ export interface Database {
           description?: string
         }
       }
+      ships: {
+        Row: {
+          id: string
+          created_at: string
+          updated_at: string
+          name: string
+          description: string | null
+          capacity: number
+          ship_type: string
+          operating_regions: string[] | null
+          base_port: string | null
+          cabin_categories: string[] | null
+          ship_features: string[] | null
+          luxury_highlights: string[] | null
+          images: string[] | null
+          deck_plans: string[] | null
+          is_active: boolean | null
+          is_featured: boolean | null
+        }
+        Insert: {
+          id?: string
+          created_at?: string
+          updated_at?: string
+          name: string
+          description?: string | null
+          capacity?: number
+          ship_type?: string
+          operating_regions?: string[] | null
+          base_port?: string | null
+          cabin_categories?: string[] | null
+          ship_features?: string[] | null
+          luxury_highlights?: string[] | null
+          images?: string[] | null
+          deck_plans?: string[] | null
+          is_active?: boolean | null
+          is_featured?: boolean | null
+        }
+        Update: {
+          id?: string
+          created_at?: string
+          updated_at?: string
+          name?: string
+          description?: string | null
+          capacity?: number
+          ship_type?: string
+          operating_regions?: string[] | null
+          base_port?: string | null
+          cabin_categories?: string[] | null
+          ship_features?: string[] | null
+          luxury_highlights?: string[] | null
+          images?: string[] | null
+          deck_plans?: string[] | null
+          is_active?: boolean | null
+          is_featured?: boolean | null
+        }
+      }
     }
     Views: {
       [_ in never]: never
@@ -576,4 +635,5 @@ export type ItineraryDay = Database['public']['Tables']['itinerary_days']['Row']
 export type ItineraryActivity = Database['public']['Tables']['itinerary_activities']['Row']
 export type ItineraryImage = Database['public']['Tables']['itinerary_images']['Row']
 export type Payment = Database['public']['Tables']['payments']['Row']
+export type Ship = Database['public']['Tables']['ships']['Row']
 export type QuoteToken = Database['public']['Tables']['quote_tokens']['Row']

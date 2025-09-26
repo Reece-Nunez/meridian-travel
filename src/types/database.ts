@@ -52,6 +52,12 @@ export interface Database {
           excludes: string[] | null
           luxury_highlights: string[] | null
           is_active: boolean | null
+          type: 'package' | 'cruise' | null
+          ship_name: string | null
+          cruise_line: string | null
+          cabin_category: string | null
+          departure_port: string | null
+          arrival_port: string | null
         }
         Insert: {
           id?: string
@@ -68,6 +74,12 @@ export interface Database {
           excludes?: string[] | null
           luxury_highlights?: string[] | null
           is_active?: boolean | null
+          type?: 'package' | 'cruise' | null
+          ship_name?: string | null
+          cruise_line?: string | null
+          cabin_category?: string | null
+          departure_port?: string | null
+          arrival_port?: string | null
         }
         Update: {
           id?: string
@@ -84,6 +96,12 @@ export interface Database {
           excludes?: string[] | null
           luxury_highlights?: string[] | null
           is_active?: boolean | null
+          type?: 'package' | 'cruise' | null
+          ship_name?: string | null
+          cruise_line?: string | null
+          cabin_category?: string | null
+          departure_port?: string | null
+          arrival_port?: string | null
         }
       }
       custom_quotes: {
@@ -112,6 +130,8 @@ export interface Database {
           inclusions: string[] | null
           exclusions: string[] | null
           pdf_title: string | null
+          package_type: 'custom' | 'package' | 'cruise' | null
+          selected_package_id: string | null
         }
         Insert: {
           id?: string
@@ -138,6 +158,8 @@ export interface Database {
           inclusions?: string[] | null
           exclusions?: string[] | null
           pdf_title?: string | null
+          package_type?: 'custom' | 'package' | 'cruise' | null
+          selected_package_id?: string | null
         }
         Update: {
           id?: string
@@ -164,6 +186,8 @@ export interface Database {
           inclusions?: string[] | null
           exclusions?: string[] | null
           pdf_title?: string | null
+          package_type?: 'custom' | 'package' | 'cruise' | null
+          selected_package_id?: string | null
         }
       }
       bookings: {

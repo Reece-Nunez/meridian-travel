@@ -169,10 +169,24 @@ function getFallbackContentByKey(key: string): string {
     'services_content': 'From luxury accommodations to unique experiences, we handle every detail of your travel adventure.',
     'contact_title': 'Get in Touch',
     'contact_content': 'Ready to plan your next adventure? Contact us today to start creating your perfect travel experience.',
-    'footer_tagline': 'Creating extraordinary travel experiences since 2024.'
+    'footer_tagline': 'Creating extraordinary travel experiences since 2024.',
+    // Cruise page fallbacks
+    'cruises_page_title': 'Luxury Cruise Adventures',
+    'cruises_page_content': 'Discover the pristine beauty of remote destinations aboard our luxury expedition vessels.',
+    'cruises_accommodations_title': 'Luxury Accommodations',
+    'cruises_accommodations_subtitle': 'Choose from our selection of premium cabins and suites designed for ultimate comfort',
+    'cruises_itineraries_title': 'Cruise Itineraries',
+    'cruises_itineraries_subtitle': 'Explore our carefully crafted routes through extraordinary destinations',
+    'cruises_pricing_title': 'Cruise Pricing',
+    'cruises_pricing_subtitle': 'Transparent pricing for your luxury cruise experience',
+    'cruises_included_title': 'What\'s Included',
+    'cruises_additional_title': 'Additional Information',
+    'cruises_booking_title': 'Ready to Set Sail?',
+    'cruises_booking_subtitle': 'Begin your unforgettable cruise adventure today',
+    'cruises_booking_button': 'Request Your Custom Quote'
   };
-  
-  return fallbacks[key] || 'Content not found';
+
+  return fallbacks[key] || '';
 }
 
 function getFallbackSettingByKey(key: string): string {

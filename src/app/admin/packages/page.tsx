@@ -6,12 +6,16 @@ import Link from 'next/link';
 import { supabase } from '@/lib/supabase';
 import { TripPackage } from '@/types/database';
 import { useSimpleAdminAuth } from '@/hooks/useSimpleAdminAuth';
+import TypeSelectionModal from '@/components/admin/TypeSelectionModal';
 
 export default function AdminPackages() {
   const { loading: authLoading, isAuthenticated, logout } = useSimpleAdminAuth();
   const [packages, setPackages] = useState<TripPackage[]>([]);
+  const [filteredPackages, setFilteredPackages] = useState<TripPackage[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
+  const [isTypeModalOpen, setIsTypeModalOpen] = useState(false);
+  const [filterType, setFilterType] = useState<'all' | 'package' | 'cruise'>('all');
 
   const getUsername = () => {
     try {
@@ -33,6 +37,15 @@ export default function AdminPackages() {
   useEffect(() => {
     fetchPackages();
   }, []);
+
+  // Filter packages based on type
+  useEffect(() => {
+    if (filterType === 'all') {
+      setFilteredPackages(packages);
+    } else {
+      setFilteredPackages(packages.filter(pkg => pkg.type === filterType));
+    }
+  }, [packages, filterType]);
 
   // Fallback to ensure data loading doesn't hang
   useEffect(() => {
@@ -157,12 +170,12 @@ export default function AdminPackages() {
               >
                 Logout
               </button>
-              <Link
-                href="/admin/packages/new"
+              <button
+                onClick={() => setIsTypeModalOpen(true)}
                 className="bg-[#B8860B] hover:bg-[#DAA520] text-white px-4 py-2 rounded-md font-medium transition-colors"
               >
                 Add New Package
-              </Link>
+              </button>
             </div>
           </div>
         </div>
@@ -175,7 +188,7 @@ export default function AdminPackages() {
           </div>
         )}
 
-        {packages.length === 0 ? (
+        {filteredPackages.length === 0 && packages.length === 0 ? (
           <div className="text-center py-12">
             <div className="w-24 h-24 mx-auto mb-4 bg-gray-100 rounded-full flex items-center justify-center">
               <svg className="w-12 h-12 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -184,20 +197,52 @@ export default function AdminPackages() {
             </div>
             <h3 className="text-lg font-medium text-gray-900 mb-2">No packages found</h3>
             <p className="text-gray-800 mb-6">Get started by creating your first travel package.</p>
-            <Link
-              href="/admin/packages/new"
+            <button
+              onClick={() => setIsTypeModalOpen(true)}
               className="bg-[#B8860B] hover:bg-[#DAA520] text-white px-6 py-3 rounded-md font-medium transition-colors"
             >
               Create First Package
-            </Link>
+            </button>
+          </div>
+        ) : filteredPackages.length === 0 && packages.length > 0 ? (
+          <div className="text-center py-12">
+            <div className="w-24 h-24 mx-auto mb-4 bg-gray-100 rounded-full flex items-center justify-center">
+              <svg className="w-12 h-12 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
+              </svg>
+            </div>
+            <h3 className="text-lg font-medium text-gray-900 mb-2">No {filterType}s found</h3>
+            <p className="text-gray-800 mb-6">Try changing the filter or create a new {filterType}.</p>
+            <button
+              onClick={() => setIsTypeModalOpen(true)}
+              className="bg-[#B8860B] hover:bg-[#DAA520] text-white px-6 py-3 rounded-md font-medium transition-colors"
+            >
+              Add New {filterType === 'cruise' ? 'Cruise' : 'Package'}
+            </button>
           </div>
         ) : (
           <div className="bg-white shadow-sm rounded-lg overflow-hidden">
             <div className="px-4 py-5 sm:p-6">
               <div className="flex justify-between items-center mb-6">
                 <h3 className="text-lg font-medium text-gray-900">
-                  All Packages ({packages.length})
+                  {filterType === 'all' ? `All Items (${packages.length})` :
+                   filterType === 'package' ? `Packages (${packages.filter(p => p.type === 'package' || !p.type).length})` :
+                   `Cruises (${packages.filter(p => p.type === 'cruise').length})`}
                 </h3>
+
+                {/* Type Filter */}
+                <div className="flex items-center space-x-2">
+                  <span className="text-sm text-gray-700">Filter:</span>
+                  <select
+                    value={filterType}
+                    onChange={(e) => setFilterType(e.target.value as 'all' | 'package' | 'cruise')}
+                    className="px-3 py-1 border border-gray-300 rounded-md text-sm focus:outline-none focus:ring-[#B8860B] focus:border-[#B8860B]"
+                  >
+                    <option value="all">All Types</option>
+                    <option value="package">Packages Only</option>
+                    <option value="cruise">Cruises Only</option>
+                  </select>
+                </div>
               </div>
 
               <div className="overflow-x-auto">
@@ -205,7 +250,10 @@ export default function AdminPackages() {
                   <thead className="bg-gray-50">
                     <tr>
                       <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                        Package
+                        Name
+                      </th>
+                      <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                        Type
                       </th>
                       <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
                         Destination
@@ -222,7 +270,7 @@ export default function AdminPackages() {
                     </tr>
                   </thead>
                   <tbody className="bg-white divide-y divide-gray-200">
-                    {packages.map((pkg, index) => (
+                    {filteredPackages.map((pkg, index) => (
                       <motion.tr
                         key={pkg.id}
                         initial={{ opacity: 0, y: 20 }}
@@ -258,6 +306,15 @@ export default function AdminPackages() {
                               </div>
                             </div>
                           </div>
+                        </td>
+                        <td className="px-6 py-4 whitespace-nowrap">
+                          <span className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium ${
+                            pkg.type === 'cruise'
+                              ? 'bg-blue-100 text-blue-800'
+                              : 'bg-green-100 text-green-800'
+                          }`}>
+                            {pkg.type === 'cruise' ? 'Cruise' : 'Package'}
+                          </span>
                         </td>
                         <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
                           {pkg.destination}
@@ -300,6 +357,12 @@ export default function AdminPackages() {
           </div>
         )}
       </div>
+
+      {/* Type Selection Modal */}
+      <TypeSelectionModal
+        isOpen={isTypeModalOpen}
+        onClose={() => setIsTypeModalOpen(false)}
+      />
     </div>
   );
 }

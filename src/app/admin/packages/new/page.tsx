@@ -1,9 +1,9 @@
 'use client';
 
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { motion } from 'framer-motion';
 import Link from 'next/link';
-import { useRouter } from 'next/navigation';
+import { useRouter, useSearchParams } from 'next/navigation';
 import { supabase } from '@/lib/supabase';
 import { useSimpleAdminAuth } from '@/hooks/useSimpleAdminAuth';
 import ImageUpload from '@/components/admin/ImageUpload';
@@ -32,7 +32,10 @@ interface PackageItineraryDay {
 export default function NewPackage() {
   const { loading: authLoading, isAuthenticated } = useSimpleAdminAuth();
   const router = useRouter();
+  const searchParams = useSearchParams();
   const [loading, setLoading] = useState(false);
+  const [packageType, setPackageType] = useState<'package' | 'cruise'>('package');
+
   const [formData, setFormData] = useState({
     title: '',
     description: '',
@@ -43,13 +46,29 @@ export default function NewPackage() {
     includes: [''],
     excludes: [''],
     luxury_highlights: [''],
-    images: [] as string[]
+    images: [] as string[],
+    type: 'package' as 'package' | 'cruise',
+    // Cruise-specific fields
+    ship_name: '',
+    cruise_line: '',
+    cabin_category: '',
+    departure_port: '',
+    arrival_port: ''
   });
   const [pendingPackageImages, setPendingPackageImages] = useState<PendingImage[]>([]);
   const [packageImagesToDelete, setPackageImagesToDelete] = useState<string[]>([]);
   const [itinerary, setItinerary] = useState<PackageItineraryDay[]>([
     { day: 1, title: '', activities: [{ name: '', description: '' }], accommodation: '', images: [], pendingImages: [], imagesToDelete: [] }
   ]);
+
+  // Set the package type from URL params
+  useEffect(() => {
+    const type = searchParams.get('type') as 'package' | 'cruise' | null;
+    if (type && (type === 'package' || type === 'cruise')) {
+      setPackageType(type);
+      setFormData(prev => ({ ...prev, type }));
+    }
+  }, [searchParams]);
 
   const handleInputChange = (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement | HTMLSelectElement>) => {
     const { name, value, type } = e.target;
@@ -265,7 +284,9 @@ export default function NewPackage() {
                   <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 19l-7-7 7-7" />
                 </svg>
               </Link>
-              <h1 className="text-2xl font-bold text-[#8B4513]">Create New Package</h1>
+              <h1 className="text-2xl font-bold text-[#8B4513]">
+                Create New {packageType === 'cruise' ? 'Cruise' : 'Package'}
+              </h1>
             </div>
           </div>
         </div>
@@ -297,7 +318,7 @@ export default function NewPackage() {
             <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
               <div className="md:col-span-2">
                 <label htmlFor="title" className="block text-sm font-medium text-gray-700 mb-2">
-                  Package Title *
+                  {packageType === 'cruise' ? 'Cruise' : 'Package'} Title *
                 </label>
                 <input
                   type="text"
@@ -307,7 +328,7 @@ export default function NewPackage() {
                   value={formData.title}
                   onChange={handleInputChange}
                   className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-[#B8860B] focus:border-[#B8860B] text-gray-900"
-                  placeholder="e.g., Classic Peru Adventure - 10 Days"
+                  placeholder={packageType === 'cruise' ? 'e.g., Antarctic Discovery Cruise - 11 Days' : 'e.g., Classic Peru Adventure - 10 Days'}
                 />
               </div>
 
@@ -323,7 +344,7 @@ export default function NewPackage() {
                   value={formData.description}
                   onChange={handleInputChange}
                   className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-[#B8860B] focus:border-[#B8860B] text-gray-900"
-                  placeholder="Describe what makes this package special..."
+                  placeholder={packageType === 'cruise' ? 'Describe what makes this cruise special...' : 'Describe what makes this package special...'}
                 />
               </div>
 
@@ -393,11 +414,106 @@ export default function NewPackage() {
                   className="h-4 w-4 text-[#B8860B] focus:ring-[#B8860B] border-gray-300 rounded"
                 />
                 <label htmlFor="is_active" className="ml-2 block text-sm text-gray-900">
-                  Package is active and bookable
+                  {packageType === 'cruise' ? 'Cruise' : 'Package'} is active and bookable
                 </label>
               </div>
             </div>
           </motion.div>
+
+          {/* Cruise-specific fields */}
+          {packageType === 'cruise' && (
+            <motion.div
+              className="bg-white rounded-lg shadow-sm p-6"
+              initial={{ opacity: 0, y: 20 }}
+              animate={{ opacity: 1, y: 0 }}
+              transition={{ duration: 0.5, delay: 0.1 }}
+            >
+              <h3 className="text-lg font-medium text-gray-900 mb-6">Cruise Information</h3>
+
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                <div>
+                  <label htmlFor="cruise_line" className="block text-sm font-medium text-gray-700 mb-2">
+                    Cruise Line
+                  </label>
+                  <input
+                    type="text"
+                    id="cruise_line"
+                    name="cruise_line"
+                    value={formData.cruise_line}
+                    onChange={handleInputChange}
+                    className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-[#B8860B] focus:border-[#B8860B] text-gray-900"
+                    placeholder="e.g., Celebrity Cruises"
+                  />
+                </div>
+
+                <div>
+                  <label htmlFor="ship_name" className="block text-sm font-medium text-gray-700 mb-2">
+                    Ship Name
+                  </label>
+                  <input
+                    type="text"
+                    id="ship_name"
+                    name="ship_name"
+                    value={formData.ship_name}
+                    onChange={handleInputChange}
+                    className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-[#B8860B] focus:border-[#B8860B] text-gray-900"
+                    placeholder="e.g., Celebrity Eclipse"
+                  />
+                </div>
+
+                <div>
+                  <label htmlFor="cabin_category" className="block text-sm font-medium text-gray-700 mb-2">
+                    Cabin Category
+                  </label>
+                  <select
+                    id="cabin_category"
+                    name="cabin_category"
+                    value={formData.cabin_category}
+                    onChange={handleInputChange}
+                    className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-[#B8860B] focus:border-[#B8860B] text-gray-900"
+                  >
+                    <option value="">Select cabin category</option>
+                    <option value="Interior">Interior</option>
+                    <option value="Ocean View">Ocean View</option>
+                    <option value="Balcony">Balcony</option>
+                    <option value="Suite">Suite</option>
+                    <option value="Premium Suite">Premium Suite</option>
+                    <option value="Owner's Suite">Owner's Suite</option>
+                  </select>
+                </div>
+
+                <div>
+                  <label htmlFor="departure_port" className="block text-sm font-medium text-gray-700 mb-2">
+                    Departure Port
+                  </label>
+                  <input
+                    type="text"
+                    id="departure_port"
+                    name="departure_port"
+                    value={formData.departure_port}
+                    onChange={handleInputChange}
+                    className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-[#B8860B] focus:border-[#B8860B] text-gray-900"
+                    placeholder="e.g., Buenos Aires, Argentina"
+                  />
+                </div>
+
+                <div className="md:col-span-1">
+                  <label htmlFor="arrival_port" className="block text-sm font-medium text-gray-700 mb-2">
+                    Arrival Port
+                  </label>
+                  <input
+                    type="text"
+                    id="arrival_port"
+                    name="arrival_port"
+                    value={formData.arrival_port}
+                    onChange={handleInputChange}
+                    className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-[#B8860B] focus:border-[#B8860B] text-gray-900"
+                    placeholder="e.g., Valparaíso, Chile"
+                  />
+                </div>
+              </div>
+            </motion.div>
+          )}
 
           {/* Package Images */}
           <motion.div
@@ -660,7 +776,7 @@ export default function NewPackage() {
               disabled={loading}
               className="px-6 py-3 bg-[#B8860B] hover:bg-[#DAA520] text-white font-medium rounded-md transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
             >
-              {loading ? 'Creating...' : 'Create Package'}
+              {loading ? 'Creating...' : `Create ${packageType === 'cruise' ? 'Cruise' : 'Package'}`}
             </button>
           </motion.div>
           </form>

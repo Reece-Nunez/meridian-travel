@@ -1,7 +1,9 @@
 'use client';
 
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
+import { supabase } from '@/lib/supabase';
+import { TripPackage } from '@/types/database';
 
 export default function QuoteRequest() {
   const [formData, setFormData] = useState({
@@ -10,6 +12,8 @@ export default function QuoteRequest() {
     email: '',
     phone: '',
     destination: 'Peru',
+    selectedPackageType: 'custom', // 'custom', 'package', 'cruise'
+    selectedPackageId: '',
     dateType: '',
     flexibleMonth: '',
     flexibleYear: '',
@@ -27,6 +31,9 @@ export default function QuoteRequest() {
 
   const [showToast, setShowToast] = useState(false);
   const [isSubmitting, setIsSubmitting] = useState(false);
+  const [packages, setPackages] = useState<TripPackage[]>([]);
+  const [cruises, setCruises] = useState<TripPackage[]>([]);
+  const [loading, setLoading] = useState(true);
 
   const initialFormState = {
     firstName: '',
@@ -34,6 +41,8 @@ export default function QuoteRequest() {
     email: '',
     phone: '',
     destination: 'Peru',
+    selectedPackageType: 'custom',
+    selectedPackageId: '',
     dateType: '',
     flexibleMonth: '',
     flexibleYear: '',
@@ -90,11 +99,66 @@ export default function QuoteRequest() {
 
   const handleInputChange = (e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement | HTMLTextAreaElement>) => {
     const { name, value } = e.target;
-    setFormData(prev => ({
-      ...prev,
-      [name]: value
-    }));
+    setFormData(prev => {
+      // If changing package type, reset destination and package selection
+      if (name === 'selectedPackageType') {
+        return {
+          ...prev,
+          [name]: value,
+          selectedPackageId: '',
+          destination: value === 'custom' ? 'Peru' : ''
+        };
+      }
+      return {
+        ...prev,
+        [name]: value
+      };
+    });
   };
+
+  // Fetch packages and cruises from database
+  const fetchPackagesAndCruises = async () => {
+    try {
+      setLoading(true);
+
+      // Fetch packages (type='package' or null for backward compatibility)
+      const { data: packageData, error: packageError } = await supabase
+        .from('trip_packages')
+        .select('*')
+        .in('type', ['package', null])
+        .eq('is_active', true)
+        .order('title');
+
+      if (packageError) {
+        console.error('Error fetching packages:', packageError);
+      } else {
+        setPackages(packageData || []);
+      }
+
+      // Fetch cruises (type='cruise')
+      const { data: cruiseData, error: cruiseError } = await supabase
+        .from('trip_packages')
+        .select('*')
+        .eq('type', 'cruise')
+        .eq('is_active', true)
+        .order('title');
+
+      if (cruiseError) {
+        console.error('Error fetching cruises:', cruiseError);
+      } else {
+        setCruises(cruiseData || []);
+      }
+    } catch (error) {
+      console.error('Error fetching packages and cruises:', error);
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  // Load packages and cruises on component mount
+  useEffect(() => {
+    fetchPackagesAndCruises();
+  }, []);
 
   return (
     <div className="min-h-screen bg-white">
@@ -113,7 +177,7 @@ export default function QuoteRequest() {
             </svg>
             <div>
               <p className="font-semibold">Quote Request Submitted!</p>
-              <p className="text-sm">We'll contact you within 24 hours to discuss your Peru adventure.</p>
+              <p className="text-sm">We'll contact you within 24 hours to discuss your travel plans.</p>
             </div>
             <button
               onClick={() => setShowToast(false)}
@@ -146,10 +210,10 @@ export default function QuoteRequest() {
               Request Your Custom Quote
             </h1>
             <p className="text-xl mb-4">
-              Tell us about your dream Peru adventure and we'll create a personalized itinerary just for you.
+              Tell us about your dream adventure and we'll create a personalized itinerary just for you.
             </p>
             <p className="text-[#F5F5DC]">
-              Our Peru specialists will contact you within 24 hours with a detailed proposal.
+              Our travel specialists will contact you within 24 hours with a detailed proposal.
             </p>
           </div>
         </div>
@@ -233,26 +297,157 @@ export default function QuoteRequest() {
           </motion.div>
 
           {/* Travel Details */}
-          <motion.div 
+          <motion.div
             className="bg-[#F5F5DC] p-6 rounded-lg"
             initial={{ opacity: 0, x: 20 }}
             animate={{ opacity: 1, x: 0 }}
             transition={{ duration: 0.5, delay: 0.4 }}
           >
             <h2 className="text-2xl font-bold text-[#8B4513] mb-6">Travel Details</h2>
-            
+
+            {/* Package/Cruise Selection */}
+            <div className="mb-6">
+              <label className="block text-sm font-medium text-gray-700 mb-4">
+                What type of experience are you looking for? *
+              </label>
+              <div className="space-y-4">
+                <label className="flex items-center">
+                  <input
+                    type="radio"
+                    name="selectedPackageType"
+                    value="custom"
+                    checked={formData.selectedPackageType === 'custom'}
+                    onChange={handleInputChange}
+                    className="h-4 w-4 text-[#B8860B] focus:ring-[#B8860B] border-gray-300"
+                  />
+                  <span className="ml-2 text-gray-700">Custom travel experience (build from scratch)</span>
+                </label>
+
+                <label className="flex items-center">
+                  <input
+                    type="radio"
+                    name="selectedPackageType"
+                    value="package"
+                    checked={formData.selectedPackageType === 'package'}
+                    onChange={handleInputChange}
+                    className="h-4 w-4 text-[#B8860B] focus:ring-[#B8860B] border-gray-300"
+                  />
+                  <span className="ml-2 text-gray-700">
+                    Choose from our curated travel packages
+                    {packages.length === 0 && loading && <span className="text-gray-500"> (loading...)</span>}
+                    {packages.length === 0 && !loading && <span className="text-gray-500"> (coming soon)</span>}
+                  </span>
+                </label>
+
+                <label className="flex items-center">
+                  <input
+                    type="radio"
+                    name="selectedPackageType"
+                    value="cruise"
+                    checked={formData.selectedPackageType === 'cruise'}
+                    onChange={handleInputChange}
+                    className="h-4 w-4 text-[#B8860B] focus:ring-[#B8860B] border-gray-300"
+                  />
+                  <span className="ml-2 text-gray-700">
+                    Choose from our luxury cruise experiences
+                    {cruises.length === 0 && loading && <span className="text-gray-500"> (loading...)</span>}
+                    {cruises.length === 0 && !loading && <span className="text-gray-500"> (coming soon)</span>}
+                  </span>
+                </label>
+              </div>
+
+              {/* Package Selection */}
+              {formData.selectedPackageType === 'package' && (
+                <div className="mt-4">
+                  {packages.length > 0 ? (
+                    <>
+                      <label htmlFor="selectedPackageId" className="block text-sm font-medium text-gray-700 mb-2">
+                        Select a Package *
+                      </label>
+                      <select
+                        id="selectedPackageId"
+                        name="selectedPackageId"
+                        required={formData.selectedPackageType === 'package' && packages.length > 0}
+                        value={formData.selectedPackageId}
+                        onChange={handleInputChange}
+                        className="w-full text-black px-4 py-3 border border-gray-300 rounded-md focus:ring-2 focus:ring-[#B8860B] focus:border-transparent"
+                      >
+                        <option value="">Select a travel package</option>
+                        {packages.map((pkg) => (
+                          <option key={pkg.id} value={pkg.id}>
+                            {pkg.title} - {pkg.duration} days ({pkg.destination})
+                          </option>
+                        ))}
+                      </select>
+                    </>
+                  ) : (
+                    <div className="mt-4 p-4 bg-gray-100 rounded-md">
+                      <p className="text-gray-600">
+                        {loading
+                          ? 'Loading available packages...'
+                          : 'No travel packages are currently available. Please select "Custom travel experience" to create a personalized itinerary.'
+                        }
+                      </p>
+                    </div>
+                  )}
+                </div>
+              )}
+
+              {/* Cruise Selection */}
+              {formData.selectedPackageType === 'cruise' && (
+                <div className="mt-4">
+                  {cruises.length > 0 ? (
+                    <>
+                      <label htmlFor="selectedPackageId" className="block text-sm font-medium text-gray-700 mb-2">
+                        Select a Cruise *
+                      </label>
+                      <select
+                        id="selectedPackageId"
+                        name="selectedPackageId"
+                        required={formData.selectedPackageType === 'cruise' && cruises.length > 0}
+                        value={formData.selectedPackageId}
+                        onChange={handleInputChange}
+                        className="w-full text-black px-4 py-3 border border-gray-300 rounded-md focus:ring-2 focus:ring-[#B8860B] focus:border-transparent"
+                      >
+                        <option value="">Select a cruise experience</option>
+                        {cruises.map((cruise) => (
+                          <option key={cruise.id} value={cruise.id}>
+                            {cruise.title} - {cruise.duration} days
+                            {cruise.cruise_line && ` (${cruise.cruise_line})`}
+                            {cruise.departure_port && ` - Departs ${cruise.departure_port}`}
+                          </option>
+                        ))}
+                      </select>
+                    </>
+                  ) : (
+                    <div className="mt-4 p-4 bg-gray-100 rounded-md">
+                      <p className="text-gray-600">
+                        {loading
+                          ? 'Loading available cruises...'
+                          : 'No cruise experiences are currently available. Please select "Custom travel experience" and mention your cruise preferences in the additional information section.'
+                        }
+                      </p>
+                    </div>
+                  )}
+                </div>
+              )}
+            </div>
+
             <div className="mb-6">
               <label htmlFor="destination" className="block text-sm font-medium text-gray-700 mb-2">
-                Destination *
+                {formData.selectedPackageType === 'custom' ? 'Destination *' : 'Additional Destinations (Optional)'}
               </label>
               <select
                 id="destination"
                 name="destination"
-                required
+                required={formData.selectedPackageType === 'custom'}
                 value={formData.destination}
                 onChange={handleInputChange}
                 className="w-full text-black px-4 py-3 border border-gray-300 rounded-md focus:ring-2 focus:ring-blue-900 focus:border-transparent"
               >
+                {formData.selectedPackageType !== 'custom' && (
+                  <option value="">No additional destinations</option>
+                )}
                 <option value="Peru">Peru</option>
                 <option value="Ecuador" disabled>Ecuador (Coming Soon)</option>
                 <option value="Galapagos" disabled>Galapagos Islands (Coming Soon)</option>

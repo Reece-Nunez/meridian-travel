@@ -27,6 +27,12 @@ async function sendAdminNotification(quote: any) {
             <div style="background: linear-gradient(135deg, #f8f5f0, #faf8f5); padding: 30px; border-radius: 12px; border-left: 5px solid #DAA520; margin-bottom: 30px;">
               <h2 style="color: #8B4513; margin-top: 0; font-size: 24px; margin-bottom: 25px;">Quote Details</h2>
               <div style="display: grid; gap: 15px;">
+                ${quote.package_type !== 'custom' ? `
+                <div style="display: flex; justify-content: space-between; padding: 12px 0; border-bottom: 1px solid #e0e0e0;">
+                  <span style="color: #666; font-weight: 500;">Experience Type:</span>
+                  <span style="color: #8B4513; font-weight: 600;">${quote.package_type === 'cruise' ? 'Cruise Package' : 'Travel Package'}</span>
+                </div>
+                ` : ''}
                 <div style="display: flex; justify-content: space-between; padding: 12px 0; border-bottom: 1px solid #e0e0e0;">
                   <span style="color: #666; font-weight: 500;">Destination:</span>
                   <span style="color: #8B4513; font-weight: 600;">${quote.destination}</span>
@@ -97,7 +103,7 @@ async function sendAdminNotification(quote: any) {
     body: JSON.stringify({
       from: 'quotes@meridianluxury.travel',
       to: [adminEmail],
-      subject: `🔔 New Quote Request: ${quote.destination} for ${quote.participants} people`,
+      subject: `🔔 New Quote Request: ${quote.package_type === 'cruise' ? 'Cruise' : quote.package_type === 'package' ? 'Package' : 'Custom'} - ${quote.destination} for ${quote.participants} people`,
       html: emailContent,
     }),
   });
@@ -139,7 +145,12 @@ export async function POST(request: Request) {
     }
     
     const data = await request.json();
-    console.log('API /quotes: Request data received', { destination: data.destination, email: data.email });
+    console.log('API /quotes: Request data received', {
+      destination: data.destination,
+      email: data.email,
+      packageType: data.selectedPackageType,
+      packageId: data.selectedPackageId
+    });
     
     const {
       firstName,
@@ -147,6 +158,8 @@ export async function POST(request: Request) {
       email,
       phone,
       destination,
+      selectedPackageType,
+      selectedPackageId,
       dateType,
       flexibleMonth,
       flexibleYear,
@@ -162,8 +175,29 @@ export async function POST(request: Request) {
       travelPlans
     } = data;
 
+    // Fetch package/cruise information if selected
+    let selectedPackage = null;
+    let packageDestination = destination;
+    let packageDuration = null;
+
+    if (selectedPackageType !== 'custom' && selectedPackageId) {
+      const supabaseAdmin = createSupabaseAdmin();
+      const { data: packageData, error: packageError } = await supabaseAdmin
+        .from('trip_packages')
+        .select('*')
+        .eq('id', selectedPackageId)
+        .eq('is_active', true)
+        .single();
+
+      if (!packageError && packageData) {
+        selectedPackage = packageData;
+        packageDestination = packageData.destination || destination;
+        packageDuration = packageData.duration;
+      }
+    }
+
     // Calculate duration from the form data
-    let duration = 7; // Default duration
+    let duration = packageDuration || 7; // Use package duration or default
     let travel_dates_start = null;
     let travel_dates_end = null;
 
@@ -184,10 +218,41 @@ export async function POST(request: Request) {
 
     // Combine all additional information
     let combinedRequirements = '';
-    
+
     // Add name information
     if (firstName || lastName) {
       combinedRequirements += `Contact Name: ${firstName} ${lastName}`.trim() + '\n\n';
+    }
+
+    // Add package/cruise information
+    if (selectedPackage) {
+      const packageType = selectedPackage.type === 'cruise' ? 'Cruise' : 'Package';
+      combinedRequirements += `Selected ${packageType}: ${selectedPackage.title}`;
+      if (selectedPackage.type === 'cruise') {
+        if (selectedPackage.cruise_line) {
+          combinedRequirements += ` (${selectedPackage.cruise_line}`;
+          if (selectedPackage.ship_name) {
+            combinedRequirements += ` - ${selectedPackage.ship_name}`;
+          }
+          combinedRequirements += ')';
+        }
+        if (selectedPackage.departure_port) {
+          combinedRequirements += ` - Departing from ${selectedPackage.departure_port}`;
+        }
+        if (selectedPackage.cabin_category) {
+          combinedRequirements += ` - ${selectedPackage.cabin_category} cabin`;
+        }
+      }
+      combinedRequirements += `\n${packageType} Duration: ${selectedPackage.duration} days`;
+      if (selectedPackage.destination !== destination) {
+        combinedRequirements += `\n${packageType} Destination: ${selectedPackage.destination}`;
+      }
+      if (selectedPackage.description) {
+        combinedRequirements += `\n${packageType} Description: ${selectedPackage.description}`;
+      }
+      combinedRequirements += '\n\n';
+    } else {
+      combinedRequirements += 'Request Type: Custom travel experience\n\n';
     }
     
     // Add date preferences
@@ -235,7 +300,7 @@ export async function POST(request: Request) {
 
     // Prepare data for database with proper type validation
     const quoteData = {
-      destination: destination?.toString() || '',
+      destination: packageDestination?.toString() || destination?.toString() || '',
       duration: Number.isInteger(duration) ? duration : 7,
       participants: parseInt(adults || '0') + parseInt(children || '0') + parseInt(childrenOver12 || '0'),
       budget_range: budget?.toString() || '',
@@ -244,17 +309,33 @@ export async function POST(request: Request) {
       special_requirements: combinedRequirements.trim() || null,
       contact_email: email?.toString() || '',
       contact_phone: phone?.toString() || '',
-      status: 'pending' as const
+      status: 'pending' as const,
+      selected_package_id: selectedPackageId || null,
+      package_type: selectedPackageType || 'custom'
     };
 
     // Validate required fields
-    if (!quoteData.destination || !quoteData.contact_email) {
+    const requiresDestination = selectedPackageType === 'custom';
+    if ((requiresDestination && !quoteData.destination) || !quoteData.contact_email) {
       console.error('API /quotes: Missing required fields', {
         hasDestination: !!quoteData.destination,
-        hasEmail: !!quoteData.contact_email
+        hasEmail: !!quoteData.contact_email,
+        requiresDestination,
+        selectedPackageType
       });
+
+      let errorMessage = 'Missing required fields: ';
+      const missingFields = [];
+      if (requiresDestination && !quoteData.destination) {
+        missingFields.push('destination');
+      }
+      if (!quoteData.contact_email) {
+        missingFields.push('email');
+      }
+      errorMessage += missingFields.join(' and ') + ' are required';
+
       return NextResponse.json(
-        { error: 'Missing required fields: destination and email are required' },
+        { error: errorMessage },
         { status: 400 }
       );
     }

@@ -107,6 +107,24 @@ const PAGE_SECTIONS = {
       'CTA Button 2': 'destinations_cta_button_2',
     },
   },
+  Cruises: {
+    key: 'cruises',
+    sections: {
+      'Page Hero Title': 'cruises_page_title',
+      'Page Hero Content': 'cruises_page_content',
+      'Accommodations Title': 'cruises_accommodations_title',
+      'Accommodations Subtitle': 'cruises_accommodations_subtitle',
+      'Itineraries Title': 'cruises_itineraries_title',
+      'Itineraries Subtitle': 'cruises_itineraries_subtitle',
+      'Pricing Title': 'cruises_pricing_title',
+      'Pricing Subtitle': 'cruises_pricing_subtitle',
+      'What\'s Included Title': 'cruises_included_title',
+      'Additional Info Title': 'cruises_additional_title',
+      'Booking Banner Title': 'cruises_booking_title',
+      'Booking Banner Subtitle': 'cruises_booking_subtitle',
+      'Booking Banner Button': 'cruises_booking_button',
+    },
+  },
   'Navigation & Global': {
     key: 'global',
     sections: {
@@ -120,7 +138,7 @@ const PAGE_SECTIONS = {
       'Destinations Menu': 'nav_destinations_text',
       'View All Destinations': 'nav_view_all_destinations',
       'Packages Menu': 'nav_packages_text',
-      'Travel Styles Menu': 'nav_travel_styles_text',
+      'Cruises Menu': 'nav_cruises_text',
       'About Menu': 'nav_about_text',
       'Contact Menu': 'nav_contact_text',
       'Request Quote Mobile': 'nav_request_quote_mobile',

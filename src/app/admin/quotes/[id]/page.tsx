@@ -5,7 +5,7 @@ import { motion } from 'framer-motion';
 import Link from 'next/link';
 import { useRouter, useParams } from 'next/navigation';
 import { supabase } from '@/lib/supabase';
-import { CustomQuote } from '@/types/database';
+import { CustomQuote, TripPackage } from '@/types/database';
 import { useSimpleAdminAuth } from '@/hooks/useSimpleAdminAuth';
 import ItineraryBuilder from '@/components/ItineraryBuilder';
 import PDFInvoiceGenerator from '@/components/PDFInvoiceGenerator';
@@ -21,6 +21,7 @@ export default function QuoteDetail() {
   const quoteId = params.id as string;
 
   const [quote, setQuote] = useState<CustomQuote | null>(null);
+  const [selectedPackage, setSelectedPackage] = useState<TripPackage | null>(null);
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
   const [error, setError] = useState<string | null>(null);
@@ -71,6 +72,23 @@ export default function QuoteDetail() {
       
       if (data) {
         setQuote(data);
+
+        // Fetch selected package if it exists
+        if (data.selected_package_id) {
+          try {
+            const { data: packageData, error: packageError } = await supabase
+              .from('trip_packages')
+              .select('*')
+              .eq('id', data.selected_package_id)
+              .single();
+
+            if (!packageError && packageData) {
+              setSelectedPackage(packageData);
+            }
+          } catch (packageErr) {
+            console.error('Error fetching selected package:', packageErr);
+          }
+        }
 
         // Parse group details from special_requirements only as fallback for very old quotes
         const groupDetails = parseGroupDetails(data.special_requirements);
@@ -283,6 +301,30 @@ export default function QuoteDetail() {
     }
   };
 
+  const getPackageTypeColor = (packageType: string | null) => {
+    switch (packageType) {
+      case 'package':
+        return 'bg-green-100 text-green-800';
+      case 'cruise':
+        return 'bg-blue-100 text-blue-800';
+      case 'custom':
+      default:
+        return 'bg-gray-100 text-gray-800';
+    }
+  };
+
+  const getPackageTypeLabel = (packageType: string | null) => {
+    switch (packageType) {
+      case 'package':
+        return 'Travel Package';
+      case 'cruise':
+        return 'Cruise Package';
+      case 'custom':
+      default:
+        return 'Custom Experience';
+    }
+  };
+
   if (authLoading) {
     return (
       <div className="min-h-screen bg-gray-50 flex items-center justify-center">
@@ -431,12 +473,162 @@ export default function QuoteDetail() {
           </motion.div>
         </div>
 
+        {/* Package/Cruise Information */}
+        {(quote.package_type !== 'custom' && quote.package_type !== null) && (
+          <motion.div
+            className="bg-white rounded-lg shadow-sm p-6 mt-8"
+            initial={{ opacity: 0, y: 20 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ duration: 0.5, delay: 0.2 }}
+          >
+            <div className="flex items-center justify-between mb-6">
+              <h3 className="text-lg font-medium text-gray-900">
+                {getPackageTypeLabel(quote.package_type)} Information
+              </h3>
+              <span className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium ${getPackageTypeColor(quote.package_type)}`}>
+                {getPackageTypeLabel(quote.package_type)}
+              </span>
+            </div>
+
+            {selectedPackage ? (
+              <div className="space-y-4">
+                <div>
+                  <label className="block text-sm font-medium text-gray-700">
+                    {quote.package_type === 'cruise' ? 'Cruise' : 'Package'} Title
+                  </label>
+                  <p className="mt-1 text-sm font-semibold text-gray-900">{selectedPackage.title}</p>
+                </div>
+
+                {selectedPackage.description && (
+                  <div>
+                    <label className="block text-sm font-medium text-gray-700">Description</label>
+                    <p className="mt-1 text-sm text-gray-900">{selectedPackage.description}</p>
+                  </div>
+                )}
+
+                <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+                  <div>
+                    <label className="block text-sm font-medium text-gray-700">Duration</label>
+                    <p className="mt-1 text-sm text-gray-900">{selectedPackage.duration} days</p>
+                  </div>
+                  <div>
+                    <label className="block text-sm font-medium text-gray-700">Destination</label>
+                    <p className="mt-1 text-sm text-gray-900">{selectedPackage.destination}</p>
+                  </div>
+                  {selectedPackage.max_participants && (
+                    <div>
+                      <label className="block text-sm font-medium text-gray-700">Max Participants</label>
+                      <p className="mt-1 text-sm text-gray-900">{selectedPackage.max_participants}</p>
+                    </div>
+                  )}
+                </div>
+
+                {/* Cruise-specific information */}
+                {quote.package_type === 'cruise' && (
+                  <div className="border-t pt-4 mt-4">
+                    <h4 className="text-md font-medium text-gray-900 mb-3">Cruise Details</h4>
+                    <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                      {selectedPackage.cruise_line && (
+                        <div>
+                          <label className="block text-sm font-medium text-gray-700">Cruise Line</label>
+                          <p className="mt-1 text-sm text-gray-900">{selectedPackage.cruise_line}</p>
+                        </div>
+                      )}
+                      {selectedPackage.ship_name && (
+                        <div>
+                          <label className="block text-sm font-medium text-gray-700">Ship Name</label>
+                          <p className="mt-1 text-sm text-gray-900">{selectedPackage.ship_name}</p>
+                        </div>
+                      )}
+                      {selectedPackage.cabin_category && (
+                        <div>
+                          <label className="block text-sm font-medium text-gray-700">Cabin Category</label>
+                          <p className="mt-1 text-sm text-gray-900">{selectedPackage.cabin_category}</p>
+                        </div>
+                      )}
+                      {selectedPackage.departure_port && (
+                        <div>
+                          <label className="block text-sm font-medium text-gray-700">Departure Port</label>
+                          <p className="mt-1 text-sm text-gray-900">{selectedPackage.departure_port}</p>
+                        </div>
+                      )}
+                      {selectedPackage.arrival_port && (
+                        <div>
+                          <label className="block text-sm font-medium text-gray-700">Arrival Port</label>
+                          <p className="mt-1 text-sm text-gray-900">{selectedPackage.arrival_port}</p>
+                        </div>
+                      )}
+                    </div>
+                  </div>
+                )}
+
+                {/* Package includes/excludes */}
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-6 border-t pt-4 mt-4">
+                  {selectedPackage.includes && selectedPackage.includes.length > 0 && (
+                    <div>
+                      <label className="block text-sm font-medium text-gray-700 mb-2">Includes</label>
+                      <ul className="space-y-1">
+                        {selectedPackage.includes.map((item, index) => (
+                          <li key={index} className="text-sm text-gray-900 flex items-start">
+                            <svg className="w-4 h-4 text-green-500 mr-2 mt-0.5 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" />
+                            </svg>
+                            {item}
+                          </li>
+                        ))}
+                      </ul>
+                    </div>
+                  )}
+
+                  {selectedPackage.excludes && selectedPackage.excludes.length > 0 && (
+                    <div>
+                      <label className="block text-sm font-medium text-gray-700 mb-2">Excludes</label>
+                      <ul className="space-y-1">
+                        {selectedPackage.excludes.map((item, index) => (
+                          <li key={index} className="text-sm text-gray-900 flex items-start">
+                            <svg className="w-4 h-4 text-red-500 mr-2 mt-0.5 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
+                            </svg>
+                            {item}
+                          </li>
+                        ))}
+                      </ul>
+                    </div>
+                  )}
+                </div>
+
+                {/* Luxury highlights for cruises */}
+                {selectedPackage.luxury_highlights && selectedPackage.luxury_highlights.length > 0 && (
+                  <div className="border-t pt-4 mt-4">
+                    <label className="block text-sm font-medium text-gray-700 mb-2">Luxury Highlights</label>
+                    <ul className="space-y-1">
+                      {selectedPackage.luxury_highlights.map((item, index) => (
+                        <li key={index} className="text-sm text-gray-900 flex items-start">
+                          <svg className="w-4 h-4 text-yellow-500 mr-2 mt-0.5 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M11.049 2.927c.3-.921 1.603-.921 1.902 0l1.519 4.674a1 1 0 00.95.69h4.915c.969 0 1.371 1.24.588 1.81l-3.976 2.888a1 1 0 00-.363 1.118l1.518 4.674c.3.922-.755 1.688-1.538 1.118l-3.976-2.888a1 1 0 00-1.176 0l-3.976 2.888c-.783.57-1.838-.197-1.538-1.118l1.518-4.674a1 1 0 00-.363-1.118l-3.976-2.888c-.784-.57-.38-1.81.588-1.81h4.914a1 1 0 00.951-.69l1.519-4.674z" />
+                          </svg>
+                          {item}
+                        </li>
+                      ))}
+                    </ul>
+                  </div>
+                )}
+              </div>
+            ) : (
+              <div className="text-center py-8 text-gray-500">
+                <p>Selected {quote.package_type} information could not be loaded.</p>
+                <p className="text-sm mt-1">Package ID: {quote.selected_package_id}</p>
+              </div>
+            )}
+          </motion.div>
+        )}
+
         {/* Admin Response Form */}
         <motion.div
           className="bg-white rounded-lg shadow-sm p-6 mt-8"
           initial={{ opacity: 0, y: 20 }}
           animate={{ opacity: 1, y: 0 }}
-          transition={{ duration: 0.5, delay: 0.2 }}
+          transition={{ duration: 0.5, delay: 0.3 }}
         >
           <h3 className="text-lg font-medium text-gray-900 mb-6">Admin Response</h3>
           

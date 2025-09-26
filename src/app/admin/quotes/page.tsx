@@ -116,6 +116,30 @@ export default function AdminQuotes() {
     }
   };
 
+  const getPackageTypeColor = (packageType: string | null) => {
+    switch (packageType) {
+      case 'package':
+        return 'bg-green-100 text-green-800';
+      case 'cruise':
+        return 'bg-blue-100 text-blue-800';
+      case 'custom':
+      default:
+        return 'bg-gray-100 text-gray-800';
+    }
+  };
+
+  const getPackageTypeLabel = (packageType: string | null) => {
+    switch (packageType) {
+      case 'package':
+        return 'Package';
+      case 'cruise':
+        return 'Cruise';
+      case 'custom':
+      default:
+        return 'Custom';
+    }
+  };
+
   const formatDate = (dateString: string) => {
     return new Date(dateString).toLocaleDateString('en-US', {
       year: 'numeric',
@@ -255,6 +279,9 @@ export default function AdminQuotes() {
                       Client
                     </th>
                     <th className="px-6 py-3 text-left text-xs font-medium text-gray-700 uppercase tracking-wider">
+                      Type
+                    </th>
+                    <th className="px-6 py-3 text-left text-xs font-medium text-gray-700 uppercase tracking-wider">
                       Destination
                     </th>
                     <th className="px-6 py-3 text-left text-xs font-medium text-gray-700 uppercase tracking-wider">
@@ -293,6 +320,11 @@ export default function AdminQuotes() {
                             {formatDate(quote.created_at)}
                           </div>
                         </div>
+                      </td>
+                      <td className="px-6 py-4 whitespace-nowrap">
+                        <span className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium ${getPackageTypeColor(quote.package_type)}`}>
+                          {getPackageTypeLabel(quote.package_type)}
+                        </span>
                       </td>
                       <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
                         {quote.destination}

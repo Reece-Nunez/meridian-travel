@@ -2,7 +2,7 @@
 
 import { useAuth } from '@/contexts/AuthContext';
 import { useRouter, useParams, useSearchParams } from 'next/navigation';
-import { useEffect, useState } from 'react';
+import { useEffect, useState, Suspense } from 'react';
 import { supabase } from '@/lib/supabase';
 import Link from 'next/link';
 import { CustomQuote } from '@/types/database';
@@ -10,7 +10,7 @@ import ItineraryDisplay from '@/components/ItineraryDisplay';
 import PaymentMethodSelector, { PaymentMethod } from '@/components/PaymentMethodSelector';
 import PaymentInstructions from '@/components/PaymentInstructions';
 
-export default function QuoteDetails() {
+function QuoteDetailsContent() {
   const { user, loading: authLoading } = useAuth();
   const [quote, setQuote] = useState<CustomQuote | null>(null);
   const [loading, setLoading] = useState(true);
@@ -596,5 +596,20 @@ export default function QuoteDetails() {
         )}
       </div>
     </div>
+  );
+}
+
+export default function QuoteDetails() {
+  return (
+    <Suspense fallback={
+      <div className="min-h-screen flex items-center justify-center">
+        <div className="text-center">
+          <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-[#8B4513] mx-auto mb-4"></div>
+          <p className="text-gray-600">Loading quote details...</p>
+        </div>
+      </div>
+    }>
+      <QuoteDetailsContent />
+    </Suspense>
   );
 }

@@ -2,7 +2,7 @@
 
 import { useAuth } from '@/contexts/AuthContext';
 import { useRouter, useParams, useSearchParams } from 'next/navigation';
-import { useEffect, useState } from 'react';
+import { useEffect, useState, Suspense } from 'react';
 import { supabase } from '@/lib/supabase';
 import { CustomQuote } from '@/types/database';
 import { loadStripe } from '@stripe/stripe-js';
@@ -221,7 +221,7 @@ function PaymentForm({ quote, clientSecret, onPaymentSuccess, onPaymentError }: 
   );
 }
 
-export default function PaymentPage() {
+function PaymentPageContent() {
   const { user, loading: authLoading } = useAuth();
   const [quote, setQuote] = useState<CustomQuote | null>(null);
   const [loading, setLoading] = useState(true);
@@ -387,5 +387,20 @@ export default function PaymentPage() {
         </div>
       </div>
     </div>
+  );
+}
+
+export default function PaymentPage() {
+  return (
+    <Suspense fallback={
+      <div className="min-h-screen flex items-center justify-center">
+        <div className="text-center">
+          <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-[#8B4513] mx-auto mb-4"></div>
+          <p className="text-gray-600">Loading payment page...</p>
+        </div>
+      </div>
+    }>
+      <PaymentPageContent />
+    </Suspense>
   );
 }

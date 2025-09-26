@@ -2,11 +2,13 @@
 
 import { useEffect, useState } from 'react';
 import { useRouter } from 'next/navigation';
+import { useAuth } from '@/contexts/AuthContext';
 
 export function useSimpleAdminAuth() {
   const [loading, setLoading] = useState(true);
   const [isAuthenticated, setIsAuthenticated] = useState(false);
   const router = useRouter();
+  const { signOut } = useAuth();
 
   useEffect(() => {
     let isMounted = true;
@@ -96,9 +98,18 @@ export function useSimpleAdminAuth() {
     };
   }, [router]);
 
-  const logout = () => {
-    localStorage.removeItem('admin_session');
-    router.push('/admin/login');
+  const logout = async () => {
+    try {
+      // Clear admin session
+      localStorage.removeItem('admin_session');
+      // Also sign out from Supabase since admins now use unified auth
+      await signOut();
+      router.push('/auth/signin');
+    } catch (error) {
+      console.error('Admin logout error:', error);
+      // Still redirect even if signOut fails
+      router.push('/auth/signin');
+    }
   };
 
   return { loading, isAuthenticated, logout };

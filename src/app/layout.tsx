@@ -67,7 +67,7 @@ export default function RootLayout({
           <Navigation />
           {children}
           <Footer />
-          <SessionManager timeout={30} warningTime={2} />
+          <SessionManager timeout={30} warningTime={5} />
         </AuthProvider>
       </body>
     </html>

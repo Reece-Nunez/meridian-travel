@@ -164,10 +164,10 @@ function DashboardContent() {
         alert('Sign out failed. Please try again.');
       } else {
         console.log('Dashboard: Sign out successful, redirecting...');
-        // Force clear any cached auth state and redirect
-        localStorage.clear();
-        sessionStorage.clear();
-        window.location.href = '/';
+        // Clear admin session if it exists (for admin users)
+        localStorage.removeItem('admin_session');
+        // Let the router handle the redirect
+        router.push('/auth/signin');
       }
     } catch (e) {
       console.error('Dashboard: Sign out exception:', e);

@@ -221,14 +221,30 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
               error.message?.includes('session missing') ||
               error.status === 403) {
             console.log('AuthContext: Session already invalid - user successfully signed out locally');
-            return { error: null };
+          } else {
+            console.error('AuthContext: Sign out error:', error);
           }
-          console.error('AuthContext: Sign out error:', error);
-          // Still return success since local state is cleared
-          return { error: null };
+          // Continue to clear browser storage even if API call failed
+        } else {
+          console.log('AuthContext: Supabase signOut successful');
         }
 
-        console.log('AuthContext: Supabase signOut successful');
+        // Clear any Supabase auth storage from browser
+        try {
+          Object.keys(localStorage).forEach(key => {
+            if (key.startsWith('sb-') || key.includes('supabase')) {
+              localStorage.removeItem(key);
+            }
+          });
+          Object.keys(sessionStorage).forEach(key => {
+            if (key.startsWith('sb-') || key.includes('supabase')) {
+              sessionStorage.removeItem(key);
+            }
+          });
+        } catch (storageError) {
+          console.warn('AuthContext: Error clearing auth storage:', storageError);
+        }
+
       } catch (supabaseError) {
         console.warn('AuthContext: Supabase signOut failed, but local state cleared:', supabaseError);
         // Local state is cleared, so this is still a success from user perspective

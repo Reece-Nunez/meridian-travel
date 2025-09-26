@@ -10,9 +10,9 @@ interface SessionManagerProps {
   warningTime?: number; // in minutes
 }
 
-export default function SessionManager({ 
+export default function SessionManager({
   timeout = 30, // 30 minutes default
-  warningTime = 2 // 2 minutes warning default
+  warningTime = 5 // 5 minutes warning default
 }: SessionManagerProps) {
   const router = useRouter();
   const { signOut } = useAuth();

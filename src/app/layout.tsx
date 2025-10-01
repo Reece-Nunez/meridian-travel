@@ -3,8 +3,8 @@ import { Geist, Geist_Mono } from "next/font/google";
 import localFont from "next/font/local";
 import Script from "next/script";
 import "./globals.css";
-import Navigation from "../components/Navigation";
-import Footer from "../components/Footer";
+import ConditionalNavigation from "../components/ConditionalNavigation";
+import ConditionalFooter from "../components/ConditionalFooter";
 import { AuthProvider } from "../contexts/AuthContext";
 import SessionManager from "../components/SessionManager";
 
@@ -64,9 +64,9 @@ export default function RootLayout({
           `}
         </Script>
         <AuthProvider>
-          <Navigation />
+          <ConditionalNavigation />
           {children}
-          <Footer />
+          <ConditionalFooter />
           <SessionManager timeout={30} warningTime={5} />
         </AuthProvider>
       </body>

@@ -14,11 +14,18 @@ export async function getAllContent(): Promise<ContentSection[]> {
   }
 
   try {
-    const { data, error } = await supabase
+    // Race the query against a timeout
+    const timeoutPromise = new Promise<never>((_, reject) => {
+      setTimeout(() => reject(new Error('Content query timeout')), 2000);
+    });
+
+    const queryPromise = supabase
       .from('content_sections')
       .select('*')
       .eq('is_active', true)
       .order('section_type');
+
+    const { data, error } = await Promise.race([queryPromise, timeoutPromise]);
 
     if (error) {
       console.log('Content sections not available, using fallbacks');
@@ -29,7 +36,7 @@ export async function getAllContent(): Promise<ContentSection[]> {
     cacheTimestamp = Date.now();
     return contentCache;
   } catch (error) {
-    console.log('Error fetching content, using fallbacks');
+    console.log('Error fetching content (likely timeout), using fallbacks');
     return getFallbackContent();
   }
 }
@@ -41,10 +48,17 @@ export async function getAllSettings(): Promise<SiteSetting[]> {
   }
 
   try {
-    const { data, error } = await supabase
+    // Race the query against a timeout
+    const timeoutPromise = new Promise<never>((_, reject) => {
+      setTimeout(() => reject(new Error('Settings query timeout')), 2000);
+    });
+
+    const queryPromise = supabase
       .from('site_settings')
       .select('*')
       .order('setting_key');
+
+    const { data, error } = await Promise.race([queryPromise, timeoutPromise]);
 
     if (error) {
       console.log('Site settings not available, using fallbacks');
@@ -55,7 +69,7 @@ export async function getAllSettings(): Promise<SiteSetting[]> {
     cacheTimestamp = Date.now();
     return settingsCache;
   } catch (error) {
-    console.log('Error fetching settings, using fallbacks');
+    console.log('Error fetching settings (likely timeout), using fallbacks');
     return getFallbackSettings();
   }
 }

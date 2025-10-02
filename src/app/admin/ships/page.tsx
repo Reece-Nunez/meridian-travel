@@ -38,38 +38,21 @@ export default function AdminShips() {
     try {
       console.log('Fetching ships...');
 
-      // Check current session
-      const { data: sessionData } = await supabase.auth.getSession();
-      console.log('Current session:', sessionData.session ? 'Active' : 'None');
-
-      if (sessionData.session) {
-        console.log('User:', sessionData.session.user.email);
-      }
-
-      // Add timeout to the query
-      const fetchPromise = supabase
+      const { data, error } = await supabase
         .from('ships')
         .select('*')
         .order('name', { ascending: true });
 
-      const timeoutPromise = new Promise((_, reject) =>
-        setTimeout(() => reject(new Error('Query timeout after 5 seconds')), 5000)
-      );
-
-      const { data, error } = await Promise.race([fetchPromise, timeoutPromise]) as any;
-
       if (error) {
-        console.error('Error fetching ships:', error);
-        console.error('Error details:', JSON.stringify(error));
+        console.error('Supabase error:', error);
         throw error;
       }
 
       console.log('Ships fetched:', data?.length || 0);
-      console.log('Ships data:', data);
       setShips(data || []);
     } catch (error: any) {
       console.error('Error fetching ships:', error);
-      alert(`Failed to load ships: ${error.message || 'Unknown error'}. Check browser console for details.`);
+      alert(`Failed to load ships: ${error.message}. Check browser console for details.`);
     } finally {
       setLoading(false);
     }

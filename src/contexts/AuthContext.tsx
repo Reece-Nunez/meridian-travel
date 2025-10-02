@@ -38,16 +38,17 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
         .from('profiles')
         .select('*')
         .eq('id', userId)
-        .single();
+        .maybeSingle();
 
-      if (error && error.code !== 'PGRST116') { // PGRST116 is "not found" error
-        console.error('Error fetching profile:', error);
+      if (error) {
+        // Silently handle profile errors - profile may not exist or table may not be set up yet
+        console.warn('Profile fetch failed (this is OK if profiles are not set up):', error.message);
         return null;
       }
 
       return data;
     } catch (error) {
-      console.error('Error fetching profile:', error);
+      console.warn('Error fetching profile (this is OK if profiles are not set up):', error);
       return null;
     }
   };
@@ -70,8 +71,13 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
 
     const initializeAuth = async () => {
       try {
-        // Get initial session
-        const { data: { session }, error } = await supabase.auth.getSession();
+        // Race session fetch against timeout to prevent hanging
+        const sessionPromise = supabase.auth.getSession();
+        const timeoutPromise = new Promise<never>((_, reject) => {
+          setTimeout(() => reject(new Error('Session fetch timeout')), 2000);
+        });
+
+        const { data: { session }, error } = await Promise.race([sessionPromise, timeoutPromise]);
 
         if (!isMounted) return;
 
@@ -85,17 +91,19 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
         setUser(session?.user ?? null);
 
         if (session?.user) {
-          const profileData = await fetchProfile(session.user.id);
-          if (isMounted) {
-            setProfile(profileData);
-          }
+          // Fetch profile without awaiting - let it load in background
+          fetchProfile(session.user.id).then(profileData => {
+            if (isMounted) {
+              setProfile(profileData);
+            }
+          });
         }
 
         if (isMounted) {
           setLoading(false);
         }
       } catch (error) {
-        console.error('Session initialization error:', error);
+        console.warn('Session initialization error or timeout:', error);
         if (isMounted) {
           setLoading(false);
         }
@@ -110,7 +118,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
         console.warn('Auth initialization timeout - forcing loading to false');
         setLoading(false);
       }
-    }, 10000); // 10 second timeout
+    }, 3000); // 3 second timeout
 
     // Listen for auth changes
     const { data: { subscription } } = supabase.auth.onAuthStateChange(

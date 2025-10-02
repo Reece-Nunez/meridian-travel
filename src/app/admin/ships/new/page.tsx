@@ -6,7 +6,7 @@ import Link from 'next/link';
 import { useRouter } from 'next/navigation';
 import { supabase } from '@/lib/supabase';
 import { useSimpleAdminAuth } from '@/hooks/useSimpleAdminAuth';
-import ImageUpload from '@/components/admin/ImageUpload';
+import ImageUploadWithCaptions, { ImageWithCaption } from '@/components/admin/ImageUploadWithCaptions';
 
 interface PendingImage {
   id: string;
@@ -29,16 +29,12 @@ function NewShipContent() {
     cabin_categories: [''],
     ship_features: [''],
     luxury_highlights: [''],
-    images: [] as string[],
-    deck_plans: [] as string[],
     is_active: true,
     is_featured: false
   });
 
-  const [pendingImages, setPendingImages] = useState<PendingImage[]>([]);
-  const [imagesToDelete, setImagesToDelete] = useState<string[]>([]);
-  const [pendingDeckPlans, setPendingDeckPlans] = useState<PendingImage[]>([]);
-  const [deckPlansToDelete, setDeckPlansToDelete] = useState<string[]>([]);
+  const [shipImages, setShipImages] = useState<ImageWithCaption[]>([]);
+  const [deckPlanImages, setDeckPlanImages] = useState<ImageWithCaption[]>([]);
 
   const shipTypes = [
     'Luxury yacht',
@@ -113,45 +109,24 @@ function NewShipContent() {
     });
   };
 
-  const handleImagesChange = (images: string[], pendingImages: PendingImage[], imagesToDelete: string[]) => {
-    setFormData(prev => ({ ...prev, images }));
-    setPendingImages(pendingImages);
-    setImagesToDelete(imagesToDelete);
-  };
+  const uploadImageWithCaption = async (image: ImageWithCaption, folder: string) => {
+    if (!image.file) return { url: image.url, caption: image.caption };
 
-  const handleDeckPlansChange = (deckPlans: string[], pendingDeckPlans: PendingImage[], deckPlansToDelete: string[]) => {
-    setFormData(prev => ({ ...prev, deck_plans: deckPlans }));
-    setPendingDeckPlans(pendingDeckPlans);
-    setDeckPlansToDelete(deckPlansToDelete);
-  };
+    const fileExt = image.file.name.split('.').pop();
+    const fileName = `${Date.now()}-${Math.random().toString(36).substring(7)}.${fileExt}`;
+    const filePath = `${folder}/${fileName}`;
 
-  const uploadImages = async (pendingImages: PendingImage[], folder: string) => {
-    const uploadedUrls: string[] = [];
+    const { error: uploadError } = await supabase.storage
+      .from('images')
+      .upload(filePath, image.file);
 
-    for (const pending of pendingImages) {
-      try {
-        const fileExt = pending.file.name.split('.').pop();
-        const fileName = `${Date.now()}-${Math.random().toString(36).substring(7)}.${fileExt}`;
-        const filePath = `${folder}/${fileName}`;
+    if (uploadError) throw uploadError;
 
-        const { error: uploadError } = await supabase.storage
-          .from('images')
-          .upload(filePath, pending.file);
+    const { data: { publicUrl } } = supabase.storage
+      .from('images')
+      .getPublicUrl(filePath);
 
-        if (uploadError) throw uploadError;
-
-        const { data: { publicUrl } } = supabase.storage
-          .from('images')
-          .getPublicUrl(filePath);
-
-        uploadedUrls.push(publicUrl);
-      } catch (error) {
-        console.error('Error uploading image:', error);
-        throw error;
-      }
-    }
-
-    return uploadedUrls;
+    return { url: publicUrl, caption: image.caption };
   };
 
   const handleSubmit = async (e: React.FormEvent) => {
@@ -159,15 +134,31 @@ function NewShipContent() {
     setLoading(true);
 
     try {
-      // Upload new images
-      const uploadedImageUrls = await uploadImages(pendingImages, 'ships');
-      const uploadedDeckPlanUrls = await uploadImages(pendingDeckPlans, 'deck-plans');
+      // Upload ship images with captions
+      const uploadedShipImages = await Promise.all(
+        shipImages.map(img => uploadImageWithCaption(img, 'ships'))
+      );
+
+      // Upload deck plans with captions
+      const uploadedDeckPlans = await Promise.all(
+        deckPlanImages.map(img => uploadImageWithCaption(img, 'deck-plans'))
+      );
+
+      // Prepare metadata for database
+      const imageMetadata = uploadedShipImages.length > 0 ? uploadedShipImages : null;
+      const deckPlanMetadata = uploadedDeckPlans.length > 0 ? uploadedDeckPlans : null;
+
+      // Also keep the old format for backward compatibility
+      const images = uploadedShipImages.map(img => img.url);
+      const deck_plans = uploadedDeckPlans.map(img => img.url);
 
       // Clean array fields
       const cleanedData = {
         ...formData,
-        images: [...formData.images, ...uploadedImageUrls],
-        deck_plans: [...formData.deck_plans, ...uploadedDeckPlanUrls],
+        images: images.length > 0 ? images : null as any,
+        deck_plans: deck_plans.length > 0 ? deck_plans : null as any,
+        image_metadata: imageMetadata,
+        deck_plan_metadata: deckPlanMetadata,
         operating_regions: formData.operating_regions.filter(region => region.trim() !== ''),
         cabin_categories: formData.cabin_categories.filter(category => category.trim() !== ''),
         ship_features: formData.ship_features.filter(feature => feature.trim() !== ''),
@@ -179,8 +170,6 @@ function NewShipContent() {
       if (cleanedData.cabin_categories.length === 0) cleanedData.cabin_categories = null as any;
       if (cleanedData.ship_features.length === 0) cleanedData.ship_features = null as any;
       if (cleanedData.luxury_highlights.length === 0) cleanedData.luxury_highlights = null as any;
-      if (cleanedData.images.length === 0) cleanedData.images = null as any;
-      if (cleanedData.deck_plans.length === 0) cleanedData.deck_plans = null as any;
 
       const { error } = await supabase
         .from('ships')
@@ -487,12 +476,11 @@ function NewShipContent() {
             className="bg-white rounded-lg shadow p-6"
           >
             <h3 className="text-lg font-medium text-gray-900 mb-6">Ship Images</h3>
-            <ImageUpload
-              currentImages={formData.images}
-              pendingImages={pendingImages}
-              imagesToDelete={imagesToDelete}
-              onImagesChange={handleImagesChange}
+            <ImageUploadWithCaptions
+              images={shipImages}
+              onChange={setShipImages}
               maxImages={10}
+              title="Ship Images"
             />
           </motion.div>
 
@@ -504,12 +492,11 @@ function NewShipContent() {
             className="bg-white rounded-lg shadow p-6"
           >
             <h3 className="text-lg font-medium text-gray-900 mb-6">Deck Plans</h3>
-            <ImageUpload
-              currentImages={formData.deck_plans}
-              pendingImages={pendingDeckPlans}
-              imagesToDelete={deckPlansToDelete}
-              onImagesChange={handleDeckPlansChange}
+            <ImageUploadWithCaptions
+              images={deckPlanImages}
+              onChange={setDeckPlanImages}
               maxImages={5}
+              title="Deck Plans"
             />
           </motion.div>
 

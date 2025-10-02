@@ -54,7 +54,11 @@ function NewPackageContent() {
     // Cruise-specific fields
     ship_id: '',
     ship_name: '',
-    cabin_category: ''
+    cabin_category: '',
+    // Pricing fields
+    price_usd: null as number | null,
+    price_eur: null as number | null,
+    price_gbp: null as number | null
   });
   const [pendingPackageImages, setPendingPackageImages] = useState<PendingImage[]>([]);
   const [packageImagesToDelete, setPackageImagesToDelete] = useState<string[]>([]);
@@ -456,7 +460,78 @@ function NewPackageContent() {
                 />
               </div>
 
-              <div className="flex items-center">
+              <div className="md:col-span-2">
+                <h4 className="text-sm font-medium text-gray-900 mb-4 flex items-center">
+                  <svg className="w-5 h-5 mr-2 text-[#B8860B]" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 8c-1.657 0-3 .895-3 2s1.343 2 3 2 3 .895 3 2-1.343 2-3 2m0-8c1.11 0 2.08.402 2.599 1M12 8V7m0 1v8m0 0v1m0-1c-1.11 0-2.08-.402-2.599-1M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
+                  </svg>
+                  Pricing (Per Person)
+                </h4>
+                <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+                  <div>
+                    <label htmlFor="price_usd" className="block text-sm font-medium text-gray-700 mb-2">
+                      Price (USD)
+                    </label>
+                    <div className="relative">
+                      <span className="absolute left-3 top-2 text-gray-500">$</span>
+                      <input
+                        type="number"
+                        id="price_usd"
+                        name="price_usd"
+                        min="0"
+                        step="0.01"
+                        value={formData.price_usd || ''}
+                        onChange={handleInputChange}
+                        className="w-full pl-7 pr-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-[#B8860B] focus:border-[#B8860B] text-gray-900"
+                        placeholder="0.00"
+                      />
+                    </div>
+                  </div>
+                  <div>
+                    <label htmlFor="price_eur" className="block text-sm font-medium text-gray-700 mb-2">
+                      Price (EUR)
+                    </label>
+                    <div className="relative">
+                      <span className="absolute left-3 top-2 text-gray-500">€</span>
+                      <input
+                        type="number"
+                        id="price_eur"
+                        name="price_eur"
+                        min="0"
+                        step="0.01"
+                        value={formData.price_eur || ''}
+                        onChange={handleInputChange}
+                        className="w-full pl-7 pr-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-[#B8860B] focus:border-[#B8860B] text-gray-900"
+                        placeholder="0.00"
+                      />
+                    </div>
+                  </div>
+                  <div>
+                    <label htmlFor="price_gbp" className="block text-sm font-medium text-gray-700 mb-2">
+                      Price (GBP)
+                    </label>
+                    <div className="relative">
+                      <span className="absolute left-3 top-2 text-gray-500">£</span>
+                      <input
+                        type="number"
+                        id="price_gbp"
+                        name="price_gbp"
+                        min="0"
+                        step="0.01"
+                        value={formData.price_gbp || ''}
+                        onChange={handleInputChange}
+                        className="w-full pl-7 pr-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-[#B8860B] focus:border-[#B8860B] text-gray-900"
+                        placeholder="0.00"
+                      />
+                    </div>
+                  </div>
+                </div>
+                <p className="mt-2 text-xs text-gray-500">
+                  Set the base price per person for this {packageType === 'cruise' ? 'cruise' : 'package'}. Leave blank if pricing varies by date.
+                </p>
+              </div>
+
+              <div className="flex items-center md:col-span-2">
                 <input
                   type="checkbox"
                   id="is_active"

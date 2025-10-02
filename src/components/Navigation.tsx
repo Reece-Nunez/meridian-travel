@@ -371,11 +371,11 @@ export default function Navigation() {
                 Packages
               </Link>
               <Link
-                href="/travel-styles"
+                href="/cruises"
                 className="text-[#8B4513] hover:text-[#B8860B] block px-3 py-2 text-base font-medium"
                 onClick={() => setIsMobileMenuOpen(false)}
               >
-                Travel Styles
+                Cruises
               </Link>
               <Link
                 href="/about"

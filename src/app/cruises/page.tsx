@@ -198,6 +198,7 @@ export default function Cruises() {
   const [cruisePackages, setCruisePackages] = useState<TripPackage[]>([]);
   const [processedBoats, setProcessedBoats] = useState<ProcessedBoat[]>([]);
   const [loading, setLoading] = useState(true);
+  const [locationStats, setLocationStats] = useState<{[key: string]: {boatCount: number, startingPrice: number}}>({});
 
   const filteredBoats = selectedLocation
     ? processedBoats.filter(boat => boat.location === selectedLocation)
@@ -216,7 +217,37 @@ export default function Cruises() {
   // Fetch cruise packages and process them into boats
   const fetchCruiseData = async () => {
     try {
-      // Join trip_packages with ships table to get rich ship data
+      // First, fetch all active ships to get real data
+      const { data: allShips, error: shipsError } = await supabase
+        .from('ships')
+        .select('*')
+        .eq('is_active', true);
+
+      if (shipsError) throw shipsError;
+
+      // Calculate real location stats from ships
+      const stats: {[key: string]: {boatCount: number, startingPrice: number}} = {};
+
+      allShips?.forEach((ship: any) => {
+        ship.operating_regions?.forEach((region: string) => {
+          if (!stats[region]) {
+            stats[region] = { boatCount: 0, startingPrice: 0 };
+          }
+          stats[region].boatCount++;
+
+          // Calculate a base price for this ship/region
+          // We'll update this with real prices when we have package data
+          const basePrice = calculateBasePrice(7, region); // Default 7-day estimate
+          if (stats[region].startingPrice === 0 || basePrice < stats[region].startingPrice) {
+            stats[region].startingPrice = basePrice;
+          }
+        });
+      });
+
+      // Temporarily set initial stats (will be updated with real prices after packages are fetched)
+      setLocationStats(stats);
+
+      // Fetch cruise packages
       const { data: packagesWithShips, error } = await supabase
         .from('trip_packages')
         .select(`
@@ -232,59 +263,111 @@ export default function Cruises() {
 
       setCruisePackages(packagesWithShips || []);
 
-      // Group packages by ship_id to create boats
-      const boatsMap = new Map<string, ProcessedBoat>();
+      // Create a map to store itineraries by ship_id
+      const itinerariesByShip = new Map<string, any[]>();
 
       packagesWithShips?.forEach((pkg: any) => {
-        if (!pkg.ship || !pkg.ship_id) return; // Skip packages without ship data
+        if (!pkg.ship_id) return;
 
-        const ship = pkg.ship;
-        const shipId = pkg.ship_id;
-        const location = mapDestinationToLocation(pkg.destination);
-
-        if (!boatsMap.has(shipId)) {
-          // Create new boat entry using ship data
-          boatsMap.set(shipId, {
-            id: shipId,
-            name: ship.name,
-            location: location,
-            capacity: ship.capacity,
-            itineraryCount: 0,
-            image: ship.images && ship.images[0] ? ship.images[0] : '/cruise-default.jpg',
-            startingPrice: 0,
-            boatType: ship.ship_type || 'Expedition',
-            features: ship.luxury_highlights?.slice(0, 3) || ship.ship_features?.slice(0, 3) || ['Professional crew', 'Naturalist guides', 'Premium amenities'],
-            ship: ship,
-            itineraries: []
-          });
-        }
-
-        const boat = boatsMap.get(shipId)!;
-
-        // Add this package as an itinerary
-        boat.itineraries.push({
+        const existing = itinerariesByShip.get(pkg.ship_id) || [];
+        existing.push({
           id: pkg.id,
           name: pkg.title,
           duration: `${pkg.duration} days`,
-          price: 0, // We'll need to add pricing fields to the database
+          price: pkg.price_usd || 0, // Use real price if available
           description: pkg.description || undefined,
           highlights: pkg.luxury_highlights || undefined
         });
+        itinerariesByShip.set(pkg.ship_id, existing);
+      });
 
-        // Update boat stats
-        boat.itineraryCount = boat.itineraries.length;
+      // Now process all ships, including those without packages
+      // Create a boat entry for each operating region
+      const boatsArray: ProcessedBoat[] = [];
 
-        // Use the lowest price as starting price (placeholder since we don't have pricing yet)
-        // For now, we'll use a base price calculation based on duration and destination
-        const basePrice = calculateBasePrice(pkg.duration, location);
-        if (boat.startingPrice === 0 || basePrice < boat.startingPrice) {
-          boat.startingPrice = basePrice;
+      allShips?.forEach((ship: any) => {
+        const regions = ship.operating_regions || ['Galapagos'];
+
+        // Get itineraries for this ship (if any)
+        const shipItineraries = itinerariesByShip.get(ship.id) || [];
+
+        // Create a boat entry for each operating region
+        regions.forEach((region: string) => {
+          const location = mapDestinationToLocation(region);
+
+          // Calculate starting price for this region
+          let startingPrice = 0;
+          if (shipItineraries.length > 0) {
+            // First, check if any itineraries have real prices set
+            const realPrices = shipItineraries
+              .map((itin: any) => itin.price)
+              .filter((price: number) => price > 0);
+
+            if (realPrices.length > 0) {
+              // Use the lowest real price
+              startingPrice = Math.min(...realPrices);
+            } else {
+              // Fall back to calculated price
+              const durations = packagesWithShips
+                ?.filter((pkg: any) => pkg.ship_id === ship.id)
+                .map((pkg: any) => pkg.duration) || [];
+              const minDuration = Math.min(...durations);
+              startingPrice = calculateBasePrice(minDuration, location);
+            }
+          } else {
+            // Default 7-day estimate for ships without packages
+            startingPrice = calculateBasePrice(7, location);
+          }
+
+          boatsArray.push({
+            id: `${ship.id}-${location}`, // Unique ID per region
+            name: ship.name,
+            location: location,
+            capacity: ship.capacity,
+            itineraryCount: shipItineraries.length,
+            image: ship.images && ship.images[0] ? ship.images[0] : '/cruise-default.jpg',
+            startingPrice: startingPrice,
+            boatType: ship.ship_type || 'Expedition',
+            features: ship.luxury_highlights?.slice(0, 3) || ship.ship_features?.slice(0, 3) || ['Professional crew', 'Naturalist guides', 'Premium amenities'],
+            ship: ship,
+            itineraries: shipItineraries
+          });
+        });
+      });
+
+      setProcessedBoats(boatsArray);
+
+      // Update location stats with real prices from boats
+      const updatedStats: {[key: string]: {boatCount: number, startingPrice: number}} = {};
+      boatsArray.forEach(boat => {
+        if (!updatedStats[boat.location]) {
+          updatedStats[boat.location] = { boatCount: 0, startingPrice: 0 };
+        }
+        // Count unique ships (not per-region duplicates)
+        updatedStats[boat.location].boatCount = (updatedStats[boat.location].boatCount || 0);
+
+        // Use the lowest starting price
+        if (updatedStats[boat.location].startingPrice === 0 || boat.startingPrice < updatedStats[boat.location].startingPrice) {
+          updatedStats[boat.location].startingPrice = boat.startingPrice;
         }
       });
 
-      // Convert map to array
-      const processedBoatsArray = Array.from(boatsMap.values());
-      setProcessedBoats(processedBoatsArray);
+      // Count unique ships per location (not the per-region entries)
+      const shipCounts: {[key: string]: Set<string>} = {};
+      boatsArray.forEach(boat => {
+        if (!shipCounts[boat.location]) {
+          shipCounts[boat.location] = new Set();
+        }
+        shipCounts[boat.location].add(boat.ship.id);
+      });
+
+      Object.keys(shipCounts).forEach(location => {
+        if (updatedStats[location]) {
+          updatedStats[location].boatCount = shipCounts[location].size;
+        }
+      });
+
+      setLocationStats(updatedStats);
 
     } catch (error) {
       console.error('Error fetching cruise data:', error);
@@ -431,10 +514,10 @@ export default function Cruises() {
                     }}
                   />
                   <div className="absolute top-4 left-4 bg-[#B8860B] text-white px-3 py-1 rounded-full text-sm font-medium">
-                    {location.boatCount} boats available
+                    {locationStats[location.name]?.boatCount || location.boatCount} boats available
                   </div>
                   <div className="absolute bottom-4 right-4 bg-black bg-opacity-75 text-white px-3 py-1 rounded-full text-sm">
-                    From ${location.startingPrice.toLocaleString()}
+                    From ${(locationStats[location.name]?.startingPrice || location.startingPrice).toLocaleString()}
                   </div>
                 </div>
 
@@ -575,9 +658,9 @@ export default function Cruises() {
                       viewport={{ once: true }}
                       transition={{ duration: 0.6, delay: locationIndex * 0.1 + 0.2 }}
                     >
-                      <span>{locationBoats.length} boats available</span>
+                      <span>{locationStats[location.name]?.boatCount || locationBoats.length} boats available</span>
                       <span>•</span>
-                      <span>Starting from ${locationBoats.length > 0 ? Math.min(...locationBoats.map(b => b.startingPrice)).toLocaleString() : location.startingPrice.toLocaleString()}</span>
+                      <span>Starting from ${(locationStats[location.name]?.startingPrice || (locationBoats.length > 0 ? Math.min(...locationBoats.map(b => b.startingPrice)) : location.startingPrice)).toLocaleString()}</span>
                     </motion.div>
                   </div>
 

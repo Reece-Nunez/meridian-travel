@@ -37,6 +37,11 @@ export default function AdminShips() {
     setLoading(true);
     try {
       console.log('Fetching ships...');
+
+      // Check current session
+      const { data: sessionData } = await supabase.auth.getSession();
+      console.log('Current session:', sessionData.session ? 'Active' : 'None');
+
       const { data, error } = await supabase
         .from('ships')
         .select('*')
@@ -44,6 +49,7 @@ export default function AdminShips() {
 
       if (error) {
         console.error('Error fetching ships:', error);
+        console.error('Error details:', JSON.stringify(error));
         throw error;
       }
 
@@ -51,7 +57,7 @@ export default function AdminShips() {
       setShips(data || []);
     } catch (error) {
       console.error('Error fetching ships:', error);
-      alert('Failed to load ships. Please refresh the page.');
+      alert('Failed to load ships. Please check console and refresh the page.');
     } finally {
       setLoading(false);
     }

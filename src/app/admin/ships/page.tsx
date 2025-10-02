@@ -42,10 +42,21 @@ export default function AdminShips() {
       const { data: sessionData } = await supabase.auth.getSession();
       console.log('Current session:', sessionData.session ? 'Active' : 'None');
 
-      const { data, error } = await supabase
+      if (sessionData.session) {
+        console.log('User:', sessionData.session.user.email);
+      }
+
+      // Add timeout to the query
+      const fetchPromise = supabase
         .from('ships')
         .select('*')
         .order('name', { ascending: true });
+
+      const timeoutPromise = new Promise((_, reject) =>
+        setTimeout(() => reject(new Error('Query timeout after 5 seconds')), 5000)
+      );
+
+      const { data, error } = await Promise.race([fetchPromise, timeoutPromise]) as any;
 
       if (error) {
         console.error('Error fetching ships:', error);
@@ -54,10 +65,11 @@ export default function AdminShips() {
       }
 
       console.log('Ships fetched:', data?.length || 0);
+      console.log('Ships data:', data);
       setShips(data || []);
-    } catch (error) {
+    } catch (error: any) {
       console.error('Error fetching ships:', error);
-      alert('Failed to load ships. Please check console and refresh the page.');
+      alert(`Failed to load ships: ${error.message || 'Unknown error'}. Check browser console for details.`);
     } finally {
       setLoading(false);
     }

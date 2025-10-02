@@ -103,7 +103,10 @@ export default function EditPackage() {
           includes: data.includes && data.includes.length > 0 ? data.includes : [''],
           excludes: data.excludes && data.excludes.length > 0 ? data.excludes : [''],
           luxury_highlights: data.luxury_highlights && data.luxury_highlights.length > 0 ? data.luxury_highlights : [''],
-          images: data.images || []
+          images: data.images || [],
+          price_usd: data.price_usd || null,
+          price_eur: data.price_eur || null,
+          price_gbp: data.price_gbp || null
         });
 
         if (data.itinerary && data.itinerary.length > 0) {

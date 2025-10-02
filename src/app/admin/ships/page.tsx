@@ -15,21 +15,43 @@ export default function AdminShips() {
   useEffect(() => {
     if (isAuthenticated) {
       fetchShips();
+    } else if (!authLoading) {
+      // If auth loaded but user is not authenticated, stop loading
+      setLoading(false);
     }
-  }, [isAuthenticated]);
+  }, [isAuthenticated, authLoading]);
+
+  // Fallback timeout to prevent infinite loading
+  useEffect(() => {
+    const timeout = setTimeout(() => {
+      if (loading) {
+        console.error('Ships page loading timeout');
+        setLoading(false);
+      }
+    }, 10000); // 10 second timeout
+
+    return () => clearTimeout(timeout);
+  }, [loading]);
 
   const fetchShips = async () => {
     setLoading(true);
     try {
+      console.log('Fetching ships...');
       const { data, error } = await supabase
         .from('ships')
         .select('*')
         .order('name', { ascending: true });
 
-      if (error) throw error;
+      if (error) {
+        console.error('Error fetching ships:', error);
+        throw error;
+      }
+
+      console.log('Ships fetched:', data?.length || 0);
       setShips(data || []);
     } catch (error) {
       console.error('Error fetching ships:', error);
+      alert('Failed to load ships. Please refresh the page.');
     } finally {
       setLoading(false);
     }

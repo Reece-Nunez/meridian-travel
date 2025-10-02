@@ -307,8 +307,14 @@ function NewPackageContent() {
           ...day,
           activities: day.activities.filter((activity: PackageActivity) => activity.name.trim() !== ''),
           images: day.images || []
-        }))
+        })),
+        // Include pricing fields - convert empty strings to null
+        price_usd: formData.price_usd || null,
+        price_eur: formData.price_eur || null,
+        price_gbp: formData.price_gbp || null
       };
+
+      console.log('Inserting package data:', packageData);
 
       const { error } = await supabase
         .from('trip_packages')

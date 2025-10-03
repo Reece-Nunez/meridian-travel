@@ -39,6 +39,8 @@ const leJourSerif = localFont({
 export const metadata: Metadata = {
   title: "Meridian Luxury Travel - Luxury South American Adventures",
   description: "Discover South America with expertly crafted travel experiences. Luxury tours to Machu Picchu, Amazon rainforest, and more. Request your custom quote today.",
+  viewport: "width=device-width, initial-scale=1",
+  themeColor: "#0F172A",
 };
 
 export default function RootLayout({

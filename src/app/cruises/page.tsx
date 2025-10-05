@@ -98,93 +98,6 @@ const locations = [
   }
 ];
 
-interface ItineraryModalProps {
-  boat: any;
-  isOpen: boolean;
-  onClose: () => void;
-}
-
-function ItineraryModal({ boat, isOpen, onClose }: ItineraryModalProps) {
-  if (!isOpen || !boat) return null;
-
-  return (
-    <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4">
-      <div className="bg-white rounded-lg shadow-xl max-w-4xl w-full max-h-[90vh] overflow-y-auto">
-        <div className="sticky top-0 bg-white border-b border-gray-200 px-6 py-4 flex justify-between items-center">
-          <h3 className="text-2xl font-bold text-[#8B4513]">{boat.name} - Itineraries</h3>
-          <button
-            onClick={onClose}
-            className="text-gray-400 hover:text-gray-600 transition-colors"
-          >
-            <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
-            </svg>
-          </button>
-        </div>
-
-        <div className="p-6">
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-            {boat.itineraries.map((itinerary: any, index: number) => (
-              <div key={index} className="border border-gray-200 rounded-lg p-6 hover:shadow-lg transition-shadow">
-                <h4 className="text-xl font-bold text-[#8B4513] mb-2">{itinerary.name}</h4>
-                <p className="text-[#B8860B] font-semibold mb-2">{itinerary.duration}</p>
-                <p className="text-2xl font-bold text-[#8B4513] mb-4">
-                  From ${itinerary.price.toLocaleString()} per person
-                </p>
-
-                {/* Itinerary Description */}
-                {itinerary.description && (
-                  <div className="mb-4">
-                    <h5 className="font-semibold text-gray-900 mb-2">Description:</h5>
-                    <p className="text-sm text-gray-600">{itinerary.description}</p>
-                  </div>
-                )}
-
-                {/* Itinerary Highlights */}
-                {itinerary.highlights && itinerary.highlights.length > 0 && (
-                  <div className="mb-4">
-                    <h5 className="font-semibold text-gray-900 mb-2">Highlights:</h5>
-                    <div className="space-y-1">
-                      {itinerary.highlights.map((highlight: string, hIndex: number) => (
-                        <div key={hIndex} className="flex items-start text-sm text-gray-600">
-                          <svg className="w-4 h-4 text-[#B8860B] mr-2 mt-0.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" />
-                          </svg>
-                          {highlight}
-                        </div>
-                      ))}
-                    </div>
-                  </div>
-                )}
-
-                <div className="space-y-2 mb-6">
-                  <h5 className="font-semibold text-gray-900">Boat Features:</h5>
-                  {boat.features.map((feature: string, fIndex: number) => (
-                    <div key={fIndex} className="flex items-center text-sm text-gray-600">
-                      <svg className="w-4 h-4 text-[#B8860B] mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" />
-                      </svg>
-                      {feature}
-                    </div>
-                  ))}
-                </div>
-
-                <Link
-                  href={`/quote?packageId=${itinerary.id}&boat=${boat.name}&itinerary=${itinerary.name}&location=${boat.location}`}
-                  className="block w-full bg-[#B8860B] hover:bg-[#DAA520] text-white text-center py-3 rounded-md font-medium transition-colors"
-                  onClick={onClose}
-                >
-                  Request Quote
-                </Link>
-              </div>
-            ))}
-          </div>
-        </div>
-      </div>
-    </div>
-  );
-}
-
 export default function Cruises() {
   const [content, setContent] = useState({
     cruisesTitle: 'Luxury South American Cruises',
@@ -193,8 +106,6 @@ export default function Cruises() {
   });
 
   const [selectedLocation, setSelectedLocation] = useState<string | null>(null);
-  const [selectedBoat, setSelectedBoat] = useState<any>(null);
-  const [isModalOpen, setIsModalOpen] = useState(false);
   const [cruisePackages, setCruisePackages] = useState<TripPackage[]>([]);
   const [processedBoats, setProcessedBoats] = useState<ProcessedBoat[]>([]);
   const [loading, setLoading] = useState(true);
@@ -203,16 +114,6 @@ export default function Cruises() {
   const filteredBoats = selectedLocation
     ? processedBoats.filter(boat => boat.location === selectedLocation)
     : processedBoats;
-
-  const openItineraryModal = (boat: any) => {
-    setSelectedBoat(boat);
-    setIsModalOpen(true);
-  };
-
-  const closeItineraryModal = () => {
-    setSelectedBoat(null);
-    setIsModalOpen(false);
-  };
 
   // Fetch cruise packages and process them into boats
   const fetchCruiseData = async () => {
@@ -616,12 +517,12 @@ export default function Cruises() {
                     >
                       Ship Details
                     </Link>
-                    <button
-                      onClick={() => openItineraryModal(boat)}
-                      className="flex-1 bg-[#B8860B] hover:bg-[#DAA520] text-white py-3 rounded-md font-medium transition-colors"
+                    <Link
+                      href={`/ships/${boat.ship.id}/itineraries`}
+                      className="flex-1 text-center bg-[#B8860B] hover:bg-[#DAA520] text-white py-3 rounded-md font-medium transition-colors"
                     >
                       Itineraries ({boat.itineraryCount})
-                    </button>
+                    </Link>
                   </div>
                 </div>
               </motion.div>
@@ -728,12 +629,12 @@ export default function Cruises() {
                             >
                               Ship Details
                             </Link>
-                            <button
-                              onClick={() => openItineraryModal(boat)}
-                              className="flex-1 bg-[#B8860B] hover:bg-[#DAA520] text-white py-3 rounded-md font-medium transition-colors"
+                            <Link
+                              href={`/ships/${boat.ship.id}/itineraries`}
+                              className="flex-1 text-center bg-[#B8860B] hover:bg-[#DAA520] text-white py-3 rounded-md font-medium transition-colors"
                             >
                               Itineraries ({boat.itineraryCount})
-                            </button>
+                            </Link>
                           </div>
                         </div>
                       </motion.div>
@@ -781,13 +682,6 @@ export default function Cruises() {
           </Link>
         </div>
       </div>
-
-      {/* Itinerary Modal */}
-      <ItineraryModal
-        boat={selectedBoat}
-        isOpen={isModalOpen}
-        onClose={closeItineraryModal}
-      />
     </div>
   );
 }

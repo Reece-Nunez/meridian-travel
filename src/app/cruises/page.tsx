@@ -609,12 +609,20 @@ export default function Cruises() {
                     ))}
                   </div>
 
-                  <button
-                    onClick={() => openItineraryModal(boat)}
-                    className="w-full bg-[#B8860B] hover:bg-[#DAA520] text-white py-3 rounded-md font-medium transition-colors"
-                  >
-                    View Itineraries ({boat.itineraryCount})
-                  </button>
+                  <div className="flex gap-3">
+                    <Link
+                      href={`/ships/${boat.ship.id}`}
+                      className="flex-1 text-center border-2 border-[#B8860B] text-[#B8860B] hover:bg-[#B8860B] hover:text-white py-3 rounded-md font-medium transition-colors"
+                    >
+                      Ship Details
+                    </Link>
+                    <button
+                      onClick={() => openItineraryModal(boat)}
+                      className="flex-1 bg-[#B8860B] hover:bg-[#DAA520] text-white py-3 rounded-md font-medium transition-colors"
+                    >
+                      Itineraries ({boat.itineraryCount})
+                    </button>
+                  </div>
                 </div>
               </motion.div>
             ))}
@@ -713,12 +721,20 @@ export default function Cruises() {
                             ))}
                           </div>
 
-                          <button
-                            onClick={() => openItineraryModal(boat)}
-                            className="w-full bg-[#B8860B] hover:bg-[#DAA520] text-white py-3 rounded-md font-medium transition-colors"
-                          >
-                            View Itineraries ({boat.itineraryCount})
-                          </button>
+                          <div className="flex gap-3">
+                            <Link
+                              href={`/ships/${boat.ship.id}`}
+                              className="flex-1 text-center border-2 border-[#B8860B] text-[#B8860B] hover:bg-[#B8860B] hover:text-white py-3 rounded-md font-medium transition-colors"
+                            >
+                              Ship Details
+                            </Link>
+                            <button
+                              onClick={() => openItineraryModal(boat)}
+                              className="flex-1 bg-[#B8860B] hover:bg-[#DAA520] text-white py-3 rounded-md font-medium transition-colors"
+                            >
+                              Itineraries ({boat.itineraryCount})
+                            </button>
+                          </div>
                         </div>
                       </motion.div>
                     ))}

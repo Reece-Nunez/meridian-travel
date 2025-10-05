@@ -22,6 +22,7 @@ export default function Packages() {
         .from('trip_packages')
         .select('*')
         .eq('is_active', true)
+        .or('type.eq.package,type.is.null') // Only get packages, exclude cruises
         .order('created_at', { ascending: false });
 
       if (error) throw error;

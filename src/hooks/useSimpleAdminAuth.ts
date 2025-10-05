@@ -25,15 +25,27 @@ export function useSimpleAdminAuth() {
     }, 5000); // 5 second timeout
 
     const checkAuth = async () => {
+      console.log('🟣 [ADMIN AUTH] checkAuth started, isMounted:', isMounted);
       try {
-        if (!isMounted) return;
+        if (!isMounted) {
+          console.log('🟣 [ADMIN AUTH] Component unmounted, exiting');
+          return;
+        }
 
         // Check actual Supabase session instead of localStorage
+        console.log('🟣 [ADMIN AUTH] Checking Supabase session...');
         const { data: { session }, error } = await supabase.auth.getSession();
+        console.log('🟣 [ADMIN AUTH] Session result:', {
+          hasSession: !!session,
+          email: session?.user?.email,
+          hasError: !!error,
+          timestamp: new Date().toISOString()
+        });
 
         if (error) {
-          console.error('Session check error:', error);
+          console.error('🔴 [ADMIN AUTH] Session check error:', error);
           if (isMounted) {
+            console.log('🔴 [ADMIN AUTH] Error - redirecting to /auth/signin');
             clearTimeout(fallbackTimer);
             setIsAuthenticated(false);
             setLoading(false);
@@ -45,6 +57,7 @@ export function useSimpleAdminAuth() {
         if (!session) {
           // No session - redirect to login
           if (isMounted) {
+            console.log('🔴 [ADMIN AUTH] No session - redirecting to /auth/signin');
             clearTimeout(fallbackTimer);
             setIsAuthenticated(false);
             setLoading(false);
@@ -55,9 +68,11 @@ export function useSimpleAdminAuth() {
 
         // Check if it's the admin email
         const isAdmin = session.user.email === 'chris@meridianluxury.travel';
+        console.log('🟣 [ADMIN AUTH] Admin check - isAdmin:', isAdmin, 'email:', session.user.email);
 
         if (isAdmin) {
           if (isMounted) {
+            console.log('🟢 [ADMIN AUTH] Admin verified - setting authenticated=true');
             clearTimeout(fallbackTimer);
             setIsAuthenticated(true);
             setLoading(false);
@@ -65,6 +80,7 @@ export function useSimpleAdminAuth() {
         } else {
           // Not an admin - redirect
           if (isMounted) {
+            console.log('🔴 [ADMIN AUTH] Not admin - redirecting to /dashboard');
             clearTimeout(fallbackTimer);
             setIsAuthenticated(false);
             setLoading(false);
@@ -72,8 +88,9 @@ export function useSimpleAdminAuth() {
           }
         }
       } catch (error) {
-        console.error('Auth check error:', error);
+        console.error('🔴 [ADMIN AUTH] Auth check error:', error);
         if (isMounted) {
+          console.log('🔴 [ADMIN AUTH] Exception - redirecting to /auth/signin');
           clearTimeout(fallbackTimer);
           setIsAuthenticated(false);
           setLoading(false);

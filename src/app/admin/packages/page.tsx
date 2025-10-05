@@ -162,7 +162,7 @@ export default function AdminPackages() {
               </Link>
               <h1 className="text-2xl font-bold text-[#8B4513]">Manage Packages</h1>
             </div>
-            <div className="flex items-center space-x-4">
+            <div className="flex items-center gap-6">
               <span className="text-sm text-gray-700">Welcome, {getUsername()}</span>
               <button
                 onClick={logout}

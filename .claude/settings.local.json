@@ -91,7 +91,8 @@
       "Bash(start \"http://localhost:3001/admin/ships\")",
       "Bash(PGPASSWORD=postgres psql -h localhost -U postgres -d meridian_travel -f database/migrations/add_pricing_to_packages.sql)",
       "Bash(PGPASSWORD=postgres psql -h db.sgcxjlpcqsbiusugslnf.supabase.co -U postgres -d postgres -c \"\\d+ ships\")",
-      "Bash(PGPASSWORD=postgres psql -h db.sgcxjlpcqsbiusugslnf.supabase.co -U postgres -d postgres -c \"SELECT schemaname, tablename, policyname, permissive, roles, cmd, qual, with_check FROM pg_policies WHERE tablename = ''ships'';\")"
+      "Bash(PGPASSWORD=postgres psql -h db.sgcxjlpcqsbiusugslnf.supabase.co -U postgres -d postgres -c \"SELECT schemaname, tablename, policyname, permissive, roles, cmd, qual, with_check FROM pg_policies WHERE tablename = ''ships'';\")",
+      "Bash(md5sum:*)"
     ],
     "deny": [],
     "ask": []

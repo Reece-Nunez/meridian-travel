@@ -73,10 +73,10 @@ export default function Navigation() {
           {/* Left side - Logo and brand */}
           <div className="flex items-center space-x-4">
             <Link href="/" className="flex-shrink-0">
-              <img 
-                src="/logo.png" 
-                alt="Meridian Luxury Travel" 
-                className="h-16 w-auto" 
+              <img
+                src="/logo.png"
+                alt="Meridian Luxury Travel"
+                className="h-20 w-20"
                 onError={(e) => {
                   console.error('Failed to load logo.png');
                   e.currentTarget.style.display = 'none';

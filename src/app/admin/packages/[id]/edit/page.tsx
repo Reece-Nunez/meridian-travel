@@ -441,8 +441,8 @@ export default function EditPackage() {
         .update(basicData)
         .eq('id', packageId);
 
-      const basicTimeoutPromise = new Promise((_, reject) => 
-        setTimeout(() => reject(new Error('Basic update timed out after 15 seconds')), 15000)
+      const basicTimeoutPromise = new Promise((_, reject) =>
+        setTimeout(() => reject(new Error('Basic update timed out after 30 seconds')), 30000)
       );
 
       const { data: basicUpdateData, error: basicError } = await Promise.race([
@@ -462,8 +462,8 @@ export default function EditPackage() {
         .update({ itinerary: packageData.itinerary })
         .eq('id', packageId);
 
-      const itineraryTimeoutPromise = new Promise((_, reject) => 
-        setTimeout(() => reject(new Error('Itinerary update timed out after 20 seconds')), 20000)
+      const itineraryTimeoutPromise = new Promise((_, reject) =>
+        setTimeout(() => reject(new Error('Itinerary update timed out after 40 seconds')), 40000)
       );
 
       try {

@@ -9,16 +9,43 @@ import LoadingFallback from '@/components/LoadingFallback';
 function SignInForm() {
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
-  const [loading, setLoading] = useState(false);
+  const [formLoading, setFormLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [quoteToken, setQuoteToken] = useState<string | null>(null);
   const [quoteInfo, setQuoteInfo] = useState<any>(null);
-  const { signIn, signInWithOAuth, user } = useAuth();
+  const [hasRedirected, setHasRedirected] = useState(false);
+  const { signIn, signInWithOAuth, user, loading: authLoading } = useAuth();
   const router = useRouter();
   const searchParams = useSearchParams();
 
   const redirectTo = searchParams.get('redirect') || '/dashboard';
   const errorParam = searchParams.get('error');
+
+  // Redirect authenticated users (only once)
+  useEffect(() => {
+    console.log('🔵 [SIGNIN] useEffect triggered:', {
+      hasUser: !!user,
+      userEmail: user?.email,
+      authLoading,
+      hasRedirected,
+      timestamp: new Date().toISOString()
+    });
+
+    if (user && !authLoading && !hasRedirected) {
+      console.log('🟢 [SIGNIN] Conditions met for redirect, setting hasRedirected=true');
+      setHasRedirected(true);
+      const isAdmin = user.email === 'chris@meridianluxury.travel';
+      const targetPath = isAdmin ? '/admin' : redirectTo;
+      console.log('🟢 [SIGNIN] Redirecting to:', targetPath, '(isAdmin:', isAdmin + ')');
+      if (isAdmin) {
+        router.replace('/admin');
+      } else {
+        router.replace(redirectTo);
+      }
+    } else {
+      console.log('🔴 [SIGNIN] Redirect blocked - conditions not met');
+    }
+  }, [user, authLoading, hasRedirected, router, redirectTo]);
 
   // Check for quote token on component mount
   useEffect(() => {
@@ -47,34 +74,28 @@ function SignInForm() {
 
   const handleEmailSignIn = async (e: React.FormEvent) => {
     e.preventDefault();
-    setLoading(true);
+    setFormLoading(true);
     setError(null);
 
     const { data, error } = await signIn(email, password);
 
     if (error) {
       setError(error.message);
-      setLoading(false);
+      setFormLoading(false);
     } else {
-      // Check if this is an admin user
+      // Set up admin session if this is an admin user
       const isAdmin = email === 'chris@meridianluxury.travel';
-
       if (isAdmin) {
-        // Set up admin session for the admin auth system
         localStorage.setItem('admin_session', JSON.stringify({
           email: email,
           loginTime: new Date().toISOString()
         }));
-
-        // Redirect to admin dashboard
-        router.push('/admin');
-        return;
       }
 
-      // Regular user flow - handle quote tokens if present
-      if (quoteToken && data?.user?.id) {
+      // Handle quote token attachment for regular users
+      if (quoteToken && data?.user?.id && !isAdmin) {
         try {
-          const response = await fetch('/api/quote-tokens/validate', {
+          await fetch('/api/quote-tokens/validate', {
             method: 'POST',
             headers: {
               'Content-Type': 'application/json',
@@ -84,27 +105,17 @@ function SignInForm() {
               userId: data.user.id
             }),
           });
-
-          if (response.ok) {
-            console.log('Quote attached to existing user account');
-            // Redirect to dashboard to show the quote
-            router.push('/dashboard?quote_attached=true');
-          } else {
-            console.error('Failed to attach quote');
-            router.push(redirectTo);
-          }
         } catch (attachError) {
           console.error('Failed to attach quote to account:', attachError);
-          router.push(redirectTo);
         }
-      } else {
-        router.push(redirectTo);
       }
+
+      // The useEffect will handle the actual redirect once user state updates
     }
   };
 
   const handleOAuthSignIn = async (provider: 'google' | 'github' | 'apple') => {
-    setLoading(true);
+    setFormLoading(true);
     setError(null);
 
     // Store redirect URL for after OAuth
@@ -114,7 +125,7 @@ function SignInForm() {
 
     if (error) {
       setError(error.message);
-      setLoading(false);
+      setFormLoading(false);
     }
     // Note: OAuth redirect will happen automatically, so we don't set loading back to false here
   };
@@ -221,10 +232,10 @@ function SignInForm() {
           <div>
             <button
               type="submit"
-              disabled={loading}
+              disabled={formLoading}
               className="group relative w-full flex justify-center py-2 px-4 border border-transparent text-sm font-medium rounded-md text-[#F5F5DC] bg-[#B8860B] hover:bg-[#DAA520] focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-[#B8860B] disabled:opacity-50 disabled:cursor-not-allowed"
             >
-              {loading ? 'Signing in...' : 'Sign in'}
+              {formLoading ? 'Signing in...' : 'Sign in'}
             </button>
           </div>
 
@@ -242,7 +253,7 @@ function SignInForm() {
               <button
                 type="button"
                 onClick={() => handleOAuthSignIn('google')}
-                disabled={loading}
+                disabled={formLoading}
                 className="w-full inline-flex justify-center py-2 px-4 border border-gray-300 rounded-md shadow-sm bg-white text-sm font-medium text-gray-500 hover:bg-gray-50 disabled:opacity-50"
               >
                 <svg className="h-5 w-5" viewBox="0 0 24 24">
@@ -269,7 +280,7 @@ function SignInForm() {
               <button
                 type="button"
                 onClick={() => handleOAuthSignIn('apple')}
-                disabled={loading}
+                disabled={formLoading}
                 className="w-full inline-flex justify-center py-2 px-4 border border-gray-300 rounded-md shadow-sm bg-white text-sm font-medium text-gray-500 hover:bg-gray-50 disabled:opacity-50"
               >
                 <svg className="h-5 w-5" fill="currentColor" viewBox="0 0 24 24">

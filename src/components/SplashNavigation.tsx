@@ -13,7 +13,7 @@ export default function SplashNavigation() {
               <img
                 src="/logo.png"
                 alt="Meridian Luxury Travel"
-                className="h-16 w-auto"
+                className="h-20 w-20"
                 onError={(e) => {
                   console.error('Failed to load logo.png');
                   e.currentTarget.style.display = 'none';

@@ -67,10 +67,10 @@ export default function Footer() {
           {/* Company Info */}
           <div className="lg:col-span-1">
             <div className="mb-6">
-              <img 
-                src="/logo.png" 
-                alt={contactInfo.companyName} 
-                className="h-32 w-auto mb-4"
+              <img
+                src="/logo.png"
+                alt={contactInfo.companyName}
+                className="h-20 w-20 mb-4"
                 onError={(e) => {
                   console.error('Failed to load logo.png');
                   e.currentTarget.style.display = 'none';

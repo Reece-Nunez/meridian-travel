@@ -9,7 +9,14 @@ const createSupabaseClient = () => {
     console.warn('Supabase environment variables missing - using dummy client for build')
     return createClient('https://dummy.supabase.co', 'dummy-key')
   }
-  return createClient(supabaseUrl, supabaseAnonKey)
+  return createClient(supabaseUrl, supabaseAnonKey, {
+    auth: {
+      autoRefreshToken: true,
+      persistSession: true,
+      detectSessionInUrl: true,
+      storage: typeof window !== 'undefined' ? window.localStorage : undefined
+    }
+  })
 }
 
 export const supabase = createSupabaseClient()

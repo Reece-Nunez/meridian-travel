@@ -7,6 +7,10 @@ import { getContentByKey, getSettingByKey } from '@/lib/content';
 import { supabase } from '@/lib/supabase';
 import { TripPackage, Ship } from '@/types/database';
 
+// Disable caching for this dynamic route
+export const dynamic = 'force-dynamic';
+export const revalidate = 0;
+
 // Helper function to map destinations to our location categories
 const mapDestinationToLocation = (destination: string): string => {
   const dest = destination.toLowerCase();
@@ -95,6 +99,15 @@ const locations = [
     boatCount: 6,
     startingPrice: 3800,
     features: ["Glacier viewing", "Fjord navigation", "Wildlife watching", "Hiking excursions"]
+  },
+  {
+    name: "Diving",
+    title: "Diving Cruises",
+    description: "Explore the world's most spectacular dive sites aboard specialized diving vessels with expert crews and top-notch equipment.",
+    image: "/locations/diving-hero.jpg",
+    boatCount: 3,
+    startingPrice: 2800,
+    features: ["World-class dive sites", "Expert dive guides", "Modern equipment", "Small group expeditions"]
   }
 ];
 
@@ -183,32 +196,27 @@ export default function Cruises() {
       });
 
       // Now process all ships, including those without packages
-      // Create a boat entry for each operating region
+      // Create a boat entry for each operating region or ship type (for diving ships)
       const boatsArray: ProcessedBoat[] = [];
 
       allShips?.forEach((ship: any) => {
-        const regions = ship.operating_regions || ['Galapagos'];
-
         // Get itineraries for this ship (if any)
         const shipItineraries = itinerariesByShip.get(ship.id) || [];
 
-        // Create a boat entry for each operating region
-        regions.forEach((region: string) => {
-          const location = mapDestinationToLocation(region);
+        // Special handling for Diving Ships - they go in "Diving" category
+        if (ship.ship_type && ship.ship_type.toLowerCase().includes('diving')) {
+          const location = 'Diving';
 
-          // Calculate starting price for this region
+          // Calculate starting price
           let startingPrice = 0;
           if (shipItineraries.length > 0) {
-            // First, check if any itineraries have real prices set
             const realPrices = shipItineraries
               .map((itin: any) => itin.price)
               .filter((price: number) => price > 0);
 
             if (realPrices.length > 0) {
-              // Use the lowest real price
               startingPrice = Math.min(...realPrices);
             } else {
-              // Fall back to calculated price
               const durations = packagesWithShips
                 ?.filter((pkg: any) => pkg.ship_id === ship.id)
                 .map((pkg: any) => pkg.duration) || [];
@@ -216,24 +224,68 @@ export default function Cruises() {
               startingPrice = calculateBasePrice(minDuration, location);
             }
           } else {
-            // Default 7-day estimate for ships without packages
             startingPrice = calculateBasePrice(7, location);
           }
 
           boatsArray.push({
-            id: `${ship.id}-${location}`, // Unique ID per region
+            id: `${ship.id}-${location}`,
             name: ship.name,
             location: location,
             capacity: ship.capacity,
             itineraryCount: shipItineraries.length,
             image: ship.images && ship.images[0] ? ship.images[0] : '/cruise-default.jpg',
             startingPrice: startingPrice,
-            boatType: ship.ship_type || 'Expedition',
-            features: ship.luxury_highlights?.slice(0, 3) || ship.ship_features?.slice(0, 3) || ['Professional crew', 'Naturalist guides', 'Premium amenities'],
+            boatType: ship.ship_type || 'Diving Ship',
+            features: ship.luxury_highlights?.slice(0, 3) || ship.ship_features?.slice(0, 3) || ['Professional crew', 'Dive guides', 'Premium equipment'],
             ship: ship,
             itineraries: shipItineraries
           });
-        });
+        } else {
+          // Normal ships - create entry for each operating region
+          const regions = ship.operating_regions || ['Galapagos'];
+
+          regions.forEach((region: string) => {
+            const location = mapDestinationToLocation(region);
+
+            // Calculate starting price for this region
+            let startingPrice = 0;
+            if (shipItineraries.length > 0) {
+              // First, check if any itineraries have real prices set
+              const realPrices = shipItineraries
+                .map((itin: any) => itin.price)
+                .filter((price: number) => price > 0);
+
+              if (realPrices.length > 0) {
+                // Use the lowest real price
+                startingPrice = Math.min(...realPrices);
+              } else {
+                // Fall back to calculated price
+                const durations = packagesWithShips
+                  ?.filter((pkg: any) => pkg.ship_id === ship.id)
+                  .map((pkg: any) => pkg.duration) || [];
+                const minDuration = Math.min(...durations);
+                startingPrice = calculateBasePrice(minDuration, location);
+              }
+            } else {
+              // Default 7-day estimate for ships without packages
+              startingPrice = calculateBasePrice(7, location);
+            }
+
+            boatsArray.push({
+              id: `${ship.id}-${location}`, // Unique ID per region
+              name: ship.name,
+              location: location,
+              capacity: ship.capacity,
+              itineraryCount: shipItineraries.length,
+              image: ship.images && ship.images[0] ? ship.images[0] : '/cruise-default.jpg',
+              startingPrice: startingPrice,
+              boatType: ship.ship_type || 'Expedition',
+              features: ship.luxury_highlights?.slice(0, 3) || ship.ship_features?.slice(0, 3) || ['Professional crew', 'Naturalist guides', 'Premium amenities'],
+              ship: ship,
+              itineraries: shipItineraries
+            });
+          });
+        }
       });
 
       setProcessedBoats(boatsArray);
@@ -284,7 +336,8 @@ export default function Cruises() {
       'Antarctica': 1000,
       'Chile': 400,
       'Galapagos': 500,
-      'Amazon': 350
+      'Amazon': 350,
+      'Diving': 400
     };
 
     const baseRate = basePrices[location] || 400;

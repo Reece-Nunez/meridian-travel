@@ -3,7 +3,7 @@
 import { useState, useEffect } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { supabase } from '@/lib/supabase';
-import { ItineraryDay, ItineraryActivity, ItineraryImage } from '@/types/database';
+import { ItineraryDay, ItineraryActivity, ItineraryImage, Ship, CabinCategory } from '@/types/database';
 import ImageUpload from '@/components/admin/ImageUpload';
 
 interface PendingImage {
@@ -35,6 +35,10 @@ interface DayData {
 
 interface ActivityData extends Omit<ItineraryActivity, 'id' | 'day_id' | 'created_at' | 'updated_at'> {
   id?: string;
+  ship_id?: string;
+  cabin_category_id?: string;
+  embark_port?: string;
+  disembark_port?: string;
 }
 
 const ACTIVITY_TYPES = [
@@ -78,15 +82,25 @@ const ACTIVITY_TYPES = [
     ),
     color: 'bg-[#8B4513]' 
   },
-  { 
-    value: 'custom', 
-    label: 'Custom', 
+  {
+    value: 'cruise',
+    label: 'Cruise',
+    icon: (
+      <svg className="w-4 h-4 text-white" fill="currentColor" viewBox="0 0 24 24">
+        <path d="M20 21c-1.39 0-2.78-.47-4-1.32-2.44 1.71-5.56 1.71-8 0C6.78 20.53 5.39 21 4 21H2v2h2c1.38 0 2.74-.35 4-.99 2.52 1.29 5.48 1.29 8 0 1.26.65 2.62.99 4 .99h2v-2h-2zM3.95 19H4c1.6 0 3.02-.88 4-2 .98 1.12 2.4 2 4 2s3.02-.88 4-2c.98 1.12 2.4 2 4 2h.05l1.89-6.68c.08-.26.06-.54-.06-.78s-.34-.42-.6-.5L20 10.62V6c0-1.1-.9-2-2-2h-3V1H9v3H6c-1.1 0-2 .9-2 2v4.62l-1.29.42c-.26.08-.48.26-.6.5s-.15.52-.06.78L3.95 19zM6 6h12v3.97L12 8 6 9.97V6z"/>
+      </svg>
+    ),
+    color: 'bg-blue-600'
+  },
+  {
+    value: 'custom',
+    label: 'Custom',
     icon: (
       <svg className="w-4 h-4 text-white" fill="currentColor" viewBox="0 0 24 24">
         <path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm-2 15l-5-5 1.41-1.41L10 14.17l7.59-7.59L19 8l-9 9z"/>
       </svg>
     ),
-    color: 'bg-[#B8860B]' 
+    color: 'bg-[#B8860B]'
   }
 ] as const;
 
@@ -95,10 +109,49 @@ export default function ItineraryBuilder({ quoteId, onSave }: ItineraryBuilderPr
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
   const [expandedDays, setExpandedDays] = useState<Set<number>>(new Set());
+  const [ships, setShips] = useState<Ship[]>([]);
+  const [cabinCategoriesByShip, setCabinCategoriesByShip] = useState<{ [shipId: string]: CabinCategory[] }>({});
 
   useEffect(() => {
     loadItinerary();
+    loadShips();
   }, [quoteId]);
+
+  const loadShips = async () => {
+    try {
+      const { data: shipsData, error } = await supabase
+        .from('ships')
+        .select('*')
+        .eq('is_active', true)
+        .order('name');
+
+      if (error) throw error;
+      setShips(shipsData || []);
+    } catch (error) {
+      console.error('Error loading ships:', error);
+    }
+  };
+
+  const loadCabinCategories = async (shipId: string) => {
+    if (cabinCategoriesByShip[shipId]) return; // Already loaded
+
+    try {
+      const { data: cabinsData, error } = await supabase
+        .from('cabin_categories')
+        .select('*')
+        .eq('ship_id', shipId)
+        .order('pricing_per_person', { ascending: true, nullsFirst: false });
+
+      if (error) throw error;
+
+      setCabinCategoriesByShip(prev => ({
+        ...prev,
+        [shipId]: cabinsData || []
+      }));
+    } catch (error) {
+      console.error('Error loading cabin categories:', error);
+    }
+  };
 
   const loadItinerary = async () => {
     try {
@@ -126,14 +179,28 @@ export default function ItineraryBuilder({ quoteId, onSave }: ItineraryBuilderPr
         ...day,
         activities: (day.itinerary_activities || [])
           .sort((a: any, b: any) => a.display_order - b.display_order)
-          .map((activity: any) => ({
-            activity_type: activity.activity_type,
-            custom_type: activity.custom_type,
-            name: activity.name,
-            description: activity.description,
-            display_order: activity.display_order,
-            id: activity.id
-          })),
+          .map((activity: any) => {
+            // Parse cruise-specific fields from description if stored as JSON
+            let cruiseData = {};
+            if (activity.activity_type === 'cruise' && activity.description) {
+              try {
+                const parsed = JSON.parse(activity.description);
+                if (parsed.ship_id) cruiseData = parsed;
+              } catch (e) {
+                // Not JSON, regular description
+              }
+            }
+
+            return {
+              activity_type: activity.activity_type,
+              custom_type: activity.custom_type,
+              name: activity.name,
+              description: typeof cruiseData === 'object' && Object.keys(cruiseData).length > 0 ? '' : activity.description,
+              display_order: activity.display_order,
+              id: activity.id,
+              ...cruiseData
+            };
+          }),
         images: (day.itinerary_images || [])
           .sort((a: any, b: any) => a.display_order - b.display_order)
           .map((image: any) => image.image_url),
@@ -311,6 +378,25 @@ export default function ItineraryBuilder({ quoteId, onSave }: ItineraryBuilderPr
           display_order: index
         }));
         
+        // Process activities - serialize cruise data into description
+        const processedActivities = day.activities.map(activity => {
+          if (activity.activity_type === 'cruise') {
+            // Store cruise-specific data as JSON in description
+            const cruiseData = {
+              ship_id: activity.ship_id,
+              cabin_category_id: activity.cabin_category_id,
+              embark_port: activity.embark_port,
+              disembark_port: activity.disembark_port,
+              description: activity.description
+            };
+            return {
+              ...activity,
+              description: JSON.stringify(cruiseData)
+            };
+          }
+          return activity;
+        });
+
         // Save day data
         const response = await fetch('/api/admin/itinerary', {
           method: 'POST',
@@ -321,6 +407,7 @@ export default function ItineraryBuilder({ quoteId, onSave }: ItineraryBuilderPr
             adminEmail,
             day: {
               ...day,
+              activities: processedActivities,
               display_order: dayIndex,
               images: imageObjects
             }
@@ -590,7 +677,7 @@ export default function ItineraryBuilder({ quoteId, onSave }: ItineraryBuilderPr
                                         </div>
                                       )}
 
-                                      <div className={activity.activity_type === 'custom' ? '' : 'md:col-span-2'}>
+                                      <div className={activity.activity_type === 'custom' || activity.activity_type === 'cruise' ? '' : 'md:col-span-2'}>
                                         <label className="block text-sm font-medium text-gray-900 mb-1">
                                           Activity Name
                                         </label>
@@ -599,34 +686,130 @@ export default function ItineraryBuilder({ quoteId, onSave }: ItineraryBuilderPr
                                           value={activity.name}
                                           onChange={(e) => updateActivity(dayIndex, activityIndex, { name: e.target.value })}
                                           className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-[#B8860B] focus:border-[#B8860B] text-gray-900"
-                                          placeholder="e.g., International Flight, City Tour"
+                                          placeholder={activity.activity_type === 'cruise' ? "e.g., Galapagos Cruise" : "e.g., International Flight, City Tour"}
                                         />
                                       </div>
                                     </div>
 
+                                    {/* Cruise-specific fields */}
+                                    {activity.activity_type === 'cruise' && (
+                                      <div className="mb-3 p-4 bg-blue-50 rounded-lg border border-blue-200">
+                                        <h6 className="text-sm font-semibold text-blue-900 mb-3">Cruise Details</h6>
+                                        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                                          <div>
+                                            <label className="block text-sm font-medium text-gray-900 mb-1">
+                                              Select Ship *
+                                            </label>
+                                            <select
+                                              value={activity.ship_id || ''}
+                                              onChange={(e) => {
+                                                updateActivity(dayIndex, activityIndex, { ship_id: e.target.value, cabin_category_id: '' });
+                                                if (e.target.value) loadCabinCategories(e.target.value);
+                                              }}
+                                              className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-blue-500 focus:border-blue-500 text-gray-900"
+                                            >
+                                              <option value="">Choose a ship...</option>
+                                              {ships.map(ship => (
+                                                <option key={ship.id} value={ship.id}>
+                                                  {ship.name} ({ship.capacity} guests)
+                                                </option>
+                                              ))}
+                                            </select>
+                                          </div>
+
+                                          {activity.ship_id && cabinCategoriesByShip[activity.ship_id] && (
+                                            <div>
+                                              <label className="block text-sm font-medium text-gray-900 mb-1">
+                                                Cabin Category
+                                              </label>
+                                              <select
+                                                value={activity.cabin_category_id || ''}
+                                                onChange={(e) => updateActivity(dayIndex, activityIndex, { cabin_category_id: e.target.value })}
+                                                className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-blue-500 focus:border-blue-500 text-gray-900"
+                                              >
+                                                <option value="">Choose a cabin...</option>
+                                                {cabinCategoriesByShip[activity.ship_id].map(cabin => (
+                                                  <option key={cabin.id} value={cabin.id}>
+                                                    {cabin.name} {cabin.pricing_per_person ? `- $${cabin.pricing_per_person.toLocaleString()}/person` : ''}
+                                                  </option>
+                                                ))}
+                                              </select>
+                                            </div>
+                                          )}
+
+                                          <div>
+                                            <label className="block text-sm font-medium text-gray-900 mb-1">
+                                              Embarkation Port
+                                            </label>
+                                            <input
+                                              type="text"
+                                              value={activity.embark_port || ''}
+                                              onChange={(e) => updateActivity(dayIndex, activityIndex, { embark_port: e.target.value })}
+                                              className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-blue-500 focus:border-blue-500 text-gray-900"
+                                              placeholder="e.g., Puerto Ayora"
+                                            />
+                                          </div>
+
+                                          <div>
+                                            <label className="block text-sm font-medium text-gray-900 mb-1">
+                                              Disembarkation Port
+                                            </label>
+                                            <input
+                                              type="text"
+                                              value={activity.disembark_port || ''}
+                                              onChange={(e) => updateActivity(dayIndex, activityIndex, { disembark_port: e.target.value })}
+                                              className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-blue-500 focus:border-blue-500 text-gray-900"
+                                              placeholder="e.g., Baltra Airport"
+                                            />
+                                          </div>
+                                        </div>
+                                      </div>
+                                    )}
+
                                     <div className="mb-3">
                                       <label className="block text-sm font-medium text-gray-900 mb-1">
-                                        Description
+                                        {activity.activity_type === 'cruise' ? 'Additional Notes' : 'Description'}
                                       </label>
                                       <textarea
                                         value={activity.description}
                                         onChange={(e) => updateActivity(dayIndex, activityIndex, { description: e.target.value })}
                                         rows={2}
                                         className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-[#B8860B] focus:border-[#B8860B] text-gray-900"
-                                        placeholder="Describe this activity..."
+                                        placeholder={activity.activity_type === 'cruise' ? "Any additional details about the cruise..." : "Describe this activity..."}
                                       />
                                     </div>
 
-                                    <div className="flex justify-between items-center">
-                                      <div className={`inline-flex items-center px-2 py-1 rounded text-xs font-medium text-white ${typeConfig.color}`}>
-                                        <span className="mr-1">{typeConfig.icon}</span>
-                                        {activity.activity_type === 'custom' && activity.custom_type 
-                                          ? activity.custom_type 
-                                          : typeConfig.label}
+                                    <div className="flex justify-between items-start">
+                                      <div className="flex flex-col gap-2">
+                                        <div className={`inline-flex items-center px-2 py-1 rounded text-xs font-medium text-white ${typeConfig.color}`}>
+                                          <span className="mr-1">{typeConfig.icon}</span>
+                                          {activity.activity_type === 'custom' && activity.custom_type
+                                            ? activity.custom_type
+                                            : typeConfig.label}
+                                        </div>
+                                        {activity.activity_type === 'cruise' && activity.ship_id && (
+                                          <div className="text-xs text-gray-600 space-y-1">
+                                            <div>
+                                              <strong>Ship:</strong> {ships.find(s => s.id === activity.ship_id)?.name || 'Unknown'}
+                                            </div>
+                                            {activity.cabin_category_id && cabinCategoriesByShip[activity.ship_id] && (
+                                              <div>
+                                                <strong>Cabin:</strong> {cabinCategoriesByShip[activity.ship_id].find(c => c.id === activity.cabin_category_id)?.name || 'Unknown'}
+                                              </div>
+                                            )}
+                                            {(activity.embark_port || activity.disembark_port) && (
+                                              <div>
+                                                {activity.embark_port && <span><strong>From:</strong> {activity.embark_port}</span>}
+                                                {activity.embark_port && activity.disembark_port && <span> → </span>}
+                                                {activity.disembark_port && <span><strong>To:</strong> {activity.disembark_port}</span>}
+                                              </div>
+                                            )}
+                                          </div>
+                                        )}
                                       </div>
                                       <button
                                         onClick={() => removeActivity(dayIndex, activityIndex)}
-                                        className="text-red-600 hover:text-red-800 text-sm"
+                                        className="text-red-600 hover:text-red-800 text-sm flex-shrink-0"
                                       >
                                         Remove Activity
                                       </button>

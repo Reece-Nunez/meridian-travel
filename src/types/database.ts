@@ -600,6 +600,50 @@ export interface Database {
           is_featured?: boolean | null
         }
       }
+      cabin_categories: {
+        Row: {
+          id: string
+          created_at: string
+          updated_at: string
+          ship_id: string
+          name: string
+          description: string | null
+          pricing_per_person: number | null
+          images: string[] | null
+          quantity: string | null
+          size_sqm: number | null
+          max_occupancy: number | null
+          amenities: string[] | null
+        }
+        Insert: {
+          id?: string
+          created_at?: string
+          updated_at?: string
+          ship_id: string
+          name: string
+          description?: string | null
+          pricing_per_person?: number | null
+          images?: string[] | null
+          quantity?: string | null
+          size_sqm?: number | null
+          max_occupancy?: number | null
+          amenities?: string[] | null
+        }
+        Update: {
+          id?: string
+          created_at?: string
+          updated_at?: string
+          ship_id?: string
+          name?: string
+          description?: string | null
+          pricing_per_person?: number | null
+          images?: string[] | null
+          quantity?: string | null
+          size_sqm?: number | null
+          max_occupancy?: number | null
+          amenities?: string[] | null
+        }
+      }
     }
     Views: {
       [_ in never]: never
@@ -637,3 +681,4 @@ export type ItineraryImage = Database['public']['Tables']['itinerary_images']['R
 export type Payment = Database['public']['Tables']['payments']['Row']
 export type Ship = Database['public']['Tables']['ships']['Row']
 export type QuoteToken = Database['public']['Tables']['quote_tokens']['Row']
+export type CabinCategory = Database['public']['Tables']['cabin_categories']['Row']

@@ -5,7 +5,11 @@ import { useParams } from 'next/navigation';
 import Link from 'next/link';
 import { motion } from 'framer-motion';
 import { supabase } from '@/lib/supabase';
-import { Ship, TripPackage } from '@/types/database';
+import { Ship, TripPackage, CabinCategory } from '@/types/database';
+
+// Disable caching for this dynamic route
+export const dynamic = 'force-dynamic';
+export const revalidate = 0;
 
 export default function ShipDetail() {
   const params = useParams();
@@ -13,6 +17,7 @@ export default function ShipDetail() {
 
   const [ship, setShip] = useState<Ship | null>(null);
   const [itineraries, setItineraries] = useState<TripPackage[]>([]);
+  const [cabinCategories, setCabinCategories] = useState<CabinCategory[]>([]);
   const [loading, setLoading] = useState(true);
   const [selectedImage, setSelectedImage] = useState(0);
 
@@ -40,6 +45,21 @@ export default function ShipDetail() {
 
       if (itinerariesError) throw itinerariesError;
       setItineraries(itinerariesData || []);
+
+      // Fetch cabin categories from the database
+      const { data: cabinData, error: cabinError } = await supabase
+        .from('cabin_categories')
+        .select('*')
+        .eq('ship_id', shipId)
+        .order('pricing_per_person', { ascending: true, nullsFirst: false });
+
+      if (cabinError) {
+        console.error('Error fetching cabin categories:', cabinError);
+        // If no cabin categories in DB, we'll fallback to the ship's cabin_categories array
+        setCabinCategories([]);
+      } else {
+        setCabinCategories(cabinData || []);
+      }
 
     } catch (error) {
       console.error('Error fetching ship data:', error);
@@ -191,8 +211,8 @@ export default function ShipDetail() {
               />
             </div>
 
-            <div className="grid grid-cols-2 gap-4">
-              {images.slice(0, 4).map((image, index) => (
+            <div className="grid grid-cols-2 gap-4 max-h-[500px] overflow-y-auto">
+              {images.map((image, index) => (
                 <motion.div
                   key={index}
                   className={`relative h-[190px] lg:h-[240px] rounded-lg overflow-hidden cursor-pointer ${
@@ -210,9 +230,6 @@ export default function ShipDetail() {
                       e.currentTarget.src = '/cruise-default.jpg';
                     }}
                   />
-                  {selectedImage === index && (
-                    <div className="absolute inset-0 bg-[#B8860B] bg-opacity-20"></div>
-                  )}
                 </motion.div>
               ))}
             </div>
@@ -330,7 +347,7 @@ export default function ShipDetail() {
               </motion.div>
             )}
 
-            {ship.cabin_categories && ship.cabin_categories.length > 0 && (
+            {(cabinCategories.length > 0 || (ship.cabin_categories && ship.cabin_categories.length > 0)) && (
               <motion.div
                 initial={{ opacity: 0, y: 20 }}
                 animate={{ opacity: 1, y: 0 }}
@@ -339,31 +356,69 @@ export default function ShipDetail() {
               >
                 <h2 className="text-2xl font-bold text-[#8B4513] mb-4">Cabin Categories</h2>
                 <p className="text-gray-600 mb-6">
-                  Choose from {ship.cabin_categories.length} different cabin types, each designed for comfort and relaxation during your voyage.
+                  Choose from {cabinCategories.length > 0 ? cabinCategories.length : ship.cabin_categories?.length || 0} different cabin types, each designed for comfort and relaxation during your voyage.
                 </p>
                 <div className="space-y-4">
-                  {ship.cabin_categories.map((category, index) => {
-                    const formatted = formatCabinCategory(category);
-                    return (
-                      <div
-                        key={index}
-                        className="flex items-start gap-4 p-5 bg-gradient-to-r from-[#F5F5DC] to-white border-2 border-[#B8860B]/20 rounded-lg hover:border-[#B8860B]/40 hover:shadow-md transition-all"
+                  {cabinCategories.length > 0 ? (
+                    // Show cabin categories from database with full details
+                    cabinCategories.map((cabin, index) => (
+                      <Link
+                        key={cabin.id}
+                        href={`/ships/${shipId}/cabins/${encodeURIComponent(cabin.name)}`}
+                        className="block"
                       >
-                        <div className="text-4xl flex-shrink-0 mt-1">{formatted.icon}</div>
-                        <div className="flex-1 min-w-0">
-                          <div className="flex items-start justify-between gap-3 mb-2">
-                            <h3 className="text-[#8B4513] font-bold text-lg leading-tight">{formatted.name}</h3>
-                            {formatted.quantity && (
-                              <span className="px-3 py-1 bg-[#B8860B] text-white text-sm font-semibold rounded-full whitespace-nowrap flex-shrink-0">
-                                {formatted.quantity} available
-                              </span>
+                        <div className="flex items-start gap-4 p-5 bg-gradient-to-r from-[#F5F5DC] to-white border-2 border-[#B8860B]/20 rounded-lg hover:border-[#B8860B] hover:shadow-lg transition-all cursor-pointer group">
+                          <div className="text-4xl flex-shrink-0 mt-1">🛏️</div>
+                          <div className="flex-1 min-w-0">
+                            <div className="flex items-start justify-between gap-3 mb-2">
+                              <h3 className="text-[#8B4513] font-bold text-lg leading-tight group-hover:text-[#B8860B] transition-colors">{cabin.name}</h3>
+                              {cabin.pricing_per_person && (
+                                <span className="px-3 py-1 bg-[#B8860B] text-white text-sm font-semibold rounded-full whitespace-nowrap flex-shrink-0">
+                                  ${cabin.pricing_per_person.toLocaleString()}/person
+                                </span>
+                              )}
+                            </div>
+                            {cabin.description && (
+                              <p className="text-gray-600 text-sm leading-relaxed mb-3 line-clamp-2">{cabin.description}</p>
                             )}
+                            <div className="flex items-center gap-4 text-xs text-gray-500">
+                              {cabin.size_sqm && <span>📐 {cabin.size_sqm} m²</span>}
+                              {cabin.max_occupancy && <span>👥 Max {cabin.max_occupancy} guests</span>}
+                              {cabin.quantity && <span>✓ {cabin.quantity} available</span>}
+                            </div>
+                            <div className="mt-3 text-[#B8860B] text-sm font-medium group-hover:underline">
+                              Click for pricing and more info →
+                            </div>
                           </div>
-                          <p className="text-gray-600 text-sm leading-relaxed">{formatted.description}</p>
                         </div>
-                      </div>
-                    );
-                  })}
+                      </Link>
+                    ))
+                  ) : (
+                    // Fallback to old format with ship's cabin_categories array
+                    ship.cabin_categories?.map((category, index) => {
+                      const formatted = formatCabinCategory(category);
+                      return (
+                        <div
+                          key={index}
+                          className="flex items-start gap-4 p-5 bg-gradient-to-r from-[#F5F5DC] to-white border-2 border-[#B8860B]/20 rounded-lg hover:border-[#B8860B]/40 hover:shadow-md transition-all"
+                        >
+                          <div className="text-4xl flex-shrink-0 mt-1">{formatted.icon}</div>
+                          <div className="flex-1 min-w-0">
+                            <div className="flex items-start justify-between gap-3 mb-2">
+                              <h3 className="text-[#8B4513] font-bold text-lg leading-tight">{formatted.name}</h3>
+                              {formatted.quantity && (
+                                <span className="px-3 py-1 bg-[#B8860B] text-white text-sm font-semibold rounded-full whitespace-nowrap flex-shrink-0">
+                                  {formatted.quantity} available
+                                </span>
+                              )}
+                            </div>
+                            <p className="text-gray-600 text-sm leading-relaxed">{formatted.description}</p>
+                            <p className="mt-3 text-[#B8860B] text-sm">Contact us for pricing and more details</p>
+                          </div>
+                        </div>
+                      );
+                    })
+                  )}
                 </div>
               </motion.div>
             )}

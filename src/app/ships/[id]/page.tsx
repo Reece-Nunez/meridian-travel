@@ -7,10 +7,6 @@ import { motion } from 'framer-motion';
 import { supabase } from '@/lib/supabase';
 import { Ship, TripPackage, CabinCategory } from '@/types/database';
 
-// Disable caching for this dynamic route
-export const dynamic = 'force-dynamic';
-export const revalidate = 0;
-
 export default function ShipDetail() {
   const params = useParams();
   const shipId = params.id as string;

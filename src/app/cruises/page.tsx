@@ -7,10 +7,6 @@ import { getContentByKey, getSettingByKey } from '@/lib/content';
 import { supabase } from '@/lib/supabase';
 import { TripPackage, Ship } from '@/types/database';
 
-// Disable caching for this dynamic route
-export const dynamic = 'force-dynamic';
-export const revalidate = 0;
-
 // Helper function to map destinations to our location categories
 const mapDestinationToLocation = (destination: string): string => {
   const dest = destination.toLowerCase();

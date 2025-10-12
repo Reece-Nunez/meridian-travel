@@ -241,24 +241,33 @@ function EditShipContent() {
       };
 
       // Remove empty arrays to prevent database issues
-      if (cleanedData.operating_regions.length === 0) cleanedData.operating_regions = null as any;
-      if (cleanedData.cabin_categories.length === 0) cleanedData.cabin_categories = null as any;
-      if (cleanedData.ship_features.length === 0) cleanedData.ship_features = null as any;
-      if (cleanedData.luxury_highlights.length === 0) cleanedData.luxury_highlights = null as any;
-      if (cleanedData.images.length === 0) cleanedData.images = null as any;
-      if (cleanedData.deck_plans.length === 0) cleanedData.deck_plans = null as any;
+      if (!cleanedData.operating_regions || cleanedData.operating_regions.length === 0) cleanedData.operating_regions = null as any;
+      if (!cleanedData.cabin_categories || cleanedData.cabin_categories.length === 0) cleanedData.cabin_categories = null as any;
+      if (!cleanedData.ship_features || cleanedData.ship_features.length === 0) cleanedData.ship_features = null as any;
+      if (!cleanedData.luxury_highlights || cleanedData.luxury_highlights.length === 0) cleanedData.luxury_highlights = null as any;
+      if (!cleanedData.images || cleanedData.images.length === 0) cleanedData.images = null as any;
+      if (!cleanedData.deck_plans || cleanedData.deck_plans.length === 0) cleanedData.deck_plans = null as any;
+
+      console.log('📝 Updating ship:', params.id);
+      console.log('📝 Update data:', cleanedData);
 
       const { error } = await supabase
         .from('ships')
         .update(cleanedData)
         .eq('id', params.id);
 
-      if (error) throw error;
+      if (error) {
+        console.error('❌ Ship update error:', error);
+        console.error('Error details:', JSON.stringify(error, null, 2));
+        throw error;
+      }
 
+      console.log('✅ Ship updated successfully');
       router.push('/admin/ships');
-    } catch (error) {
+    } catch (error: any) {
       console.error('Error updating ship:', error);
-      alert('Failed to update ship. Please try again.');
+      const errorMessage = error?.message || error?.details || JSON.stringify(error);
+      alert(`Failed to update ship: ${errorMessage}\n\nCheck the console for more details.`);
     } finally {
       setLoading(false);
     }

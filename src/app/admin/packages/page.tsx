@@ -85,16 +85,20 @@ export default function AdminPackages() {
         .update({ is_active: !currentStatus })
         .eq('id', packageId);
 
-      if (error) throw error;
+      if (error) {
+        console.error('Supabase error:', error);
+        throw error;
+      }
 
-      setPackages(packages.map(pkg => 
-        pkg.id === packageId 
+      setPackages(packages.map(pkg =>
+        pkg.id === packageId
           ? { ...pkg, is_active: !currentStatus }
           : pkg
       ));
-    } catch (err) {
+    } catch (err: any) {
       console.error('Error updating package:', err);
-      alert('Failed to update package status');
+      const errorMessage = err?.message || err?.details || JSON.stringify(err);
+      alert(`Failed to update package status: ${errorMessage}\n\nCheck the console for more details.`);
     }
   };
 

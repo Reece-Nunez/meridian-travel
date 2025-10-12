@@ -158,7 +158,7 @@ export default function EditPackage() {
     const { name, value, type } = e.target;
     setFormData(prev => ({
       ...prev,
-      [name]: type === 'number' ? Number(value) : 
+      [name]: type === 'number' ? (value === '' ? null : Number(value)) :
                type === 'checkbox' ? (e.target as HTMLInputElement).checked : value
     }));
   };
@@ -419,7 +419,7 @@ export default function EditPackage() {
       }
 
       // Split the update - do basic fields first, then itinerary separately
-      
+
       // First update: Basic fields only (fast)
       const basicData = {
         title: packageData.title,
@@ -432,56 +432,51 @@ export default function EditPackage() {
         excludes: packageData.excludes,
         images: packageData.images,
         luxury_highlights: packageData.luxury_highlights,
+        price_usd: formData.price_usd,
+        price_eur: formData.price_eur,
+        price_gbp: formData.price_gbp,
         updated_at: packageData.updated_at
       };
-      
-      // Add timeout back for basic fields
-      const basicUpdatePromise = supabase
+
+      console.log('📝 Updating basic fields for package:', packageId);
+      console.log('📝 Basic data:', basicData);
+
+      // Direct update without timeout to diagnose the issue
+      const { data: basicUpdateData, error: basicError } = await supabase
         .from('trip_packages')
         .update(basicData)
         .eq('id', packageId);
 
-      const basicTimeoutPromise = new Promise((_, reject) =>
-        setTimeout(() => reject(new Error('Basic update timed out after 30 seconds')), 30000)
-      );
-
-      const { data: basicUpdateData, error: basicError } = await Promise.race([
-        basicUpdatePromise, 
-        basicTimeoutPromise
-      ]) as any;
-
       if (basicError) {
-        console.error('Basic update error:', basicError);
+        console.error('❌ Basic update error:', basicError);
+        console.error('Error details:', JSON.stringify(basicError, null, 2));
         throw basicError;
       }
 
-      // Now update the itinerary with a reasonable timeout
-      
-      const itineraryUpdatePromise = supabase
+      console.log('✅ Basic fields updated successfully');
+      console.log('✅ Update response:', basicUpdateData);
+
+      // Now update the itinerary
+      console.log('📝 Updating itinerary...');
+      console.log('📝 Itinerary data:', packageData.itinerary);
+
+      const { data: itineraryData, error: itineraryError } = await supabase
         .from('trip_packages')
         .update({ itinerary: packageData.itinerary })
         .eq('id', packageId);
 
-      const itineraryTimeoutPromise = new Promise((_, reject) =>
-        setTimeout(() => reject(new Error('Itinerary update timed out after 40 seconds')), 40000)
-      );
-
-      try {
-        const { data: itineraryData, error: itineraryError } = await Promise.race([
-          itineraryUpdatePromise, 
-          itineraryTimeoutPromise
-        ]) as any;
-
-        if (itineraryError) {
-          console.error('Itinerary update error:', itineraryError);
-          // Don't throw - basic fields are already saved
-          console.log('Itinerary update failed, but basic changes are saved');
-        }
-      } catch (timeoutError) {
-        console.log('Itinerary update timed out, but basic changes are saved');
+      if (itineraryError) {
+        console.error('❌ Itinerary update error:', itineraryError);
+        console.error('Error details:', JSON.stringify(itineraryError, null, 2));
+        // Don't throw - basic fields are already saved
+        console.warn('⚠️ Itinerary update failed, but basic changes are saved');
+        alert('Warning: Basic fields saved but itinerary update failed. Error: ' + (itineraryError.message || JSON.stringify(itineraryError)));
+      } else {
+        console.log('✅ Itinerary updated successfully');
+        console.log('✅ Itinerary update response:', itineraryData);
       }
 
-      console.log('Save successful, redirecting...');
+      console.log('✅ Save successful, redirecting...');
       
       // Clear pending images and deletion state since everything is now saved
       setPendingPackageImages([]);

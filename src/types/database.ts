@@ -379,7 +379,7 @@ export interface Database {
         Row: {
           id: string
           day_id: string
-          activity_type: 'flight' | 'tour' | 'excursion' | 'activity' | 'custom'
+          activity_type: 'flight' | 'tour' | 'excursion' | 'activity' | 'custom' | 'cruise'
           custom_type: string | null
           name: string
           description: string
@@ -390,7 +390,7 @@ export interface Database {
         Insert: {
           id?: string
           day_id: string
-          activity_type: 'flight' | 'tour' | 'excursion' | 'activity' | 'custom'
+          activity_type: 'flight' | 'tour' | 'excursion' | 'activity' | 'custom' | 'cruise'
           custom_type?: string | null
           name: string
           description: string
@@ -401,7 +401,7 @@ export interface Database {
         Update: {
           id?: string
           day_id?: string
-          activity_type?: 'flight' | 'tour' | 'excursion' | 'activity' | 'custom'
+          activity_type?: 'flight' | 'tour' | 'excursion' | 'activity' | 'custom' | 'cruise'
           custom_type?: string | null
           name?: string
           description?: string

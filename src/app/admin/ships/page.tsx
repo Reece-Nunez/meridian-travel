@@ -3,12 +3,17 @@
 import { useState, useEffect } from 'react';
 import { motion } from 'framer-motion';
 import Link from 'next/link';
+import { useRouter } from 'next/navigation';
 import { supabase } from '@/lib/supabase';
 import { useSimpleAdminAuth } from '@/hooks/useSimpleAdminAuth';
 import { Ship } from '@/types/database';
 
+// Force dynamic rendering (no static generation)
+export const dynamic = 'force-dynamic';
+
 export default function AdminShips() {
   const { loading: authLoading, isAuthenticated } = useSimpleAdminAuth();
+  const router = useRouter();
   const [ships, setShips] = useState<Ship[]>([]);
   const [loading, setLoading] = useState(true);
 
@@ -27,11 +32,17 @@ export default function AdminShips() {
       if (loading) {
         console.error('Ships page loading timeout');
         setLoading(false);
+        alert('Loading timed out. Please refresh the page or try again.');
       }
     }, 10000); // 10 second timeout
 
     return () => clearTimeout(timeout);
   }, [loading]);
+
+  // Force refresh data on mount to avoid stale cache
+  useEffect(() => {
+    router.refresh();
+  }, []);
 
   const fetchShips = async () => {
     setLoading(true);
@@ -277,6 +288,12 @@ export default function AdminShips() {
                                 className="text-[#B8860B] hover:text-[#DAA520] transition-colors"
                               >
                                 Edit
+                              </Link>
+                              <Link
+                                href={`/admin/ships/${ship.id}/cabins`}
+                                className="text-green-600 hover:text-green-800 transition-colors"
+                              >
+                                Cabins
                               </Link>
                               <button
                                 onClick={() => toggleShipStatus(ship.id, ship.is_active || false)}

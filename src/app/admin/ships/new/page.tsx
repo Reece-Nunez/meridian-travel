@@ -1,12 +1,15 @@
 'use client';
 
-import { useState, Suspense } from 'react';
+import { useState, useEffect, Suspense } from 'react';
 import { motion } from 'framer-motion';
 import Link from 'next/link';
 import { useRouter } from 'next/navigation';
 import { supabase } from '@/lib/supabase';
 import { useSimpleAdminAuth } from '@/hooks/useSimpleAdminAuth';
 import ImageUploadWithCaptions, { ImageWithCaption } from '@/components/admin/ImageUploadWithCaptions';
+
+// Force dynamic rendering (no static generation)
+export const dynamic = 'force-dynamic';
 
 interface PendingImage {
   id: string;
@@ -18,6 +21,11 @@ function NewShipContent() {
   const { loading: authLoading, isAuthenticated } = useSimpleAdminAuth();
   const router = useRouter();
   const [loading, setLoading] = useState(false);
+
+  // Force refresh data on mount to avoid stale cache
+  useEffect(() => {
+    router.refresh();
+  }, []);
 
   const [formData, setFormData] = useState({
     name: '',
@@ -43,7 +51,8 @@ function NewShipContent() {
     'River cruise',
     'Sailing yacht',
     'Catamaran',
-    'Motor yacht'
+    'Motor yacht',
+    'Diving Ship'
   ];
 
   const operatingRegions = [
@@ -351,43 +360,22 @@ function NewShipContent() {
             </div>
           </motion.div>
 
-          {/* Cabin Categories */}
+          {/* Cabin Categories - Info Only */}
           <motion.div
             initial={{ opacity: 0, y: 20 }}
             animate={{ opacity: 1, y: 0 }}
             transition={{ delay: 0.3 }}
             className="bg-white rounded-lg shadow p-6"
           >
-            <h3 className="text-lg font-medium text-gray-900 mb-6">Cabin Categories</h3>
-
-            {formData.cabin_categories.map((category, index) => (
-              <div key={index} className="flex items-center space-x-2 mb-3">
-                <input
-                  type="text"
-                  value={category}
-                  onChange={(e) => handleArrayChange('cabin_categories', index, e.target.value)}
-                  className="flex-1 px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-[#B8860B] focus:border-[#B8860B] text-gray-900"
-                  placeholder="e.g., Oceanview Suite"
-                />
-                {formData.cabin_categories.length > 1 && (
-                  <button
-                    type="button"
-                    onClick={() => removeArrayItem('cabin_categories', index)}
-                    className="text-red-600 hover:text-red-800 transition-colors"
-                  >
-                    Remove
-                  </button>
-                )}
-              </div>
-            ))}
-
-            <button
-              type="button"
-              onClick={() => addArrayItem('cabin_categories')}
-              className="text-[#B8860B] hover:text-[#DAA520] transition-colors text-sm font-medium"
-            >
-              + Add Cabin Category
-            </button>
+            <div>
+              <h3 className="text-lg font-medium text-gray-900 mb-2">Cabin Categories</h3>
+              <p className="text-sm text-gray-600 mb-4">Manage detailed cabin information with pricing and images</p>
+            </div>
+            <div className="bg-blue-50 border border-blue-200 rounded-lg p-4">
+              <p className="text-sm text-blue-800">
+                <strong>Note:</strong> After creating this ship, you can add cabin categories with pricing, images, amenities, and detailed specifications by clicking the "Manage Cabins" button on the ship edit page.
+              </p>
+            </div>
           </motion.div>
 
           {/* Ship Features */}

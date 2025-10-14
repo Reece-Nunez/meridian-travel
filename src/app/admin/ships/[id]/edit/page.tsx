@@ -9,6 +9,9 @@ import { useSimpleAdminAuth } from '@/hooks/useSimpleAdminAuth';
 import ImageUploadWithCaptions, { ImageWithCaption } from '@/components/admin/ImageUploadWithCaptions';
 import { Ship } from '@/types/database';
 
+// Force dynamic rendering (no static generation)
+export const dynamic = 'force-dynamic';
+
 interface PendingImage {
   id: string;
   file: File;
@@ -47,7 +50,8 @@ function EditShipContent() {
     'River cruise',
     'Sailing yacht',
     'Catamaran',
-    'Motor yacht'
+    'Motor yacht',
+    'Diving Ship'
   ];
 
   const operatingRegions = [
@@ -67,8 +71,29 @@ function EditShipContent() {
   useEffect(() => {
     if (isAuthenticated && params.id) {
       fetchShip();
+    } else if (!authLoading && !isAuthenticated) {
+      // If auth loaded but user is not authenticated, redirect
+      setFetchLoading(false);
     }
-  }, [isAuthenticated, params.id]);
+  }, [isAuthenticated, params.id, authLoading]);
+
+  // Fallback timeout to prevent infinite loading
+  useEffect(() => {
+    const timeout = setTimeout(() => {
+      if (fetchLoading) {
+        console.error('Ship edit page loading timeout');
+        setFetchLoading(false);
+        alert('Loading timed out. Please refresh the page or try again.');
+      }
+    }, 10000); // 10 second timeout
+
+    return () => clearTimeout(timeout);
+  }, [fetchLoading]);
+
+  // Force refresh data on mount to avoid stale cache
+  useEffect(() => {
+    router.refresh();
+  }, []);
 
   const fetchShip = async () => {
     try {
@@ -307,12 +332,20 @@ function EditShipContent() {
               <h1 className="text-3xl font-bold text-gray-900">Edit Ship: {ship.name}</h1>
               <p className="text-gray-600 mt-2">Update ship information and settings</p>
             </div>
-            <Link
-              href="/admin/ships"
-              className="bg-gray-600 hover:bg-gray-700 text-white px-6 py-3 rounded-md font-medium transition-colors"
-            >
-              Back to Ships
-            </Link>
+            <div className="flex gap-3">
+              <Link
+                href={`/admin/ships/${params.id}/cabins`}
+                className="bg-green-600 hover:bg-green-700 text-white px-6 py-3 rounded-md font-medium transition-colors"
+              >
+                Manage Cabins
+              </Link>
+              <Link
+                href="/admin/ships"
+                className="bg-gray-600 hover:bg-gray-700 text-white px-6 py-3 rounded-md font-medium transition-colors"
+              >
+                Back to Ships
+              </Link>
+            </div>
           </div>
         </div>
 
@@ -451,43 +484,30 @@ function EditShipContent() {
             </div>
           </motion.div>
 
-          {/* Cabin Categories */}
+          {/* Cabin Categories - Now managed separately */}
           <motion.div
             initial={{ opacity: 0, y: 20 }}
             animate={{ opacity: 1, y: 0 }}
             transition={{ delay: 0.3 }}
             className="bg-white rounded-lg shadow p-6"
           >
-            <h3 className="text-lg font-medium text-gray-900 mb-6">Cabin Categories</h3>
-
-            {formData.cabin_categories.map((category, index) => (
-              <div key={index} className="flex items-center space-x-2 mb-3">
-                <input
-                  type="text"
-                  value={category}
-                  onChange={(e) => handleArrayChange('cabin_categories', index, e.target.value)}
-                  className="flex-1 px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-[#B8860B] focus:border-[#B8860B] text-gray-900"
-                  placeholder="e.g., Oceanview Suite"
-                />
-                {formData.cabin_categories.length > 1 && (
-                  <button
-                    type="button"
-                    onClick={() => removeArrayItem('cabin_categories', index)}
-                    className="text-red-600 hover:text-red-800 transition-colors"
-                  >
-                    Remove
-                  </button>
-                )}
+            <div className="flex items-center justify-between mb-4">
+              <div>
+                <h3 className="text-lg font-medium text-gray-900">Cabin Categories</h3>
+                <p className="text-sm text-gray-600 mt-1">Manage detailed cabin information with pricing and images</p>
               </div>
-            ))}
-
-            <button
-              type="button"
-              onClick={() => addArrayItem('cabin_categories')}
-              className="text-[#B8860B] hover:text-[#DAA520] transition-colors text-sm font-medium"
-            >
-              + Add Cabin Category
-            </button>
+              <Link
+                href={`/admin/ships/${params.id}/cabins`}
+                className="bg-green-600 hover:bg-green-700 text-white px-4 py-2 rounded-md font-medium transition-colors text-sm"
+              >
+                Manage Cabins
+              </Link>
+            </div>
+            <div className="bg-blue-50 border border-blue-200 rounded-lg p-4">
+              <p className="text-sm text-blue-800">
+                <strong>Note:</strong> Cabin categories are now managed in the dedicated Cabin Management section where you can add pricing, images, amenities, and detailed specifications for each cabin type.
+              </p>
+            </div>
           </motion.div>
 
           {/* Ship Features */}

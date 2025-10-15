@@ -195,40 +195,108 @@ export default function ShipDetail() {
             </ol>
           </nav>
 
-          <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 mb-8">
-            <div className="relative h-[400px] lg:h-[500px] rounded-xl overflow-hidden">
+          {/* Enhanced Gallery Layout */}
+          <div className="mb-8">
+            {/* Main Large Image */}
+            <motion.div
+              className="relative w-full bg-gray-100 rounded-xl overflow-hidden mb-4 shadow-2xl flex items-center justify-center min-h-[450px] lg:min-h-[600px]"
+              initial={{ opacity: 0 }}
+              animate={{ opacity: 1 }}
+              transition={{ duration: 0.5 }}
+            >
               <img
                 src={images[selectedImage] || '/cruise-default.jpg'}
                 alt={ship.name}
-                className="w-full h-full object-cover"
+                className="w-full h-auto object-contain max-h-[450px] lg:max-h-[600px]"
                 onError={(e) => {
                   e.currentTarget.src = '/cruise-default.jpg';
                 }}
               />
-            </div>
+              {/* Image Counter */}
+              <div className="absolute bottom-4 right-4 bg-black/60 text-white px-3 py-1.5 rounded-full text-sm font-medium backdrop-blur-sm">
+                {selectedImage + 1} / {images.length}
+              </div>
 
-            <div className="grid grid-cols-2 gap-4 max-h-[500px] overflow-y-auto">
-              {images.map((image, index) => (
-                <motion.div
-                  key={index}
-                  className={`relative h-[190px] lg:h-[240px] rounded-lg overflow-hidden cursor-pointer ${
-                    selectedImage === index ? 'ring-4 ring-[#B8860B]' : ''
-                  }`}
-                  onClick={() => setSelectedImage(index)}
-                  whileHover={{ scale: 1.02 }}
-                  transition={{ duration: 0.2 }}
-                >
-                  <img
-                    src={image}
-                    alt={`${ship.name} - View ${index + 1}`}
-                    className="w-full h-full object-cover"
-                    onError={(e) => {
-                      e.currentTarget.src = '/cruise-default.jpg';
-                    }}
-                  />
-                </motion.div>
-              ))}
-            </div>
+              {/* Navigation Arrows */}
+              {images.length > 1 && (
+                <>
+                  <button
+                    onClick={() => setSelectedImage((prev) => (prev === 0 ? images.length - 1 : prev - 1))}
+                    className="absolute left-4 top-1/2 -translate-y-1/2 bg-black/50 hover:bg-black/70 text-white p-3 rounded-full transition-all backdrop-blur-sm"
+                    aria-label="Previous image"
+                  >
+                    <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 19l-7-7 7-7" />
+                    </svg>
+                  </button>
+                  <button
+                    onClick={() => setSelectedImage((prev) => (prev === images.length - 1 ? 0 : prev + 1))}
+                    className="absolute right-4 top-1/2 -translate-y-1/2 bg-black/50 hover:bg-black/70 text-white p-3 rounded-full transition-all backdrop-blur-sm"
+                    aria-label="Next image"
+                  >
+                    <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5l7 7-7 7" />
+                    </svg>
+                  </button>
+                </>
+              )}
+            </motion.div>
+
+            {/* Thumbnail Grid - All Same Size */}
+            {images.length > 1 && (
+              <div className="grid grid-cols-4 sm:grid-cols-5 md:grid-cols-6 lg:grid-cols-8 gap-3">
+                {images.map((image, index) => (
+                  <button
+                    key={index}
+                    onClick={() => setSelectedImage(index)}
+                    className={`relative aspect-square w-full rounded-lg overflow-hidden transition-all ${
+                      selectedImage === index
+                        ? 'ring-4 ring-[#B8860B] shadow-lg'
+                        : 'ring-2 ring-gray-200 hover:ring-[#B8860B]/50 hover:shadow-md'
+                    }`}
+                    aria-label={`Select image ${index + 1}`}
+                  >
+                    {/* Background for loading state */}
+                    <div className="absolute inset-0 bg-gray-100" />
+
+                    <img
+                      src={image || '/cruise-default.jpg'}
+                      alt={`${ship.name} - Thumbnail ${index + 1}`}
+                      className="absolute inset-0 w-full h-full block"
+                      style={{
+                        objectFit: 'cover',
+                        objectPosition: 'center',
+                        width: '100%',
+                        height: '100%',
+                        display: 'block'
+                      }}
+                      onError={(e) => {
+                        e.currentTarget.src = '/cruise-default.jpg';
+                      }}
+                      draggable={false}
+                    />
+
+                    {selectedImage === index && (
+                      <div className="absolute inset-0 bg-[#B8860B]/20 flex items-center justify-center">
+                        <div className="bg-white rounded-full p-1">
+                          <svg
+                            className="w-4 h-4 text-[#B8860B]"
+                            fill="currentColor"
+                            viewBox="0 0 20 20"
+                          >
+                            <path
+                              fillRule="evenodd"
+                              d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z"
+                              clipRule="evenodd"
+                            />
+                          </svg>
+                        </div>
+                      </div>
+                    )}
+                  </button>
+                ))}
+              </div>
+            )}
           </div>
         </div>
       </div>

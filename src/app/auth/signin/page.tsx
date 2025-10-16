@@ -89,9 +89,10 @@ function SignInForm() {
       setFormLoading(false);
     } else {
       // Set up admin session if this is an admin user
+      let isAdmin = false;
       if (data?.user?.id) {
         const profile = await getUserProfile(data.user.id);
-        const isAdmin = profile?.role === 'admin';
+        isAdmin = profile?.role === 'admin';
         if (isAdmin) {
           localStorage.setItem('admin_session', JSON.stringify({
             email: email,

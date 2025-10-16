@@ -1,6 +1,6 @@
 'use client';
 
-import { useEffect, useState } from 'react';
+import { useEffect, useState, useRef } from 'react';
 import { useRouter } from 'next/navigation';
 import { useAuth } from '@/contexts/AuthContext';
 import { supabase } from '@/lib/supabase';
@@ -11,19 +11,25 @@ export function useSimpleAdminAuth() {
   const [isAuthenticated, setIsAuthenticated] = useState(false);
   const router = useRouter();
   const { signOut } = useAuth();
+  const routerRef = useRef(router);
+
+  // Keep router ref up to date
+  useEffect(() => {
+    routerRef.current = router;
+  }, [router]);
 
   useEffect(() => {
     let isMounted = true;
 
-    // Fallback timeout to prevent infinite loading
+    // Fallback timeout to prevent infinite loading - increased to 10 seconds
     const fallbackTimer = setTimeout(() => {
       if (isMounted) {
         console.warn('Auth check timeout, forcing login redirect');
         setIsAuthenticated(false);
         setLoading(false);
-        router.push('/auth/signin');
+        routerRef.current.push('/auth/signin');
       }
-    }, 5000); // 5 second timeout
+    }, 10000); // 10 second timeout
 
     const checkAuth = async () => {
       console.log('🟣 [ADMIN AUTH] checkAuth started, isMounted:', isMounted);
@@ -74,10 +80,12 @@ export function useSimpleAdminAuth() {
 
         if (isAdmin) {
           if (isMounted) {
-            console.log('🟢 [ADMIN AUTH] Admin verified - setting authenticated=true');
+            console.log('🟢 [ADMIN AUTH] Admin verified - setting authenticated=true, clearing timeout');
             clearTimeout(fallbackTimer);
             setIsAuthenticated(true);
             setLoading(false);
+          } else {
+            console.log('🟡 [ADMIN AUTH] Admin verified but component unmounted');
           }
         } else {
           // Not an admin - redirect
@@ -86,7 +94,7 @@ export function useSimpleAdminAuth() {
             clearTimeout(fallbackTimer);
             setIsAuthenticated(false);
             setLoading(false);
-            router.push('/dashboard'); // Regular users go to dashboard
+            routerRef.current.push('/dashboard'); // Regular users go to dashboard
           }
         }
       } catch (error) {
@@ -105,10 +113,11 @@ export function useSimpleAdminAuth() {
 
     // Cleanup function to prevent state updates on unmounted component
     return () => {
+      console.log('🧹 [ADMIN AUTH] Cleanup - clearing timeout and marking unmounted');
       isMounted = false;
       clearTimeout(fallbackTimer);
     };
-  }, [router]);
+  }, []); // Empty dependency array - only run once on mount
 
   const logout = async () => {
     try {
@@ -116,11 +125,11 @@ export function useSimpleAdminAuth() {
       localStorage.removeItem('admin_session');
       // Sign out from Supabase
       await signOut();
-      router.push('/auth/signin');
+      routerRef.current.push('/auth/signin');
     } catch (error) {
       console.error('Admin logout error:', error);
       // Still redirect even if signOut fails
-      router.push('/auth/signin');
+      routerRef.current.push('/auth/signin');
     }
   };
 

@@ -1,24 +1,23 @@
 import { NextResponse } from 'next/server';
 import { createSupabaseAdmin } from '@/lib/supabase';
+import { requireAdmin } from '@/lib/auth';
 
 export async function GET(request: Request) {
   try {
     console.log('Admin quotes API: Starting request');
 
-    // Basic admin auth check - in production you'd want proper JWT verification
-    const { searchParams } = new URL(request.url);
-    const adminEmail = searchParams.get('admin_email');
+    // Use role-based authentication
+    const profile = await requireAdmin();
 
-    console.log('Admin quotes API: Admin email:', adminEmail);
-
-    // Simple admin check - in production, use proper authentication
-    if (adminEmail !== 'chris@meridianluxury.travel') {
-      console.log('Admin quotes API: Unauthorized admin email');
+    if (!profile) {
+      console.log('Admin quotes API: Unauthorized - not an admin');
       return NextResponse.json(
         { error: 'Unauthorized' },
         { status: 401 }
       );
     }
+
+    console.log('Admin quotes API: Admin authorized:', profile.role);
 
     // Check environment variables
     const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL;
@@ -69,6 +68,16 @@ export async function GET(request: Request) {
 
 export async function PATCH(request: Request) {
   try {
+    // Use role-based authentication
+    const profile = await requireAdmin();
+
+    if (!profile) {
+      return NextResponse.json(
+        { error: 'Unauthorized' },
+        { status: 401 }
+      );
+    }
+
     const body = await request.json();
     const {
       quoteId,
@@ -83,17 +92,8 @@ export async function PATCH(request: Request) {
       participants,
       inclusions,
       exclusions,
-      pdf_title,
-      adminEmail
+      pdf_title
     } = body;
-
-    // Simple admin check
-    if (adminEmail !== 'chris@meridianluxury.travel') {
-      return NextResponse.json(
-        { error: 'Unauthorized' },
-        { status: 401 }
-      );
-    }
 
     // Use admin client to update quote
     const supabaseAdmin = createSupabaseAdmin();

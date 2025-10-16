@@ -3,14 +3,36 @@
  * This module provides role-based access control using database roles
  */
 
-import { supabase } from './supabase';
+import { supabase, createSupabaseAdmin } from './supabase';
 import { UserRole, Profile } from '@/types/database';
 
 /**
  * Get the current user's profile including their role
+ * CLIENT-SIDE: Fetches via API route to bypass RLS
+ * SERVER-SIDE: Uses admin client to bypass RLS
  */
 export async function getUserProfile(userId: string): Promise<Profile | null> {
-  const { data, error } = await supabase
+  // Check if we're on the client side
+  if (typeof window !== 'undefined') {
+    // Client-side: use API route
+    try {
+      const response = await fetch(`/api/auth/profile?userId=${userId}`);
+      if (!response.ok) {
+        console.error('Error fetching user profile via API:', response.statusText);
+        return null;
+      }
+      const data = await response.json();
+      return data.profile;
+    } catch (error) {
+      console.error('Error fetching user profile:', error);
+      return null;
+    }
+  }
+
+  // Server-side: use admin client to bypass RLS
+  const adminClient = createSupabaseAdmin();
+
+  const { data, error } = await adminClient
     .from('profiles')
     .select('*')
     .eq('id', userId)

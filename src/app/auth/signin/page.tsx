@@ -5,6 +5,7 @@ import { useRouter, useSearchParams } from 'next/navigation';
 import Link from 'next/link';
 import { useAuth } from '@/contexts/AuthContext';
 import LoadingFallback from '@/components/LoadingFallback';
+import { getUserProfile } from '@/lib/auth';
 
 function SignInForm() {
   const [email, setEmail] = useState('');
@@ -34,14 +35,18 @@ function SignInForm() {
     if (user && !authLoading && !hasRedirected) {
       console.log('🟢 [SIGNIN] Conditions met for redirect, setting hasRedirected=true');
       setHasRedirected(true);
-      const isAdmin = user.email === 'chris@meridianluxury.travel';
-      const targetPath = isAdmin ? '/admin' : redirectTo;
-      console.log('🟢 [SIGNIN] Redirecting to:', targetPath, '(isAdmin:', isAdmin + ')');
-      if (isAdmin) {
-        router.replace('/admin');
-      } else {
-        router.replace(redirectTo);
-      }
+
+      // Check user role from database
+      getUserProfile(user.id).then((profile) => {
+        const isAdmin = profile?.role === 'admin';
+        const targetPath = isAdmin ? '/admin' : redirectTo;
+        console.log('🟢 [SIGNIN] Redirecting to:', targetPath, '(isAdmin:', isAdmin + ')');
+        if (isAdmin) {
+          router.replace('/admin');
+        } else {
+          router.replace(redirectTo);
+        }
+      });
     } else {
       console.log('🔴 [SIGNIN] Redirect blocked - conditions not met');
     }
@@ -84,12 +89,15 @@ function SignInForm() {
       setFormLoading(false);
     } else {
       // Set up admin session if this is an admin user
-      const isAdmin = email === 'chris@meridianluxury.travel';
-      if (isAdmin) {
-        localStorage.setItem('admin_session', JSON.stringify({
-          email: email,
-          loginTime: new Date().toISOString()
-        }));
+      if (data?.user?.id) {
+        const profile = await getUserProfile(data.user.id);
+        const isAdmin = profile?.role === 'admin';
+        if (isAdmin) {
+          localStorage.setItem('admin_session', JSON.stringify({
+            email: email,
+            loginTime: new Date().toISOString()
+          }));
+        }
       }
 
       // Handle quote token attachment for regular users

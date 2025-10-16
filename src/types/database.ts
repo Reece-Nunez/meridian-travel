@@ -12,6 +12,7 @@ export interface Database {
           emergency_contact: string | null
           dietary_restrictions: string | null
           travel_preferences: string | null
+          role: 'user' | 'admin'
         }
         Insert: {
           id: string
@@ -23,6 +24,7 @@ export interface Database {
           emergency_contact?: string | null
           dietary_restrictions?: string | null
           travel_preferences?: string | null
+          role?: 'user' | 'admin'
         }
         Update: {
           id?: string
@@ -34,6 +36,7 @@ export interface Database {
           emergency_contact?: string | null
           dietary_restrictions?: string | null
           travel_preferences?: string | null
+          role?: 'user' | 'admin'
         }
       }
       trip_packages: {
@@ -652,7 +655,7 @@ export interface Database {
       [_ in never]: never
     }
     Enums: {
-      [_ in never]: never
+      user_role: 'user' | 'admin'
     }
   }
 }
@@ -682,3 +685,6 @@ export type Payment = Database['public']['Tables']['payments']['Row']
 export type Ship = Database['public']['Tables']['ships']['Row']
 export type QuoteToken = Database['public']['Tables']['quote_tokens']['Row']
 export type CabinCategory = Database['public']['Tables']['cabin_categories']['Row']
+
+// User role type
+export type UserRole = Database['public']['Enums']['user_role']

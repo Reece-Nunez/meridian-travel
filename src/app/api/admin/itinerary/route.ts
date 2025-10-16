@@ -1,24 +1,21 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { createSupabaseAdmin } from '@/lib/supabase';
 import { ItineraryDay, ItineraryActivity, ItineraryImage } from '@/types/database';
-
-const AUTHORIZED_EMAILS = [
-  'reecehnunez@gmail.com',
-  'admin@meridianluxurytravel.com',
-  'chris@meridianluxury.travel'
-];
+import { requireAdmin } from '@/lib/auth';
 
 export async function POST(request: NextRequest) {
   try {
-    const body = await request.json();
-    console.log('Itinerary API: Received request body:', JSON.stringify(body, null, 2));
-    
-    const { adminEmail, day } = body;
-
-    if (!adminEmail || !AUTHORIZED_EMAILS.includes(adminEmail)) {
-      console.log('Itinerary API: Unauthorized access attempt:', adminEmail);
+    // Check if user has admin role
+    const adminProfile = await requireAdmin();
+    if (!adminProfile) {
+      console.log('Itinerary API: Unauthorized access attempt');
       return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
     }
+
+    const body = await request.json();
+    console.log('Itinerary API: Received request body:', JSON.stringify(body, null, 2));
+
+    const { day } = body;
 
     if (!day) {
       return NextResponse.json({ error: 'Day data is required' }, { status: 400 });
@@ -151,13 +148,14 @@ export async function POST(request: NextRequest) {
 // GET endpoint to fetch itinerary for a quote
 export async function GET(request: NextRequest) {
   try {
-    const { searchParams } = new URL(request.url);
-    const quoteId = searchParams.get('quote_id');
-    const adminEmail = searchParams.get('admin_email');
-
-    if (!adminEmail || !AUTHORIZED_EMAILS.includes(adminEmail)) {
+    // Check if user has admin role
+    const adminProfile = await requireAdmin();
+    if (!adminProfile) {
       return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
     }
+
+    const { searchParams } = new URL(request.url);
+    const quoteId = searchParams.get('quote_id');
 
     if (!quoteId) {
       return NextResponse.json({ error: 'Quote ID is required' }, { status: 400 });

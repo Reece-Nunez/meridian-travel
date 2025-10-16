@@ -3,6 +3,7 @@
 import { useEffect, useState } from 'react';
 import { useRouter } from 'next/navigation';
 import { supabase } from '@/lib/supabase';
+import { getUserProfile } from '@/lib/auth';
 
 export function useAdminAuth() {
   const [loading, setLoading] = useState(true);
@@ -21,14 +22,10 @@ export function useAdminAuth() {
           return;
         }
 
-        // Check if user is authorized admin
-        const adminEmails = [
-          'chris@meridianluxury.travel',
-          'chrispinto@meridianluxury.travel',
-          'admin@meridianluxury.travel'
-        ];
+        // Check if user has admin role in database
+        const profile = await getUserProfile(session.user.id);
 
-        if (!adminEmails.includes(session.user.email || '')) {
+        if (profile?.role !== 'admin') {
           router.push('/unauthorized');
           return;
         }

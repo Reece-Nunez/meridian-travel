@@ -16,11 +16,16 @@ export function isAdmin(): boolean {
       return false;
     }
 
-    // Check if it's the valid admin email
-    return sessionData.email === 'chris@meridianluxury.travel';
+    // Check if it's a valid admin email
+    const adminEmails = ['chris@meridianluxury.travel', 'reece@nunezdev.com'];
+    return adminEmails.includes(sessionData.email);
   } catch {
     return false;
   }
+}
+
+export function getAdminEmails(): string[] {
+  return ['chris@meridianluxury.travel', 'reece@nunezdev.com'];
 }
 
 export function getAdminEmail(): string {
@@ -29,5 +34,5 @@ export function getAdminEmail(): string {
 
 export function isUserAdmin(userEmail?: string): boolean {
   if (!userEmail) return false;
-  return userEmail === getAdminEmail();
+  return getAdminEmails().includes(userEmail);
 }

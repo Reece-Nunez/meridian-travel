@@ -4,6 +4,7 @@ import { useEffect, useState } from 'react';
 import { useRouter } from 'next/navigation';
 import { useAuth } from '@/contexts/AuthContext';
 import { supabase } from '@/lib/supabase';
+import { getUserProfile } from '@/lib/auth';
 
 export function useSimpleAdminAuth() {
   const [loading, setLoading] = useState(true);
@@ -66,9 +67,10 @@ export function useSimpleAdminAuth() {
           return;
         }
 
-        // Check if it's the admin email
-        const isAdmin = session.user.email === 'chris@meridianluxury.travel';
-        console.log('🟣 [ADMIN AUTH] Admin check - isAdmin:', isAdmin, 'email:', session.user.email);
+        // Check if user has admin role in database
+        const profile = await getUserProfile(session.user.id);
+        const isAdmin = profile?.role === 'admin';
+        console.log('🟣 [ADMIN AUTH] Admin check - isAdmin:', isAdmin, 'role:', profile?.role, 'email:', session.user.email);
 
         if (isAdmin) {
           if (isMounted) {

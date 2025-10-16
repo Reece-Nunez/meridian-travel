@@ -4,6 +4,7 @@ import { useEffect } from 'react';
 import { useRouter } from 'next/navigation';
 import { supabase } from '@/lib/supabase';
 import LoadingFallback from '@/components/LoadingFallback';
+import { getUserProfile } from '@/lib/auth';
 
 export default function AuthCallback() {
   const router = useRouter();
@@ -19,9 +20,10 @@ export default function AuthCallback() {
       }
 
       if (data.session) {
-        // Check if this is an admin user
+        // Check if this is an admin user via database role
+        const profile = await getUserProfile(data.session.user.id);
+        const isAdmin = profile?.role === 'admin';
         const userEmail = data.session.user?.email;
-        const isAdmin = userEmail === 'chris@meridianluxury.travel';
 
         if (isAdmin) {
           // Set up admin session for the admin auth system

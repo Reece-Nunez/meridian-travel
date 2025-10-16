@@ -438,7 +438,7 @@ export default function ShipDetail() {
                               <h3 className="text-[#8B4513] font-bold text-lg leading-tight group-hover:text-[#B8860B] transition-colors">{cabin.name}</h3>
                               {cabin.pricing_per_person && (
                                 <span className="px-3 py-1 bg-[#B8860B] text-white text-sm font-semibold rounded-full whitespace-nowrap flex-shrink-0">
-                                  ${cabin.pricing_per_person.toLocaleString()}/person
+                                  from ${cabin.pricing_per_person.toLocaleString()}
                                 </span>
                               )}
                             </div>
@@ -446,7 +446,7 @@ export default function ShipDetail() {
                               <p className="text-gray-600 text-sm leading-relaxed mb-3 line-clamp-2">{cabin.description}</p>
                             )}
                             <div className="flex items-center gap-4 text-xs text-gray-500">
-                              {cabin.size_sqm && <span>📐 {cabin.size_sqm} m²</span>}
+                              {cabin.size_sqm && <span>📐 {Math.round(cabin.size_sqm * 10.764)} ft²</span>}
                               {cabin.max_occupancy && <span>👥 Max {cabin.max_occupancy} guests</span>}
                               {cabin.quantity && <span>✓ {cabin.quantity} available</span>}
                             </div>

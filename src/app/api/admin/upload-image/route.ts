@@ -1,23 +1,19 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { createSupabaseAdmin } from '@/lib/supabase';
-
-const AUTHORIZED_EMAILS = [
-  'reecehnunez@gmail.com',
-  'admin@meridianluxurytravel.com',
-  'chris@meridianluxury.travel'
-];
+import { requireAdmin } from '@/lib/auth';
 
 export async function POST(request: NextRequest) {
   try {
-    const formData = await request.formData();
-    const file = formData.get('file') as File;
-    const adminEmail = formData.get('adminEmail') as string;
-    const quoteId = formData.get('quoteId') as string;
-
-    if (!adminEmail || !AUTHORIZED_EMAILS.includes(adminEmail)) {
-      console.log('Image Upload API: Unauthorized access attempt:', adminEmail);
+    // Check if user has admin role
+    const adminProfile = await requireAdmin();
+    if (!adminProfile) {
+      console.log('Image Upload API: Unauthorized access attempt');
       return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
     }
+
+    const formData = await request.formData();
+    const file = formData.get('file') as File;
+    const quoteId = formData.get('quoteId') as string;
 
     if (!file) {
       return NextResponse.json({ error: 'No file provided' }, { status: 400 });

@@ -44,16 +44,13 @@ export default function AdminDashboard() {
         .select('*', { count: 'exact', head: true })
         .eq('is_active', true);
 
-      // Fetch quote requests count using admin API
+      // Fetch quote requests count using admin API (no email needed, uses role-based auth)
       let quoteRequestsCount = 0;
       try {
-        const session = localStorage.getItem('admin_session');
-        const adminEmail = session ? JSON.parse(session).email : '';
-        
-        const quotesResponse = await fetch(`/api/admin/quotes?admin_email=${encodeURIComponent(adminEmail)}`);
+        const quotesResponse = await fetch('/api/admin/quotes');
         if (quotesResponse.ok) {
           const allQuotes = await quotesResponse.json();
-          quoteRequestsCount = allQuotes.filter((quote: any) => 
+          quoteRequestsCount = allQuotes.filter((quote: any) =>
             ['pending', 'reviewing'].includes(quote.status)
           ).length;
         }

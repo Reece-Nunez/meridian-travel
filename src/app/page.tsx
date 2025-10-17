@@ -108,7 +108,7 @@ export default function ComingSoon() {
 
           {/* Scroll Indicator */}
           <motion.div
-            className="absolute left-1/2 transform -translate-x-1/2"
+            className="absolute left-1/2 transform -translate-x-1/2 bottom-8 hidden sm:block"
             initial={{ opacity: 0 }}
             animate={{ opacity: 1 }}
             transition={{ duration: 1, delay: 1 }}
@@ -129,7 +129,7 @@ export default function ComingSoon() {
       </div>
 
       {/* Email Signup Section */}
-      <div className="py-16 bg-[#8B4513]">
+      <div className="py-8 sm:py-12 md:py-16 bg-[#8B4513]">
         <div className="px-4 sm:px-6 lg:px-8 max-w-3xl mx-auto text-center">
           <motion.div
             initial={{ opacity: 0, y: 20 }}
@@ -137,10 +137,10 @@ export default function ComingSoon() {
             viewport={{ once: true }}
             transition={{ duration: 0.6 }}
           >
-            <h2 className="text-3xl sm:text-4xl font-bold text-white mb-4">
+            <h2 className="text-2xl sm:text-3xl md:text-4xl font-bold text-white mb-3 sm:mb-4">
               Be the First to Know
             </h2>
-            <p className="text-xl text-[#F5F5DC] mb-8">
+            <p className="text-base sm:text-lg md:text-xl text-[#F5F5DC] mb-6 sm:mb-8">
               Join our exclusive list to receive updates about our launch and early access to special offers.
             </p>
             <form onSubmit={handleEmailSignup} className="flex flex-col sm:flex-row gap-4 max-w-xl mx-auto">

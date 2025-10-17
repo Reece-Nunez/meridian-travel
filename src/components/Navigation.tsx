@@ -71,24 +71,24 @@ export default function Navigation() {
         {/* Main navbar with logo and account */}
         <div className="flex justify-between items-center h-22">
           {/* Left side - Logo and brand */}
-          <div className="flex items-center space-x-4">
+          <div className="flex items-center space-x-2 sm:space-x-4">
             <Link href="/" className="flex-shrink-0">
               <img
                 src="/logo.png"
                 alt="Meridian Luxury Travel"
-                className="h-20 w-20"
+                className="h-14 w-14 sm:h-16 sm:w-16 md:h-20 md:w-20"
                 onError={(e) => {
                   console.error('Failed to load logo.png');
                   e.currentTarget.style.display = 'none';
                 }}
               />
             </Link>
-            <Link href="/" className="flex-shrink-0 hidden sm:block">
+            <Link href="/" className="flex-shrink-0 hidden xs:block">
               <div className="text-left">
-                <h1 className="text-xl lg:text-2xl font-serif font-bold text-[#8B4513] tracking-wide leading-tight">
+                <h1 className="text-base sm:text-lg md:text-xl lg:text-2xl font-serif font-bold text-[#8B4513] tracking-wide leading-tight">
                   Meridian Luxury Travel
                 </h1>
-                <p className="text-xs lg:text-sm font-serif text-[#B8860B] tracking-wider">
+                <p className="text-xs md:text-sm font-serif text-[#B8860B] tracking-wider">
                   Tailor-Made Journeys
                 </p>
               </div>
@@ -96,7 +96,7 @@ export default function Navigation() {
           </div>
 
           {/* Right side - Account and mobile menu button */}
-          <div className="flex items-center space-x-4">
+          <div className="flex items-center space-x-2 sm:space-x-4">
             {/* Account Menu - Desktop */}
             <div className="hidden md:block">
               {user ? (

@@ -114,13 +114,14 @@ export default function PackageDetail() {
   return (
     <div className="min-h-screen bg-gray-50">
       {/* Hero Section */}
-      <div className="relative h-96 overflow-hidden">
+      <div className="relative h-[500px] md:h-[700px] overflow-hidden bg-gray-900">
         <div className="absolute inset-0">
           {pkg.images && pkg.images[selectedImageIndex] ? (
             <img
               src={pkg.images[selectedImageIndex]}
               alt={pkg.title}
-              className="w-full h-full object-cover"
+              className="w-full h-full md:h-[120%] object-cover md:-translate-y-[20%]"
+              style={{ objectPosition: 'center 30%' }}
               onError={(e) => {
                 e.currentTarget.style.display = 'none';
               }}
@@ -152,45 +153,50 @@ export default function PackageDetail() {
         <div className="absolute top-4 left-4">
           <Link
             href="/packages"
-            className="bg-white/20 backdrop-blur-sm text-white px-4 py-2 rounded-md hover:bg-white/30 transition-colors duration-200 flex items-center"
+            className="bg-white/20 backdrop-blur-sm text-white px-3 py-2 sm:px-4 sm:py-2 rounded-md hover:bg-white/30 transition-colors duration-200 flex items-center text-sm sm:text-base"
           >
-            <svg className="w-5 h-5 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <svg className="w-4 h-4 sm:w-5 sm:h-5 mr-1 sm:mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
               <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M10 19l-7-7m0 0l7-7m-7 7h18" />
             </svg>
-            Back to Packages
+            <span className="hidden sm:inline">Back to Packages</span>
+            <span className="sm:hidden">Back</span>
           </Link>
         </div>
 
         {/* Title */}
-        <div className="absolute bottom-8 left-8">
-          <h1 className="text-4xl font-bold text-white mb-2">{pkg.title}</h1>
-          <div className="flex items-center text-white text-lg">
-            <svg className="w-5 h-5 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M17.657 16.657L13.414 20.9a1.998 1.998 0 01-2.827 0l-4.244-4.243a8 8 0 1111.314 0z" />
-              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 11a3 3 0 11-6 0 3 3 0 016 0z" />
-            </svg>
-            {pkg.destination}
-            <span className="mx-2">•</span>
-            <svg className="w-5 h-5 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z" />
-            </svg>
-            {pkg.duration} days
+        <div className="absolute bottom-20 sm:bottom-8 left-4 sm:left-8 right-4 sm:right-auto">
+          <h1 className="text-2xl sm:text-3xl md:text-4xl font-bold text-white mb-2">{pkg.title}</h1>
+          <div className="flex flex-wrap items-center text-white text-sm sm:text-base md:text-lg">
+            <div className="flex items-center mr-3 mb-1">
+              <svg className="w-4 h-4 sm:w-5 sm:h-5 mr-1 sm:mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M17.657 16.657L13.414 20.9a1.998 1.998 0 01-2.827 0l-4.244-4.243a8 8 0 1111.314 0z" />
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 11a3 3 0 11-6 0 3 3 0 016 0z" />
+              </svg>
+              {pkg.destination}
+            </div>
+            <div className="flex items-center mb-1">
+              <span className="mx-2 hidden sm:inline">•</span>
+              <svg className="w-4 h-4 sm:w-5 sm:h-5 mr-1 sm:mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z" />
+              </svg>
+              {pkg.duration} days
+            </div>
           </div>
         </div>
 
         {/* Book Button */}
-        <div className="absolute bottom-8 right-8 text-right">
+        <div className="absolute bottom-4 sm:bottom-8 left-4 right-4 sm:left-auto sm:right-8">
           <button
             onClick={handleBookNow}
-            className="bg-[#B8860B] hover:bg-[#DAA520] text-white px-6 py-3 rounded-md text-lg font-medium transition-colors duration-200"
+            className="w-full sm:w-auto bg-[#B8860B] hover:bg-[#DAA520] text-white px-4 sm:px-6 py-2 sm:py-3 rounded-md text-base sm:text-lg font-medium transition-colors duration-200"
           >
             Book This Trip
           </button>
         </div>
       </div>
 
-      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-12">
-        <div className="grid grid-cols-1 lg:grid-cols-3 gap-12">
+      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-6 sm:py-12">
+        <div className="grid grid-cols-1 lg:grid-cols-3 gap-6 sm:gap-8 lg:gap-12">
           {/* Main Content */}
           <div className="lg:col-span-2 space-y-8">
             {/* Description */}
@@ -277,9 +283,9 @@ export default function PackageDetail() {
           </div>
 
           {/* Sidebar */}
-          <div className="space-y-6">
+          <div className="space-y-4 sm:space-y-6 lg:order-last">
             {/* Trip Summary */}
-            <div className="bg-white rounded-lg shadow-sm border border-gray-200 p-6 sticky top-6">
+            <div className="bg-white rounded-lg shadow-sm border border-gray-200 p-4 sm:p-6 lg:sticky lg:top-6">
               <h3 className="text-xl font-semibold text-[#8B4513] mb-4">Trip Summary</h3>
               <div className="space-y-3 text-sm">
                 <div className="flex justify-between">

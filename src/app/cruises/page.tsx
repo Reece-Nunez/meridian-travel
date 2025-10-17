@@ -407,21 +407,24 @@ export default function Cruises() {
   return (
     <div className="min-h-screen bg-white">
       {/* Header Section */}
-      <div className="relative h-[600px] overflow-hidden">
-        <img
-          src="/cruise-ship.png"
-          alt="Luxury cruise ship"
-          className="w-full h-full object-cover"
-          onError={(e) => {
-            console.error('Failed to load cruise-ship.jpg');
-            e.currentTarget.style.display = 'none';
-          }}
-        />
+      <div className="relative h-[500px] md:h-[700px] overflow-hidden bg-gray-900">
+        <div className="absolute inset-0">
+          <img
+            src="/cruise-ship.png"
+            alt="Luxury cruise ship"
+            className="w-full h-full md:h-[120%] object-cover md:-translate-y-[20%]"
+            style={{ objectPosition: 'center 30%' }}
+            onError={(e) => {
+              console.error('Failed to load cruise-ship.jpg');
+              e.currentTarget.style.display = 'none';
+            }}
+          />
+        </div>
         <div className="absolute inset-0 bg-black opacity-40"></div>
         <div className="absolute inset-0 flex items-center justify-center">
           <div className="text-center text-white px-4 sm:px-6 lg:px-8 max-w-4xl">
             <motion.h1
-              className="text-4xl sm:text-5xl lg:text-6xl font-bold mb-6"
+              className="text-2xl sm:text-3xl md:text-4xl lg:text-5xl xl:text-6xl font-bold mb-4 sm:mb-6"
               initial={{ opacity: 0, y: 30 }}
               animate={{ opacity: 1, y: 0 }}
               transition={{ duration: 0.8, delay: 0.2 }}
@@ -429,7 +432,7 @@ export default function Cruises() {
               {content.cruisesTitle}
             </motion.h1>
             <motion.p
-              className="text-xl sm:text-2xl mb-8"
+              className="text-base sm:text-lg md:text-xl lg:text-2xl mb-6 sm:mb-8"
               initial={{ opacity: 0, y: 30 }}
               animate={{ opacity: 1, y: 0 }}
               transition={{ duration: 0.8, delay: 0.4 }}
@@ -441,12 +444,12 @@ export default function Cruises() {
       </div>
 
       {/* Location Navigation */}
-      <div className="bg-[#F5F5DC] py-8">
+      <div className="bg-[#F5F5DC] py-4 sm:py-6 md:py-8">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-          <div className="flex flex-wrap justify-center gap-4">
+          <div className="flex flex-wrap justify-center gap-2 sm:gap-3 md:gap-4">
             <button
               onClick={() => setSelectedLocation(null)}
-              className={`px-6 py-3 rounded-md font-medium transition-colors ${
+              className={`px-3 py-2 sm:px-4 sm:py-2 md:px-6 md:py-3 rounded-md text-sm sm:text-base font-medium transition-colors ${
                 selectedLocation === null
                   ? 'bg-[#B8860B] text-white'
                   : 'bg-white text-[#8B4513] hover:bg-gray-50'
@@ -458,13 +461,14 @@ export default function Cruises() {
               <button
                 key={location.name}
                 onClick={() => setSelectedLocation(location.name)}
-                className={`px-6 py-3 rounded-md font-medium transition-colors ${
+                className={`px-3 py-2 sm:px-4 sm:py-2 md:px-6 md:py-3 rounded-md text-sm sm:text-base font-medium transition-colors ${
                   selectedLocation === location.name
                     ? 'bg-[#B8860B] text-white'
                     : 'bg-white text-[#8B4513] hover:bg-gray-50'
                 }`}
               >
-                {location.title}
+                <span className="hidden sm:inline">{location.title}</span>
+                <span className="sm:hidden">{location.name}</span>
               </button>
             ))}
           </div>

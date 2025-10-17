@@ -44,19 +44,10 @@ export default function AdminDashboard() {
         .select('*', { count: 'exact', head: true })
         .eq('is_active', true);
 
-      // Fetch quote requests count using admin API (no email needed, uses role-based auth)
-      let quoteRequestsCount = 0;
-      try {
-        const quotesResponse = await fetch('/api/admin/quotes');
-        if (quotesResponse.ok) {
-          const allQuotes = await quotesResponse.json();
-          quoteRequestsCount = allQuotes.filter((quote: any) =>
-            ['pending', 'reviewing'].includes(quote.status)
-          ).length;
-        }
-      } catch (error) {
-        console.error('Error fetching quote requests count:', error);
-      }
+      // Fetch all quote requests count directly from Supabase
+      const { count: quoteRequestsCount } = await supabase
+        .from('custom_quotes')
+        .select('*', { count: 'exact', head: true });
 
       // Fetch active bookings count
       const { count: activeBookingsCount } = await supabase
@@ -80,7 +71,7 @@ export default function AdminDashboard() {
 
       setStats({
         activePackages: activePackagesCount || 0,
-        quoteRequests: quoteRequestsCount,
+        quoteRequests: quoteRequestsCount || 0,
         activeBookings: activeBookingsCount || 0,
         monthlyRevenue: monthlyRevenue
       });

@@ -40,18 +40,17 @@ export default function AdminQuotes() {
   const fetchQuotes = async () => {
     try {
       setLoading(true);
-      
-      // Get admin email from session
-      const session = localStorage.getItem('admin_session');
-      const adminEmail = session ? JSON.parse(session).email : '';
-      
-      const response = await fetch(`/api/admin/quotes?admin_email=${encodeURIComponent(adminEmail)}`);
-      
-      if (!response.ok) {
-        throw new Error('Failed to fetch quotes');
+
+      const { data, error } = await supabase
+        .from('custom_quotes')
+        .select('*')
+        .order('created_at', { ascending: false });
+
+      if (error) {
+        console.error('Supabase error:', error);
+        throw error;
       }
-      
-      const data = await response.json();
+
       setQuotes(data || []);
     } catch (err) {
       console.error('Error fetching quotes:', err);
@@ -63,30 +62,18 @@ export default function AdminQuotes() {
 
   const updateQuoteStatus = async (quoteId: string, newStatus: string) => {
     try {
-      // Get admin email from session
-      const session = localStorage.getItem('admin_session');
-      const adminEmail = session ? JSON.parse(session).email : '';
+      const { error } = await supabase
+        .from('custom_quotes')
+        .update({ status: newStatus, updated_at: new Date().toISOString() })
+        .eq('id', quoteId);
 
-      const response = await fetch('/api/admin/quotes', {
-        method: 'PATCH',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify({
-          quoteId,
-          status: newStatus,
-          adminEmail
-        }),
-      });
-
-      if (!response.ok) {
-        throw new Error('Failed to update quote status');
+      if (error) {
+        console.error('Error updating quote status:', error);
+        throw error;
       }
 
-      const updatedQuote = await response.json();
-      
-      setQuotes(quotes.map(quote => 
-        quote.id === quoteId 
+      setQuotes(quotes.map(quote =>
+        quote.id === quoteId
           ? { ...quote, status: newStatus as any }
           : quote
       ));

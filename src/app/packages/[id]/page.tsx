@@ -110,6 +110,8 @@ export default function PackageDetail() {
   }
 
   const itinerary: ItineraryDay[] = pkg.itinerary as ItineraryDay[] || [];
+  const backUrl = pkg.type === 'cruise' ? '/cruises' : '/packages';
+  const backText = pkg.type === 'cruise' ? 'Cruises' : 'Packages';
 
   return (
     <div className="min-h-screen bg-gray-50">
@@ -133,7 +135,7 @@ export default function PackageDetail() {
           )}
           <div className="absolute inset-0 bg-black opacity-40"></div>
         </div>
-        
+
         {/* Image Navigation */}
         {pkg.images && pkg.images.length > 1 && (
           <div className="absolute bottom-4 left-1/2 transform -translate-x-1/2 flex space-x-2">
@@ -152,13 +154,13 @@ export default function PackageDetail() {
         {/* Back Button */}
         <div className="absolute top-4 left-4">
           <Link
-            href="/packages"
+            href={backUrl}
             className="bg-white/20 backdrop-blur-sm text-white px-3 py-2 sm:px-4 sm:py-2 rounded-md hover:bg-white/30 transition-colors duration-200 flex items-center text-sm sm:text-base"
           >
             <svg className="w-4 h-4 sm:w-5 sm:h-5 mr-1 sm:mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
               <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M10 19l-7-7m0 0l7-7m-7 7h18" />
             </svg>
-            <span className="hidden sm:inline">Back to Packages</span>
+            <span className="hidden sm:inline">Back to {backText}</span>
             <span className="sm:hidden">Back</span>
           </Link>
         </div>

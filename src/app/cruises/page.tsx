@@ -10,8 +10,8 @@ import { TripPackage, Ship } from '@/types/database';
 // Helper function to extract numbers from pricing text
 const extractPriceFromText = (priceText: string): number | null => {
   // Remove all non-numeric characters except decimal points
-  // Match patterns like "$1,500", "1500.00", "$ 1500", etc.
-  const matches = priceText.match(/\$?\s*(\d{1,3}(?:,\d{3})*(?:\.\d{2})?)/);
+  // Match patterns like "$1,500", "1500.00", "$ 1500", "$3600", etc.
+  const matches = priceText.match(/\$?\s*([\d,]+(?:\.\d{2})?)/);
   if (matches && matches[1]) {
     // Remove commas and parse as number
     const numericValue = parseFloat(matches[1].replace(/,/g, ''));

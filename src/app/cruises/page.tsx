@@ -7,6 +7,19 @@ import { getContentByKey, getSettingByKey } from '@/lib/content';
 import { supabase } from '@/lib/supabase';
 import { TripPackage, Ship } from '@/types/database';
 
+// Helper function to extract numbers from pricing text
+const extractPriceFromText = (priceText: string): number | null => {
+  // Remove all non-numeric characters except decimal points
+  // Match patterns like "$1,500", "1500.00", "$ 1500", etc.
+  const matches = priceText.match(/\$?\s*(\d{1,3}(?:,\d{3})*(?:\.\d{2})?)/);
+  if (matches && matches[1]) {
+    // Remove commas and parse as number
+    const numericValue = parseFloat(matches[1].replace(/,/g, ''));
+    return isNaN(numericValue) ? null : numericValue;
+  }
+  return null;
+};
+
 // Helper function to map destinations to our location categories
 const mapDestinationToLocation = (destination: string): string => {
   const dest = destination.toLowerCase();
@@ -46,6 +59,7 @@ interface ProcessedBoat {
   itineraryCount: number;
   image: string;
   startingPrice: number;
+  priceRange: string | null; // e.g., "$1500 - $3600" or null if no cabins
   boatType: string;
   features: string[];
   ship: Ship;
@@ -59,14 +73,20 @@ interface ProcessedBoat {
   }[];
 }
 
-const locations = [
+// Location information derived from database
+interface LocationInfo {
+  name: string;
+  boatCount: number;
+  startingPrice: number | null;
+}
+
+// Static location display information (for UI only, not data)
+const locationDisplayInfo = [
   {
     name: "Galapagos",
     title: "Galapagos Discoveries",
     description: "Follow Darwin's footsteps through the enchanted islands where evolution comes alive with unique wildlife found nowhere else.",
     image: "/locations/galapagos-hero.webp",
-    boatCount: 4,
-    startingPrice: 3200,
     features: ["Unique wildlife", "Snorkeling", "Educational tours", "Multiple itineraries"]
   },
   {
@@ -74,8 +94,6 @@ const locations = [
     title: "Amazon Explorations",
     description: "Journey deep into the world's largest rainforest, discovering incredible biodiversity and indigenous cultures.",
     image: "/locations/amazon-hero.png",
-    boatCount: 5,
-    startingPrice: 2400,
     features: ["Rainforest wildlife", "Indigenous culture", "River expeditions", "Birdwatching"]
   },
   {
@@ -83,8 +101,6 @@ const locations = [
     title: "Antarctic Expeditions",
     description: "Experience the last pristine wilderness on Earth with encounters with penguins, whales, and dramatic ice formations.",
     image: "/locations/antarctica-hero.jpg",
-    boatCount: 5,
-    startingPrice: 9800,
     features: ["Emperor penguins", "Massive icebergs", "Zodiac landings", "Expert guides"]
   },
   {
@@ -92,8 +108,6 @@ const locations = [
     title: "Chilean Adventures",
     description: "Navigate the dramatic fjords and channels of Chilean Patagonia, discovering glaciers, wildlife, and remote landscapes.",
     image: "/locations/chile-hero.webp",
-    boatCount: 6,
-    startingPrice: 3800,
     features: ["Glacier viewing", "Fjord navigation", "Wildlife watching", "Hiking excursions"]
   },
   {
@@ -101,8 +115,6 @@ const locations = [
     title: "Diving Cruises",
     description: "Explore the world's most spectacular dive sites aboard specialized diving vessels with expert crews and top-notch equipment.",
     image: "/locations/diving-hero.jpg",
-    boatCount: 3,
-    startingPrice: 2800,
     features: ["World-class dive sites", "Expert dive guides", "Modern equipment", "Small group expeditions"]
   }
 ];
@@ -118,7 +130,7 @@ export default function Cruises() {
   const [cruisePackages, setCruisePackages] = useState<TripPackage[]>([]);
   const [processedBoats, setProcessedBoats] = useState<ProcessedBoat[]>([]);
   const [loading, setLoading] = useState(true);
-  const [locationStats, setLocationStats] = useState<{[key: string]: {boatCount: number, startingPrice: number}}>({});
+  const [locations, setLocations] = useState<LocationInfo[]>([]);
 
   const filteredBoats = selectedLocation
     ? processedBoats.filter(boat => boat.location === selectedLocation)
@@ -127,37 +139,32 @@ export default function Cruises() {
   // Fetch cruise packages and process them into boats
   const fetchCruiseData = async () => {
     try {
-      // First, fetch all active ships to get real data
-      const { data: allShips, error: shipsError } = await supabase
+      console.log('🚢 Fetching ships from database...');
+
+      // Add timeout protection to the ships query
+      const shipsQueryPromise = supabase
         .from('ships')
         .select('*')
         .eq('is_active', true);
 
-      if (shipsError) throw shipsError;
-
-      // Calculate real location stats from ships
-      const stats: {[key: string]: {boatCount: number, startingPrice: number}} = {};
-
-      allShips?.forEach((ship: any) => {
-        ship.operating_regions?.forEach((region: string) => {
-          if (!stats[region]) {
-            stats[region] = { boatCount: 0, startingPrice: 0 };
-          }
-          stats[region].boatCount++;
-
-          // Calculate a base price for this ship/region
-          // We'll update this with real prices when we have package data
-          const basePrice = calculateBasePrice(7, region); // Default 7-day estimate
-          if (stats[region].startingPrice === 0 || basePrice < stats[region].startingPrice) {
-            stats[region].startingPrice = basePrice;
-          }
-        });
+      const timeoutPromise = new Promise<never>((_, reject) => {
+        setTimeout(() => reject(new Error('Ships query timeout')), 5000);
       });
 
-      // Temporarily set initial stats (will be updated with real prices after packages are fetched)
-      setLocationStats(stats);
+      const { data: allShips, error: shipsError } = await Promise.race([
+        shipsQueryPromise,
+        timeoutPromise
+      ]);
+
+      if (shipsError) {
+        console.error('❌ Error fetching ships:', shipsError);
+        throw shipsError;
+      }
+
+      console.log(`✅ Fetched ${allShips?.length || 0} ships from database`);
 
       // Fetch cruise packages
+      console.log('📦 Fetching cruise packages...');
       const { data: packagesWithShips, error } = await supabase
         .from('trip_packages')
         .select(`
@@ -169,9 +176,66 @@ export default function Cruises() {
         .not('ship_id', 'is', null)
         .order('ship_id', { ascending: true });
 
-      if (error) throw error;
+      if (error) {
+        console.error('❌ Error fetching packages:', error);
+        throw error;
+      }
 
+      console.log(`✅ Fetched ${packagesWithShips?.length || 0} cruise packages`);
       setCruisePackages(packagesWithShips || []);
+
+      // Fetch all cabin categories
+      console.log('🛏️ Fetching cabin categories...');
+      const { data: cabinCategories, error: cabinError } = await supabase
+        .from('cabin_categories')
+        .select('ship_id, pricing_per_person');
+
+      if (cabinError) {
+        console.error('❌ Error fetching cabin categories:', cabinError);
+      }
+
+      console.log(`✅ Fetched ${cabinCategories?.length || 0} cabin categories`);
+
+      // Create a map to store cabin price ranges by ship_id
+      const priceRangesByShip = new Map<string, string>();
+
+      if (cabinCategories) {
+        const cabinsByShip = new Map<string, any[]>();
+
+        // Group cabins by ship
+        cabinCategories.forEach((cabin: any) => {
+          if (!cabin.ship_id || !cabin.pricing_per_person) return;
+
+          const existing = cabinsByShip.get(cabin.ship_id) || [];
+          existing.push(cabin);
+          cabinsByShip.set(cabin.ship_id, existing);
+        });
+
+        // Calculate price range for each ship
+        cabinsByShip.forEach((cabins, shipId) => {
+          const prices: number[] = [];
+
+          cabins.forEach(cabin => {
+            const price = extractPriceFromText(cabin.pricing_per_person);
+            if (price !== null) {
+              prices.push(price);
+            }
+          });
+
+          if (prices.length > 0) {
+            const minPrice = Math.min(...prices);
+            const maxPrice = Math.max(...prices);
+
+            if (minPrice === maxPrice) {
+              priceRangesByShip.set(shipId, `$${minPrice.toLocaleString()}`);
+            } else {
+              priceRangesByShip.set(shipId, `$${minPrice.toLocaleString()} - $${maxPrice.toLocaleString()}`);
+            }
+          }
+        });
+      }
+
+      console.log(`📊 Calculated price ranges for ${priceRangesByShip.size} ships`);
 
       // Create a map to store itineraries by ship_id
       const itinerariesByShip = new Map<string, any[]>();
@@ -203,7 +267,7 @@ export default function Cruises() {
         if (ship.ship_type && ship.ship_type.toLowerCase().includes('diving')) {
           const location = 'Diving';
 
-          // Calculate starting price
+          // Calculate starting price - ONLY from real data, no fallbacks
           let startingPrice = 0;
           if (shipItineraries.length > 0) {
             const realPrices = shipItineraries
@@ -212,15 +276,7 @@ export default function Cruises() {
 
             if (realPrices.length > 0) {
               startingPrice = Math.min(...realPrices);
-            } else {
-              const durations = packagesWithShips
-                ?.filter((pkg: any) => pkg.ship_id === ship.id)
-                .map((pkg: any) => pkg.duration) || [];
-              const minDuration = Math.min(...durations);
-              startingPrice = calculateBasePrice(minDuration, location);
             }
-          } else {
-            startingPrice = calculateBasePrice(7, location);
           }
 
           boatsArray.push({
@@ -229,42 +285,34 @@ export default function Cruises() {
             location: location,
             capacity: ship.capacity,
             itineraryCount: shipItineraries.length,
-            image: ship.images && ship.images[0] ? ship.images[0] : '/cruise-default.jpg',
+            image: ship.images && ship.images[0] ? ship.images[0] : '', // No default image
             startingPrice: startingPrice,
+            priceRange: priceRangesByShip.get(ship.id) || null,
             boatType: ship.ship_type || 'Diving Ship',
-            features: ship.luxury_highlights?.slice(0, 3) || ship.ship_features?.slice(0, 3) || ['Professional crew', 'Dive guides', 'Premium equipment'],
+            features: ship.luxury_highlights?.slice(0, 3) || ship.ship_features?.slice(0, 3) || [],
             ship: ship,
             itineraries: shipItineraries
           });
         } else {
           // Normal ships - create entry for each operating region
-          const regions = ship.operating_regions || ['Galapagos'];
+          const regions = ship.operating_regions || [];
+
+          // Skip ships with no operating regions
+          if (regions.length === 0) return;
 
           regions.forEach((region: string) => {
             const location = mapDestinationToLocation(region);
 
-            // Calculate starting price for this region
+            // Calculate starting price - ONLY from real data, no fallbacks
             let startingPrice = 0;
             if (shipItineraries.length > 0) {
-              // First, check if any itineraries have real prices set
               const realPrices = shipItineraries
                 .map((itin: any) => itin.price)
                 .filter((price: number) => price > 0);
 
               if (realPrices.length > 0) {
-                // Use the lowest real price
                 startingPrice = Math.min(...realPrices);
-              } else {
-                // Fall back to calculated price
-                const durations = packagesWithShips
-                  ?.filter((pkg: any) => pkg.ship_id === ship.id)
-                  .map((pkg: any) => pkg.duration) || [];
-                const minDuration = Math.min(...durations);
-                startingPrice = calculateBasePrice(minDuration, location);
               }
-            } else {
-              // Default 7-day estimate for ships without packages
-              startingPrice = calculateBasePrice(7, location);
             }
 
             boatsArray.push({
@@ -273,10 +321,11 @@ export default function Cruises() {
               location: location,
               capacity: ship.capacity,
               itineraryCount: shipItineraries.length,
-              image: ship.images && ship.images[0] ? ship.images[0] : '/cruise-default.jpg',
+              image: ship.images && ship.images[0] ? ship.images[0] : '', // No default image
               startingPrice: startingPrice,
+              priceRange: priceRangesByShip.get(ship.id) || null,
               boatType: ship.ship_type || 'Expedition',
-              features: ship.luxury_highlights?.slice(0, 3) || ship.ship_features?.slice(0, 3) || ['Professional crew', 'Naturalist guides', 'Premium amenities'],
+              features: ship.luxury_highlights?.slice(0, 3) || ship.ship_features?.slice(0, 3) || [],
               ship: ship,
               itineraries: shipItineraries
             });
@@ -284,60 +333,52 @@ export default function Cruises() {
         }
       });
 
+      console.log(`🚤 Processed ${boatsArray.length} boat entries from ${allShips?.length || 0} ships`);
       setProcessedBoats(boatsArray);
 
-      // Update location stats with real prices from boats
-      const updatedStats: {[key: string]: {boatCount: number, startingPrice: number}} = {};
+      // Build locations array from actual boat data (no hardcoded locations)
+      const locationMap: {[key: string]: LocationInfo} = {};
+      const shipsByLocation: {[key: string]: Set<string>} = {};
+
       boatsArray.forEach(boat => {
-        if (!updatedStats[boat.location]) {
-          updatedStats[boat.location] = { boatCount: 0, startingPrice: 0 };
+        if (!locationMap[boat.location]) {
+          locationMap[boat.location] = {
+            name: boat.location,
+            boatCount: 0,
+            startingPrice: null
+          };
+          shipsByLocation[boat.location] = new Set();
         }
-        // Count unique ships (not per-region duplicates)
-        updatedStats[boat.location].boatCount = (updatedStats[boat.location].boatCount || 0);
 
-        // Use the lowest starting price
-        if (updatedStats[boat.location].startingPrice === 0 || boat.startingPrice < updatedStats[boat.location].startingPrice) {
-          updatedStats[boat.location].startingPrice = boat.startingPrice;
-        }
-      });
+        // Add ship to unique set for counting
+        shipsByLocation[boat.location].add(boat.ship.id);
 
-      // Count unique ships per location (not the per-region entries)
-      const shipCounts: {[key: string]: Set<string>} = {};
-      boatsArray.forEach(boat => {
-        if (!shipCounts[boat.location]) {
-          shipCounts[boat.location] = new Set();
-        }
-        shipCounts[boat.location].add(boat.ship.id);
-      });
-
-      Object.keys(shipCounts).forEach(location => {
-        if (updatedStats[location]) {
-          updatedStats[location].boatCount = shipCounts[location].size;
+        // Update starting price (only if boat has a real price > 0)
+        if (boat.startingPrice > 0) {
+          if (locationMap[boat.location].startingPrice === null ||
+              boat.startingPrice < locationMap[boat.location].startingPrice!) {
+            locationMap[boat.location].startingPrice = boat.startingPrice;
+          }
         }
       });
 
-      setLocationStats(updatedStats);
+      // Update boat counts with unique ship counts
+      Object.keys(shipsByLocation).forEach(location => {
+        locationMap[location].boatCount = shipsByLocation[location].size;
+      });
+
+      // Convert to array and set locations
+      const locationsArray = Object.values(locationMap);
+      console.log(`📍 Found ${locationsArray.length} locations:`, locationsArray);
+      setLocations(locationsArray);
 
     } catch (error) {
       console.error('Error fetching cruise data:', error);
-      setProcessedBoats([]); // Fallback to empty array
+      setProcessedBoats([]);
+      setLocations([]);
     } finally {
       setLoading(false);
     }
-  };
-
-  // Helper function to calculate base price (temporary until pricing is added to DB)
-  const calculateBasePrice = (duration: number, location: string): number => {
-    const basePrices: { [key: string]: number } = {
-      'Antarctica': 1000,
-      'Chile': 400,
-      'Galapagos': 500,
-      'Amazon': 350,
-      'Diving': 400
-    };
-
-    const baseRate = basePrices[location] || 400;
-    return duration * baseRate;
   };
 
   useEffect(() => {
@@ -413,7 +454,7 @@ export default function Cruises() {
             >
               All Locations
             </button>
-            {locations.map((location) => (
+            {locationDisplayInfo.map((location) => (
               <button
                 key={location.name}
                 onClick={() => setSelectedLocation(location.name)}
@@ -430,8 +471,8 @@ export default function Cruises() {
         </div>
       </div>
 
-      {/* Location Overview Cards (when no specific location selected) */}
-      {!selectedLocation && (
+      {/* Choose Your Adventure Section with Destination Cards */}
+      {!selectedLocation && !loading && (
         <div className="py-16 px-4 sm:px-6 lg:px-8 max-w-7xl mx-auto">
           <div className="text-center mb-12">
             <h2 className="text-3xl sm:text-4xl font-bold text-[#8B4513] mb-4">
@@ -444,67 +485,73 @@ export default function Cruises() {
           </div>
 
           <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
-            {locations.map((location, index) => (
-              <motion.div
-                key={location.name}
-                className="bg-white rounded-lg shadow-lg overflow-hidden hover:shadow-xl transition-shadow cursor-pointer"
-                initial={{ opacity: 0, y: 30 }}
-                whileInView={{ opacity: 1, y: 0 }}
-                viewport={{ once: true }}
-                transition={{ duration: 0.6, delay: index * 0.1 }}
-                onClick={() => setSelectedLocation(location.name)}
-              >
-                <div className="h-64 relative overflow-hidden">
-                  <img
-                    src={location.image}
-                    alt={location.title}
-                    className="w-full h-full object-cover hover:scale-105 transition-transform duration-300"
-                    onError={(e) => {
-                      e.currentTarget.src = '/cruise-default.jpg';
-                    }}
-                  />
-                  <div className="absolute top-4 left-4 bg-[#B8860B] text-white px-3 py-1 rounded-full text-sm font-medium">
-                    {locationStats[location.name]?.boatCount || location.boatCount} boats available
-                  </div>
-                  <div className="absolute bottom-4 right-4 bg-black bg-opacity-75 text-white px-3 py-1 rounded-full text-sm">
-                    From ${(locationStats[location.name]?.startingPrice || location.startingPrice).toLocaleString()}
-                  </div>
-                </div>
+            {locationDisplayInfo.map((location, index) => {
+              const locationStats = locations.find(l => l.name === location.name);
 
-                <div className="p-6">
-                  <h3 className="text-2xl font-bold text-[#8B4513] mb-3">{location.title}</h3>
-                  <p className="text-gray-600 mb-4">{location.description}</p>
-
-                  <div className="grid grid-cols-2 gap-2 mb-4">
-                    {location.features.map((feature, fIndex) => (
-                      <div key={fIndex} className="flex items-center text-sm text-gray-600">
-                        <svg className="w-4 h-4 text-[#B8860B] mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" />
-                        </svg>
-                        {feature}
+              return (
+                <motion.div
+                  key={location.name}
+                  className="bg-white rounded-lg shadow-lg overflow-hidden hover:shadow-xl transition-shadow cursor-pointer"
+                  initial={{ opacity: 0, y: 30 }}
+                  whileInView={{ opacity: 1, y: 0 }}
+                  viewport={{ once: true }}
+                  transition={{ duration: 0.6, delay: index * 0.1 }}
+                  onClick={() => setSelectedLocation(location.name)}
+                >
+                  <div className="h-64 relative overflow-hidden">
+                    <img
+                      src={location.image}
+                      alt={location.title}
+                      className="w-full h-full object-cover hover:scale-105 transition-transform duration-300"
+                      onError={(e) => {
+                        e.currentTarget.style.display = 'none';
+                      }}
+                    />
+                    <div className="absolute top-4 left-4 bg-[#B8860B] text-white px-3 py-1 rounded-full text-sm font-medium">
+                      {locationStats ? `${locationStats.boatCount} boats available` : 'Coming Soon'}
+                    </div>
+                    {locationStats && locationStats.startingPrice !== null && locationStats.startingPrice > 0 && (
+                      <div className="absolute bottom-4 right-4 bg-black bg-opacity-75 text-white px-3 py-1 rounded-full text-sm">
+                        From ${locationStats.startingPrice.toLocaleString()}
                       </div>
-                    ))}
+                    )}
                   </div>
 
-                  <button className="w-full bg-[#B8860B] hover:bg-[#DAA520] text-white py-3 rounded-md font-medium transition-colors">
-                    Explore {location.title}
-                  </button>
-                </div>
-              </motion.div>
-            ))}
+                  <div className="p-6">
+                    <h3 className="text-2xl font-bold text-[#8B4513] mb-3">{location.title}</h3>
+                    <p className="text-gray-600 mb-4">{location.description}</p>
+
+                    <div className="grid grid-cols-2 gap-2 mb-4">
+                      {location.features.map((feature, fIndex) => (
+                        <div key={fIndex} className="flex items-center text-sm text-gray-600">
+                          <svg className="w-4 h-4 text-[#B8860B] mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" />
+                          </svg>
+                          {feature}
+                        </div>
+                      ))}
+                    </div>
+
+                    <button className="w-full bg-[#B8860B] hover:bg-[#DAA520] text-white py-3 rounded-md font-medium transition-colors">
+                      Explore {location.title}
+                    </button>
+                  </div>
+                </motion.div>
+              );
+            })}
           </div>
         </div>
       )}
 
       {/* Boat Cards - Specific Location View */}
-      {selectedLocation && (
+      {selectedLocation && filteredBoats.length > 0 && (
         <div className="py-16 px-4 sm:px-6 lg:px-8 max-w-7xl mx-auto">
           <div className="text-center mb-12">
             <h2 className="text-3xl sm:text-4xl font-bold text-[#8B4513] mb-4">
-              {locations.find(l => l.name === selectedLocation)?.title} Fleet
+              {locationDisplayInfo.find(l => l.name === selectedLocation)?.title || selectedLocation} Fleet
             </h2>
             <p className="text-lg text-gray-600">
-              {locations.find(l => l.name === selectedLocation)?.description}
+              {locationDisplayInfo.find(l => l.name === selectedLocation)?.description}
             </p>
           </div>
 
@@ -518,46 +565,55 @@ export default function Cruises() {
                 viewport={{ once: true }}
                 transition={{ duration: 0.6, delay: index * 0.1 }}
               >
-                <div className="h-48 relative overflow-hidden">
-                  <img
-                    src={boat.image}
-                    alt={boat.name}
-                    className="w-full h-full object-cover hover:scale-105 transition-transform duration-300"
-                    onError={(e) => {
-                      e.currentTarget.src = '/cruise-default.jpg';
-                    }}
-                  />
-                  <div className="absolute top-4 left-4 bg-[#B8860B] text-white px-3 py-1 rounded-full text-sm font-medium">
-                    {boat.capacity} guests
+                {boat.image && (
+                  <div className="relative aspect-[4/3] w-full overflow-hidden bg-gray-100">
+                    <img
+                      src={boat.image}
+                      alt={boat.name}
+                      className="absolute inset-0 w-full h-full object-cover hover:scale-105 transition-transform duration-300"
+                      style={{
+                        objectFit: 'cover',
+                        objectPosition: 'center',
+                        width: '100%',
+                        height: '100%'
+                      }}
+                    />
+                    <div className="absolute top-4 left-4 bg-[#B8860B] text-white px-3 py-1 rounded-full text-sm font-medium">
+                      {boat.capacity} guests
+                    </div>
+                    <div className="absolute top-4 right-4 bg-blue-100 text-blue-800 px-3 py-1 rounded-full text-xs font-medium">
+                      {boat.boatType}
+                    </div>
+                    <div className="absolute bottom-4 left-4 bg-black bg-opacity-75 text-white px-3 py-1 rounded-full text-sm">
+                      {boat.location}
+                    </div>
+                    {boat.itineraryCount > 0 && (
+                      <div className="absolute bottom-4 right-4 bg-green-100 text-green-800 px-3 py-1 rounded-full text-xs font-medium">
+                        {boat.itineraryCount} {boat.itineraryCount > 1 ? 'itineraries' : 'itinerary'}
+                      </div>
+                    )}
                   </div>
-                  <div className="absolute top-4 right-4 bg-blue-100 text-blue-800 px-3 py-1 rounded-full text-xs font-medium">
-                    {boat.boatType}
-                  </div>
-                  <div className="absolute bottom-4 left-4 bg-black bg-opacity-75 text-white px-3 py-1 rounded-full text-sm">
-                    {boat.location}
-                  </div>
-                  <div className="absolute bottom-4 right-4 bg-green-100 text-green-800 px-3 py-1 rounded-full text-xs font-medium">
-                    {boat.itineraryCount} itinerary{boat.itineraryCount > 1 ? 'ies' : ''}
-                  </div>
-                </div>
+                )}
 
                 <div className="p-6">
                   <h3 className="text-xl font-bold text-[#8B4513] mb-2">{boat.name}</h3>
                   <p className="text-2xl font-bold text-[#B8860B] mb-4">
-                    From ${boat.startingPrice.toLocaleString()}
+                    {boat.priceRange ? `Price: ${boat.priceRange}` : 'Price: N/A'}
                   </p>
 
-                  <div className="space-y-2 mb-6">
-                    <h4 className="font-semibold text-gray-900">Features:</h4>
-                    {boat.features.slice(0, 3).map((feature: string, fIndex: number) => (
-                      <div key={fIndex} className="flex items-center text-sm text-gray-600">
-                        <svg className="w-4 h-4 text-[#B8860B] mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" />
-                        </svg>
-                        {feature}
-                      </div>
-                    ))}
-                  </div>
+                  {boat.features.length > 0 && (
+                    <div className="space-y-2 mb-6">
+                      <h4 className="font-semibold text-gray-900">Features:</h4>
+                      {boat.features.map((feature: string, fIndex: number) => (
+                        <div key={fIndex} className="flex items-center text-sm text-gray-600">
+                          <svg className="w-4 h-4 text-[#B8860B] mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" />
+                          </svg>
+                          {feature}
+                        </div>
+                      ))}
+                    </div>
+                  )}
 
                   <div className="flex gap-3">
                     <Link
@@ -566,12 +622,14 @@ export default function Cruises() {
                     >
                       Ship Details
                     </Link>
-                    <Link
-                      href={`/ships/${boat.ship.id}/itineraries`}
-                      className="flex-1 text-center bg-[#B8860B] hover:bg-[#DAA520] text-white py-3 rounded-md font-medium transition-colors"
-                    >
-                      Itineraries ({boat.itineraryCount})
-                    </Link>
+                    {boat.itineraryCount > 0 && (
+                      <Link
+                        href={`/ships/${boat.ship.id}/itineraries`}
+                        className="flex-1 text-center bg-[#B8860B] hover:bg-[#DAA520] text-white py-3 rounded-md font-medium transition-colors"
+                      >
+                        Itineraries ({boat.itineraryCount})
+                      </Link>
+                    )}
                   </div>
                 </div>
               </motion.div>
@@ -583,11 +641,24 @@ export default function Cruises() {
       {/* All Locations View - Boats Grouped by Location */}
       {!selectedLocation && (
         <div className="py-16">
-          {locations.map((location, locationIndex) => {
-            const locationBoats = processedBoats.filter(boat => boat.location === location.name);
+          {loading && (
+            <div className="text-center py-12">
+              <div className="inline-block animate-spin rounded-full h-12 w-12 border-b-2 border-[#B8860B]"></div>
+              <p className="mt-4 text-gray-600">Loading cruise ships...</p>
+            </div>
+          )}
+          {!loading && processedBoats.length === 0 && (
+            <div className="text-center py-12">
+              <p className="text-xl text-gray-600">No ships found. Please check your database connection or RLS policies.</p>
+            </div>
+          )}
+          {!loading && locationDisplayInfo.map((locationDisplay, locationIndex) => {
+            const locationBoats = processedBoats.filter(boat => boat.location === locationDisplay.name);
+            const locationStats = locations.find(l => l.name === locationDisplay.name);
 
+            // Show location even if no boats (but with message)
             return (
-              <div key={location.name} className="mb-20">
+              <div key={locationDisplay.name} className="mb-20">
                 <div className="px-4 sm:px-6 lg:px-8 max-w-7xl mx-auto">
                   {/* Location Section Header */}
                   <div className="text-center mb-12">
@@ -598,7 +669,7 @@ export default function Cruises() {
                       viewport={{ once: true }}
                       transition={{ duration: 0.6, delay: locationIndex * 0.1 }}
                     >
-                      {location.title}
+                      {locationDisplay.title}
                     </motion.h2>
                     <motion.p
                       className="text-lg text-gray-600 max-w-3xl mx-auto mb-6"
@@ -607,24 +678,31 @@ export default function Cruises() {
                       viewport={{ once: true }}
                       transition={{ duration: 0.6, delay: locationIndex * 0.1 + 0.1 }}
                     >
-                      {location.description}
+                      {locationDisplay.description}
                     </motion.p>
-                    <motion.div
-                      className="inline-flex items-center space-x-4 text-sm text-[#B8860B]"
-                      initial={{ opacity: 0, y: 20 }}
-                      whileInView={{ opacity: 1, y: 0 }}
-                      viewport={{ once: true }}
-                      transition={{ duration: 0.6, delay: locationIndex * 0.1 + 0.2 }}
-                    >
-                      <span>{locationStats[location.name]?.boatCount || locationBoats.length} boats available</span>
-                      <span>•</span>
-                      <span>Starting from ${(locationStats[location.name]?.startingPrice || (locationBoats.length > 0 ? Math.min(...locationBoats.map(b => b.startingPrice)) : location.startingPrice)).toLocaleString()}</span>
-                    </motion.div>
+                    {locationStats && (
+                      <motion.div
+                        className="inline-flex items-center space-x-4 text-sm text-[#B8860B]"
+                        initial={{ opacity: 0, y: 20 }}
+                        whileInView={{ opacity: 1, y: 0 }}
+                        viewport={{ once: true }}
+                        transition={{ duration: 0.6, delay: locationIndex * 0.1 + 0.2 }}
+                      >
+                        <span>{locationStats.boatCount} {locationStats.boatCount === 1 ? 'boat' : 'boats'} available</span>
+                        {locationStats.startingPrice !== null && locationStats.startingPrice > 0 && (
+                          <>
+                            <span>•</span>
+                            <span>Starting from ${locationStats.startingPrice.toLocaleString()}</span>
+                          </>
+                        )}
+                      </motion.div>
+                    )}
                   </div>
 
                   {/* Location Boats Grid */}
-                  <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
-                    {locationBoats.map((boat, boatIndex) => (
+                  {locationBoats.length > 0 ? (
+                    <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
+                      {locationBoats.map((boat, boatIndex) => (
                       <motion.div
                         key={boat.id}
                         className="bg-white rounded-lg shadow-lg overflow-hidden hover:shadow-xl transition-shadow"
@@ -633,43 +711,52 @@ export default function Cruises() {
                         viewport={{ once: true }}
                         transition={{ duration: 0.6, delay: boatIndex * 0.1 }}
                       >
-                        <div className="h-48 relative overflow-hidden">
-                          <img
-                            src={boat.image}
-                            alt={boat.name}
-                            className="w-full h-full object-cover hover:scale-105 transition-transform duration-300"
-                            onError={(e) => {
-                              e.currentTarget.src = '/cruise-default.jpg';
-                            }}
-                          />
-                          <div className="absolute top-4 left-4 bg-[#B8860B] text-white px-3 py-1 rounded-full text-sm font-medium">
-                            {boat.capacity} guests
+                        {boat.image && (
+                          <div className="relative aspect-[4/3] w-full overflow-hidden bg-gray-100">
+                            <img
+                              src={boat.image}
+                              alt={boat.name}
+                              className="absolute inset-0 w-full h-full object-cover hover:scale-105 transition-transform duration-300"
+                              style={{
+                                objectFit: 'cover',
+                                objectPosition: 'center',
+                                width: '100%',
+                                height: '100%'
+                              }}
+                            />
+                            <div className="absolute top-4 left-4 bg-[#B8860B] text-white px-3 py-1 rounded-full text-sm font-medium">
+                              {boat.capacity} guests
+                            </div>
+                            <div className="absolute top-4 right-4 bg-blue-100 text-blue-800 px-3 py-1 rounded-full text-xs font-medium">
+                              {boat.boatType}
+                            </div>
+                            {boat.itineraryCount > 0 && (
+                              <div className="absolute bottom-4 right-4 bg-green-100 text-green-800 px-3 py-1 rounded-full text-xs font-medium">
+                                {boat.itineraryCount} {boat.itineraryCount > 1 ? 'itineraries' : 'itinerary'}
+                              </div>
+                            )}
                           </div>
-                          <div className="absolute top-4 right-4 bg-blue-100 text-blue-800 px-3 py-1 rounded-full text-xs font-medium">
-                            {boat.boatType}
-                          </div>
-                          <div className="absolute bottom-4 right-4 bg-green-100 text-green-800 px-3 py-1 rounded-full text-xs font-medium">
-                            {boat.itineraryCount} itinerary{boat.itineraryCount > 1 ? 'ies' : ''}
-                          </div>
-                        </div>
+                        )}
 
                         <div className="p-6">
                           <h3 className="text-xl font-bold text-[#8B4513] mb-2">{boat.name}</h3>
                           <p className="text-2xl font-bold text-[#B8860B] mb-4">
-                            From ${boat.startingPrice.toLocaleString()}
+                            {boat.priceRange ? `Price: ${boat.priceRange}` : 'Price: N/A'}
                           </p>
 
-                          <div className="space-y-2 mb-6">
-                            <h4 className="font-semibold text-gray-900">Features:</h4>
-                            {boat.features.slice(0, 3).map((feature: string, fIndex: number) => (
-                              <div key={fIndex} className="flex items-center text-sm text-gray-600">
-                                <svg className="w-4 h-4 text-[#B8860B] mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" />
-                                </svg>
-                                {feature}
-                              </div>
-                            ))}
-                          </div>
+                          {boat.features.length > 0 && (
+                            <div className="space-y-2 mb-6">
+                              <h4 className="font-semibold text-gray-900">Features:</h4>
+                              {boat.features.map((feature: string, fIndex: number) => (
+                                <div key={fIndex} className="flex items-center text-sm text-gray-600">
+                                  <svg className="w-4 h-4 text-[#B8860B] mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" />
+                                  </svg>
+                                  {feature}
+                                </div>
+                              ))}
+                            </div>
+                          )}
 
                           <div className="flex gap-3">
                             <Link
@@ -678,34 +765,45 @@ export default function Cruises() {
                             >
                               Ship Details
                             </Link>
-                            <Link
-                              href={`/ships/${boat.ship.id}/itineraries`}
-                              className="flex-1 text-center bg-[#B8860B] hover:bg-[#DAA520] text-white py-3 rounded-md font-medium transition-colors"
-                            >
-                              Itineraries ({boat.itineraryCount})
-                            </Link>
+                            {boat.itineraryCount > 0 && (
+                              <Link
+                                href={`/ships/${boat.ship.id}/itineraries`}
+                                className="flex-1 text-center bg-[#B8860B] hover:bg-[#DAA520] text-white py-3 rounded-md font-medium transition-colors"
+                              >
+                                Itineraries ({boat.itineraryCount})
+                              </Link>
+                            )}
                           </div>
                         </div>
                       </motion.div>
                     ))}
                   </div>
+                  ) : (
+                    <div className="text-center py-12 bg-gray-50 rounded-lg">
+                      <p className="text-lg text-gray-600">
+                        New vessels coming soon to this destination. Contact us to learn more about upcoming availability.
+                      </p>
+                    </div>
+                  )}
 
                   {/* View All Location Button */}
-                  <div className="text-center mt-8">
-                    <button
-                      onClick={() => setSelectedLocation(location.name)}
-                      className="inline-flex items-center px-6 py-3 border border-[#B8860B] text-[#B8860B] hover:bg-[#B8860B] hover:text-white rounded-md font-medium transition-colors"
-                    >
-                      View All {location.title}
-                      <svg className="ml-2 w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5l7 7-7 7" />
-                      </svg>
-                    </button>
-                  </div>
+                  {locationBoats.length > 0 && (
+                    <div className="text-center mt-8">
+                      <button
+                        onClick={() => setSelectedLocation(locationDisplay.name)}
+                        className="inline-flex items-center px-6 py-3 border border-[#B8860B] text-[#B8860B] hover:bg-[#B8860B] hover:text-white rounded-md font-medium transition-colors"
+                      >
+                        View All {locationDisplay.title}
+                        <svg className="ml-2 w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5l7 7-7 7" />
+                        </svg>
+                      </button>
+                    </div>
+                  )}
                 </div>
 
                 {/* Separator line between sections */}
-                {locationIndex < locations.length - 1 && (
+                {locationIndex < locationDisplayInfo.length - 1 && (
                   <div className="mt-16 border-t border-gray-200"></div>
                 )}
               </div>

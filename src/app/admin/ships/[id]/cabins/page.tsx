@@ -15,7 +15,7 @@ export const dynamic = 'force-dynamic';
 interface CabinFormData {
   name: string;
   description: string;
-  pricing_per_person: number | null;
+  pricing_per_person: string | null;
   quantity: string;
   size_sqm: number | null;
   max_occupancy: number | null;
@@ -377,18 +377,16 @@ function CabinCategoriesContent() {
 
                 <div>
                   <label htmlFor="pricing_per_person" className="block text-sm font-medium text-gray-700 mb-2">
-                    Price Per Person ($)
+                    Price Per Person
                   </label>
                   <input
-                    type="number"
+                    type="text"
                     id="pricing_per_person"
                     name="pricing_per_person"
                     value={formData.pricing_per_person || ''}
                     onChange={handleInputChange}
-                    step="0.01"
-                    min="0"
                     className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-[#B8860B] focus:border-[#B8860B] text-gray-900"
-                    placeholder="e.g., 1500.00"
+                    placeholder="e.g., Starting at $1500 or From $2000 per person"
                   />
                 </div>
 
@@ -409,7 +407,7 @@ function CabinCategoriesContent() {
 
                 <div>
                   <label htmlFor="size_sqm" className="block text-sm font-medium text-gray-700 mb-2">
-                    Size (m²)
+                    Size (Ft²)
                   </label>
                   <input
                     type="number"
@@ -420,7 +418,7 @@ function CabinCategoriesContent() {
                     step="0.01"
                     min="0"
                     className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-[#B8860B] focus:border-[#B8860B] text-gray-900"
-                    placeholder="e.g., 25.5"
+                    placeholder="e.g., 275"
                   />
                 </div>
 
@@ -569,14 +567,14 @@ function CabinCategoriesContent() {
                           <h4 className="text-lg font-bold text-gray-900">{cabin.name}</h4>
                           {cabin.pricing_per_person && (
                             <p className="text-[#B8860B] font-semibold text-xl mt-1">
-                              ${cabin.pricing_per_person.toLocaleString()}/person
+                              {cabin.pricing_per_person}
                             </p>
                           )}
                           {cabin.description && (
                             <p className="text-gray-600 mt-2 text-sm">{cabin.description}</p>
                           )}
                           <div className="flex flex-wrap gap-4 mt-3 text-sm text-gray-500">
-                            {cabin.size_sqm && <span>📐 {cabin.size_sqm} m²</span>}
+                            {cabin.size_sqm && <span>📐 {cabin.size_sqm} Ft²</span>}
                             {cabin.max_occupancy && <span>👥 Max {cabin.max_occupancy} guests</span>}
                             {cabin.quantity && <span>✓ {cabin.quantity} available</span>}
                           </div>

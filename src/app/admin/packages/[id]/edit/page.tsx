@@ -51,9 +51,9 @@ export default function EditPackage() {
     excludes: [''],
     luxury_highlights: [''],
     images: [] as string[],
-    price_usd: null as number | null,
-    price_eur: null as number | null,
-    price_gbp: null as number | null
+    price_usd: null as string | null,
+    price_eur: null as string | null,
+    price_gbp: null as string | null
   });
   const [pendingPackageImages, setPendingPackageImages] = useState<PendingImage[]>([]);
   const [packageImagesToDelete, setPackageImagesToDelete] = useState<string[]>([]);
@@ -671,58 +671,43 @@ export default function EditPackage() {
                     <label htmlFor="price_usd" className="block text-sm font-medium text-gray-700 mb-2">
                       Price (USD)
                     </label>
-                    <div className="relative">
-                      <span className="absolute left-3 top-2 text-gray-500">$</span>
-                      <input
-                        type="number"
-                        id="price_usd"
-                        name="price_usd"
-                        min="0"
-                        step="0.01"
-                        value={formData.price_usd || ''}
-                        onChange={handleInputChange}
-                        className="w-full pl-7 pr-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-[#B8860B] focus:border-[#B8860B] text-gray-900"
-                        placeholder="0.00"
-                      />
-                    </div>
+                    <input
+                      type="text"
+                      id="price_usd"
+                      name="price_usd"
+                      value={formData.price_usd || ''}
+                      onChange={handleInputChange}
+                      className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-[#B8860B] focus:border-[#B8860B] text-gray-900"
+                      placeholder="e.g., Starting at $100"
+                    />
                   </div>
                   <div>
                     <label htmlFor="price_eur" className="block text-sm font-medium text-gray-700 mb-2">
                       Price (EUR)
                     </label>
-                    <div className="relative">
-                      <span className="absolute left-3 top-2 text-gray-500">€</span>
-                      <input
-                        type="number"
-                        id="price_eur"
-                        name="price_eur"
-                        min="0"
-                        step="0.01"
-                        value={formData.price_eur || ''}
-                        onChange={handleInputChange}
-                        className="w-full pl-7 pr-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-[#B8860B] focus:border-[#B8860B] text-gray-900"
-                        placeholder="0.00"
-                      />
-                    </div>
+                    <input
+                      type="text"
+                      id="price_eur"
+                      name="price_eur"
+                      value={formData.price_eur || ''}
+                      onChange={handleInputChange}
+                      className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-[#B8860B] focus:border-[#B8860B] text-gray-900"
+                      placeholder="e.g., From €875 per person"
+                    />
                   </div>
                   <div>
                     <label htmlFor="price_gbp" className="block text-sm font-medium text-gray-700 mb-2">
                       Price (GBP)
                     </label>
-                    <div className="relative">
-                      <span className="absolute left-3 top-2 text-gray-500">£</span>
-                      <input
-                        type="number"
-                        id="price_gbp"
-                        name="price_gbp"
-                        min="0"
-                        step="0.01"
-                        value={formData.price_gbp || ''}
-                        onChange={handleInputChange}
-                        className="w-full pl-7 pr-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-[#B8860B] focus:border-[#B8860B] text-gray-900"
-                        placeholder="0.00"
-                      />
-                    </div>
+                    <input
+                      type="text"
+                      id="price_gbp"
+                      name="price_gbp"
+                      value={formData.price_gbp || ''}
+                      onChange={handleInputChange}
+                      className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-[#B8860B] focus:border-[#B8860B] text-gray-900"
+                      placeholder="e.g., Starting at £750"
+                    />
                   </div>
                 </div>
                 <p className="mt-2 text-xs text-gray-500">

@@ -265,8 +265,7 @@ export default function CabinCategoryDetail() {
                 <h3 className="text-2xl font-bold mb-2">Pricing</h3>
                 {cabin.pricing_per_person ? (
                   <div className="mb-6">
-                    <p className="text-xl font-bold mb-2">from ${cabin.pricing_per_person.toLocaleString()}</p>
-                    <p className="text-[#F5F5DC] text-sm">per person</p>
+                    <p className="text-xl font-bold mb-2">{cabin.pricing_per_person}</p>
                   </div>
                 ) : (
                   <div className="mb-6">

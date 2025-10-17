@@ -84,26 +84,6 @@ export async function isCurrentUserAdmin(): Promise<boolean> {
 }
 
 /**
- * Admin authorization middleware for API routes
- * Returns the user profile if authorized, null if not
- */
-export async function requireAdmin(): Promise<Profile | null> {
-  const { data: { session } } = await supabase.auth.getSession();
-
-  if (!session?.user?.id) {
-    return null;
-  }
-
-  const profile = await getUserProfile(session.user.id);
-
-  if (profile?.role !== 'admin') {
-    return null;
-  }
-
-  return profile;
-}
-
-/**
  * Check if a user email should be assigned admin role on signup
  * This is a fallback for the database trigger
  */

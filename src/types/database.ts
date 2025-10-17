@@ -62,6 +62,7 @@ export interface Database {
           cabin_category: string | null
           departure_port: string | null
           arrival_port: string | null
+          price_usd: string | null
         }
         Insert: {
           id?: string
@@ -85,6 +86,7 @@ export interface Database {
           cabin_category?: string | null
           departure_port?: string | null
           arrival_port?: string | null
+          price_usd?: string | null
         }
         Update: {
           id?: string
@@ -108,6 +110,7 @@ export interface Database {
           cabin_category?: string | null
           departure_port?: string | null
           arrival_port?: string | null
+          price_usd?: string | null
         }
       }
       custom_quotes: {
@@ -611,7 +614,7 @@ export interface Database {
           ship_id: string
           name: string
           description: string | null
-          pricing_per_person: number | null
+          pricing_per_person: string | null
           images: string[] | null
           quantity: string | null
           size_sqm: number | null
@@ -625,7 +628,7 @@ export interface Database {
           ship_id: string
           name: string
           description?: string | null
-          pricing_per_person?: number | null
+          pricing_per_person?: string | null
           images?: string[] | null
           quantity?: string | null
           size_sqm?: number | null
@@ -639,7 +642,7 @@ export interface Database {
           ship_id?: string
           name?: string
           description?: string | null
-          pricing_per_person?: number | null
+          pricing_per_person?: string | null
           images?: string[] | null
           quantity?: string | null
           size_sqm?: number | null

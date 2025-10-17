@@ -438,7 +438,7 @@ export default function ShipDetail() {
                               <h3 className="text-[#8B4513] font-bold text-lg leading-tight group-hover:text-[#B8860B] transition-colors">{cabin.name}</h3>
                               {cabin.pricing_per_person && (
                                 <span className="px-3 py-1 bg-[#B8860B] text-white text-sm font-semibold rounded-full whitespace-nowrap flex-shrink-0">
-                                  from ${cabin.pricing_per_person.toLocaleString()}
+                                  {cabin.pricing_per_person}
                                 </span>
                               )}
                             </div>

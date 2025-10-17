@@ -7,7 +7,7 @@ import { useRouter, useParams } from 'next/navigation';
 import { supabase } from '@/lib/supabase';
 import { useSimpleAdminAuth } from '@/hooks/useSimpleAdminAuth';
 import ImageUploadWithCaptions, { ImageWithCaption } from '@/components/admin/ImageUploadWithCaptions';
-import { Ship, CabinCategory } from '@/types/database';
+import { Ship, CabinCategory, CabinImage } from '@/types/database';
 
 // Force dynamic rendering (no static generation)
 export const dynamic = 'force-dynamic';
@@ -118,7 +118,7 @@ function CabinCategoriesContent() {
     setShowForm(false);
   };
 
-  const handleEdit = (cabin: CabinCategory) => {
+  const handleEdit = async (cabin: CabinCategory) => {
     setEditingCabin(cabin);
     setFormData({
       name: cabin.name,
@@ -130,13 +130,31 @@ function CabinCategoriesContent() {
       amenities: cabin.amenities && cabin.amenities.length > 0 ? cabin.amenities : ['']
     });
 
-    // Load existing images
-    if (cabin.images && cabin.images.length > 0) {
-      setCabinImages(cabin.images.map(url => ({
-        url,
-        caption: '',
+    // Load existing images from cabin_images table
+    const { data: imageData, error: imageError } = await supabase
+      .from('cabin_images')
+      .select('*')
+      .eq('cabin_id', cabin.id)
+      .order('display_order', { ascending: true });
+
+    if (imageError) {
+      console.error('Error loading cabin images:', imageError);
+      // Fallback to old images array if cabin_images doesn't exist yet
+      if (cabin.images && cabin.images.length > 0) {
+        setCabinImages(cabin.images.map(url => ({
+          url,
+          caption: '',
+          isPending: false
+        })));
+      }
+    } else if (imageData && imageData.length > 0) {
+      setCabinImages(imageData.map(img => ({
+        url: img.image_url,
+        caption: img.caption || '',
         isPending: false
       })));
+    } else {
+      setCabinImages([]);
     }
 
     setShowForm(true);
@@ -217,11 +235,6 @@ function CabinCategoriesContent() {
     setLoading(true);
 
     try {
-      // Upload images
-      const uploadedImages = await Promise.all(
-        cabinImages.map(img => uploadImage(img))
-      );
-
       // Clean amenities
       const cleanedAmenities = formData.amenities.filter(a => a.trim() !== '');
 
@@ -234,8 +247,11 @@ function CabinCategoriesContent() {
         size_sqm: formData.size_sqm,
         max_occupancy: formData.max_occupancy,
         amenities: cleanedAmenities.length > 0 ? cleanedAmenities : null,
-        images: uploadedImages.length > 0 ? uploadedImages : null
+        // Keep images array for backward compatibility, but it won't be the primary source
+        images: null
       };
+
+      let cabinId: string;
 
       if (editingCabin) {
         // Update existing cabin
@@ -245,17 +261,57 @@ function CabinCategoriesContent() {
           .eq('id', editingCabin.id);
 
         if (error) throw error;
-        alert('Cabin category updated successfully!');
+        cabinId = editingCabin.id;
+
+        // Delete existing cabin images
+        const { error: deleteError } = await supabase
+          .from('cabin_images')
+          .delete()
+          .eq('cabin_id', cabinId);
+
+        if (deleteError) {
+          console.error('Error deleting old cabin images:', deleteError);
+        }
       } else {
         // Create new cabin
-        const { error } = await supabase
+        const { data: newCabin, error } = await supabase
           .from('cabin_categories')
-          .insert([cabinData]);
+          .insert([cabinData])
+          .select()
+          .single();
 
         if (error) throw error;
-        alert('Cabin category created successfully!');
+        if (!newCabin) throw new Error('Failed to create cabin');
+        cabinId = newCabin.id;
       }
 
+      // Upload and save images to cabin_images table
+      for (let i = 0; i < cabinImages.length; i++) {
+        const image = cabinImages[i];
+
+        // Upload image if it's a new file
+        let imageUrl = image.url;
+        if (image.file) {
+          imageUrl = await uploadImage(image);
+        }
+
+        // Save to cabin_images table
+        const { error: imageError } = await supabase
+          .from('cabin_images')
+          .insert({
+            cabin_id: cabinId,
+            image_url: imageUrl,
+            caption: image.caption || null,
+            display_order: i
+          });
+
+        if (imageError) {
+          console.error('Error saving cabin image:', imageError);
+          throw imageError;
+        }
+      }
+
+      alert(editingCabin ? 'Cabin category updated successfully!' : 'Cabin category created successfully!');
       resetForm();
       fetchData();
     } catch (error: any) {
@@ -596,7 +652,7 @@ function CabinCategoriesContent() {
                     <div className="flex items-center space-x-3 ml-4">
                       <button
                         onClick={() => handleEdit(cabin)}
-                        className="text-[#B8860B] hover:text-[#DAA520] transition-colors font-medium"
+                        className="text-[#B8860B] hover:text-[#DAA520] !mr-2 transition-colors font-medium"
                       >
                         Edit
                       </button>

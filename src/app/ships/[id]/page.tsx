@@ -5,7 +5,7 @@ import { useParams } from 'next/navigation';
 import Link from 'next/link';
 import { motion } from 'framer-motion';
 import { supabase } from '@/lib/supabase';
-import { Ship, TripPackage, CabinCategory } from '@/types/database';
+import { Ship, TripPackage, CabinCategory, CabinImage } from '@/types/database';
 
 export default function ShipDetail() {
   const params = useParams();
@@ -14,6 +14,7 @@ export default function ShipDetail() {
   const [ship, setShip] = useState<Ship | null>(null);
   const [itineraries, setItineraries] = useState<TripPackage[]>([]);
   const [cabinCategories, setCabinCategories] = useState<CabinCategory[]>([]);
+  const [cabinImagesMap, setCabinImagesMap] = useState<Record<string, CabinImage[]>>({});
   const [loading, setLoading] = useState(true);
   const [selectedImage, setSelectedImage] = useState(0);
 
@@ -55,6 +56,26 @@ export default function ShipDetail() {
         setCabinCategories([]);
       } else {
         setCabinCategories(cabinData || []);
+
+        // Fetch the first image for each cabin category
+        if (cabinData && cabinData.length > 0) {
+          const imagesMap: Record<string, CabinImage[]> = {};
+
+          for (const cabin of cabinData) {
+            const { data: imagesData, error: imagesError } = await supabase
+              .from('cabin_images')
+              .select('*')
+              .eq('cabin_id', cabin.id)
+              .order('display_order', { ascending: true })
+              .limit(1);
+
+            if (!imagesError && imagesData && imagesData.length > 0) {
+              imagesMap[cabin.id] = imagesData;
+            }
+          }
+
+          setCabinImagesMap(imagesMap);
+        }
       }
 
     } catch (error) {
@@ -425,38 +446,56 @@ export default function ShipDetail() {
                 <div className="space-y-4">
                   {cabinCategories.length > 0 ? (
                     // Show cabin categories from database with full details
-                    cabinCategories.map((cabin, index) => (
-                      <Link
-                        key={cabin.id}
-                        href={`/ships/${shipId}/cabins/${encodeURIComponent(cabin.name)}`}
-                        className="block"
-                      >
-                        <div className="flex items-start gap-4 p-5 bg-gradient-to-r from-[#F5F5DC] to-white border-2 border-[#B8860B]/20 rounded-lg hover:border-[#B8860B] hover:shadow-lg transition-all cursor-pointer group">
-                          <div className="text-4xl flex-shrink-0 mt-1">🛏️</div>
-                          <div className="flex-1 min-w-0">
-                            <div className="flex items-start justify-between gap-3 mb-2">
-                              <h3 className="text-[#8B4513] font-bold text-lg leading-tight group-hover:text-[#B8860B] transition-colors">{cabin.name}</h3>
-                              {cabin.pricing_per_person && (
-                                <span className="px-3 py-1 bg-[#B8860B] text-white text-sm font-semibold rounded-full whitespace-nowrap flex-shrink-0">
-                                  {cabin.pricing_per_person}
-                                </span>
-                              )}
-                            </div>
-                            {cabin.description && (
-                              <p className="text-gray-600 text-sm leading-relaxed mb-3 line-clamp-2">{cabin.description}</p>
+                    cabinCategories.map((cabin, index) => {
+                      const cabinImage = cabinImagesMap[cabin.id]?.[0];
+                      const imageUrl = cabinImage?.image_url || cabin.images?.[0];
+
+                      return (
+                        <Link
+                          key={cabin.id}
+                          href={`/ships/${shipId}/cabins/${encodeURIComponent(cabin.name)}`}
+                          className="block"
+                        >
+                          <div className="flex items-start gap-4 p-5 bg-gradient-to-r from-[#F5F5DC] to-white border-2 border-[#B8860B]/20 rounded-lg hover:border-[#B8860B] hover:shadow-lg transition-all cursor-pointer group">
+                            {imageUrl ? (
+                              <div className="flex-shrink-0 w-24 h-24 rounded-lg overflow-hidden">
+                                <img
+                                  src={imageUrl}
+                                  alt={cabin.name}
+                                  className="w-full h-full object-cover"
+                                  onError={(e) => {
+                                    e.currentTarget.style.display = 'none';
+                                  }}
+                                />
+                              </div>
+                            ) : (
+                              <div className="text-4xl flex-shrink-0 mt-1">🛏️</div>
                             )}
-                            <div className="flex items-center gap-4 text-xs text-gray-500">
-                              {cabin.size_sqm && <span>📐 {Math.round(cabin.size_sqm * 10.764)} ft²</span>}
-                              {cabin.max_occupancy && <span>👥 Max {cabin.max_occupancy} guests</span>}
-                              {cabin.quantity && <span>✓ {cabin.quantity} available</span>}
-                            </div>
-                            <div className="mt-3 text-[#B8860B] text-sm font-medium group-hover:underline">
-                              Click for pricing and more info →
+                            <div className="flex-1 min-w-0">
+                              <div className="flex items-start justify-between gap-3 mb-2">
+                                <h3 className="text-[#8B4513] font-bold text-lg leading-tight group-hover:text-[#B8860B] transition-colors">{cabin.name}</h3>
+                                {cabin.pricing_per_person && (
+                                  <span className="px-3 py-1 bg-[#B8860B] text-white text-sm font-semibold rounded-full whitespace-nowrap flex-shrink-0">
+                                    {cabin.pricing_per_person}
+                                  </span>
+                                )}
+                              </div>
+                              {cabin.description && (
+                                <p className="text-gray-600 text-sm leading-relaxed mb-3 line-clamp-2">{cabin.description}</p>
+                              )}
+                              <div className="flex items-center gap-4 text-xs text-gray-500">
+                                {cabin.size_sqm && <span>📐 {Math.round(cabin.size_sqm * 10.764)} ft²</span>}
+                                {cabin.max_occupancy && <span>👥 Max {cabin.max_occupancy} guests</span>}
+                                {cabin.quantity && <span>✓ {cabin.quantity} available</span>}
+                              </div>
+                              <div className="mt-3 text-[#B8860B] text-sm font-medium group-hover:underline">
+                                Click for pricing and more info →
+                              </div>
                             </div>
                           </div>
-                        </div>
-                      </Link>
-                    ))
+                        </Link>
+                      );
+                    })
                   ) : (
                     // Fallback to old format with ship's cabin_categories array
                     ship.cabin_categories?.map((category, index) => {

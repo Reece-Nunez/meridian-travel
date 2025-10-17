@@ -650,6 +650,35 @@ export interface Database {
           amenities?: string[] | null
         }
       }
+      cabin_images: {
+        Row: {
+          id: string
+          created_at: string
+          updated_at: string
+          cabin_id: string
+          image_url: string
+          caption: string | null
+          display_order: number
+        }
+        Insert: {
+          id?: string
+          created_at?: string
+          updated_at?: string
+          cabin_id: string
+          image_url: string
+          caption?: string | null
+          display_order?: number
+        }
+        Update: {
+          id?: string
+          created_at?: string
+          updated_at?: string
+          cabin_id?: string
+          image_url?: string
+          caption?: string | null
+          display_order?: number
+        }
+      }
     }
     Views: {
       [_ in never]: never
@@ -688,6 +717,7 @@ export type Payment = Database['public']['Tables']['payments']['Row']
 export type Ship = Database['public']['Tables']['ships']['Row']
 export type QuoteToken = Database['public']['Tables']['quote_tokens']['Row']
 export type CabinCategory = Database['public']['Tables']['cabin_categories']['Row']
+export type CabinImage = Database['public']['Tables']['cabin_images']['Row']
 
 // User role type
 export type UserRole = Database['public']['Enums']['user_role']

@@ -297,7 +297,7 @@ export default function AdminShips() {
                               </Link>
                               <button
                                 onClick={() => toggleShipStatus(ship.id, ship.is_active || false)}
-                                className="text-blue-600 hover:text-blue-800 transition-colors"
+                                className="text-blue-600 !mr-2 hover:text-blue-800 transition-colors"
                               >
                                 {ship.is_active ? 'Deactivate' : 'Activate'}
                               </button>

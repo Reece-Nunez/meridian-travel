@@ -5,7 +5,7 @@ import { useParams } from 'next/navigation';
 import Link from 'next/link';
 import { motion } from 'framer-motion';
 import { supabase } from '@/lib/supabase';
-import { Ship, CabinCategory } from '@/types/database';
+import { Ship, CabinCategory, CabinImage } from '@/types/database';
 
 export default function CabinCategoryDetail() {
   const params = useParams();
@@ -14,6 +14,7 @@ export default function CabinCategoryDetail() {
 
   const [ship, setShip] = useState<Ship | null>(null);
   const [cabin, setCabin] = useState<CabinCategory | null>(null);
+  const [cabinImages, setCabinImages] = useState<CabinImage[]>([]);
   const [loading, setLoading] = useState(true);
   const [selectedImage, setSelectedImage] = useState(0);
 
@@ -43,6 +44,23 @@ export default function CabinCategoryDetail() {
 
       if (cabinError) throw cabinError;
       setCabin(cabinData);
+
+      // Fetch cabin images with captions
+      if (cabinData) {
+        const { data: imagesData, error: imagesError } = await supabase
+          .from('cabin_images')
+          .select('*')
+          .eq('cabin_id', cabinData.id)
+          .order('display_order', { ascending: true });
+
+        if (imagesError) {
+          console.error('Error fetching cabin images:', imagesError);
+          // Fallback to legacy images array if cabin_images table is empty
+          setCabinImages([]);
+        } else {
+          setCabinImages(imagesData || []);
+        }
+      }
 
     } catch (error) {
       console.error('Error fetching cabin data:', error);
@@ -75,7 +93,19 @@ export default function CabinCategoryDetail() {
     );
   }
 
-  const images = cabin.images && cabin.images.length > 0 ? cabin.images : ship.images || [];
+  // Use cabin_images table data first, fallback to legacy images array, then ship images
+  const legacyCabinImages = cabin.images && cabin.images.length > 0 ? cabin.images : [];
+  const shipImages = ship.images || [];
+
+  // If we have cabin images from the database, use those
+  const hasNewImages = cabinImages.length > 0;
+  const displayImages = hasNewImages
+    ? cabinImages.map(img => img.image_url)
+    : (legacyCabinImages.length > 0 ? legacyCabinImages : shipImages);
+
+  const imageCaptions = hasNewImages
+    ? cabinImages.map(img => img.caption || '')
+    : [];
 
   return (
     <div className="min-h-screen bg-gray-50">
@@ -104,37 +134,52 @@ export default function CabinCategoryDetail() {
             {/* Main Image */}
             <div className="relative h-[400px] lg:h-[500px] rounded-xl overflow-hidden">
               <img
-                src={images[selectedImage] || '/cruise-default.jpg'}
-                alt={`${cabin.name} - View ${selectedImage + 1}`}
+                src={displayImages[selectedImage] || '/cruise-default.jpg'}
+                alt={imageCaptions[selectedImage] || `${cabin.name} - View ${selectedImage + 1}`}
                 className="w-full h-full object-cover"
                 onError={(e) => {
                   e.currentTarget.src = '/cruise-default.jpg';
                 }}
               />
+              {imageCaptions[selectedImage] && (
+                <div className="absolute bottom-0 left-0 right-0 bg-gradient-to-t from-black/80 via-black/50 to-transparent p-4">
+                  <p className="text-white text-sm font-medium">{imageCaptions[selectedImage]}</p>
+                </div>
+              )}
             </div>
 
             {/* Thumbnail Grid */}
-            <div className="grid grid-cols-2 gap-4">
-              {images.slice(0, 4).map((image, index) => (
-                <motion.div
-                  key={index}
-                  className={`relative h-[190px] lg:h-[240px] rounded-lg overflow-hidden cursor-pointer ${
-                    selectedImage === index ? 'ring-4 ring-[#B8860B]' : ''
-                  }`}
-                  onClick={() => setSelectedImage(index)}
-                  whileHover={{ scale: 1.02 }}
-                  transition={{ duration: 0.2 }}
-                >
-                  <img
-                    src={image}
-                    alt={`${cabin.name} - View ${index + 1}`}
-                    className="w-full h-full object-cover"
-                    onError={(e) => {
-                      e.currentTarget.src = '/cruise-default.jpg';
-                    }}
-                  />
-                </motion.div>
-              ))}
+            <div className="max-h-[500px] overflow-y-auto pr-2">
+              <div className="grid grid-cols-2 gap-4">
+                {displayImages.map((image, index) => (
+                  <motion.div
+                    key={index}
+                    className={`relative h-[120px] rounded-lg overflow-hidden cursor-pointer ${
+                      selectedImage === index ? 'ring-4 ring-[#B8860B]' : ''
+                    }`}
+                    onClick={() => setSelectedImage(index)}
+                    whileHover={{ scale: 1.02 }}
+                    transition={{ duration: 0.2 }}
+                  >
+                    <img
+                      src={image}
+                      alt={imageCaptions[index] || `${cabin.name} - View ${index + 1}`}
+                      className="w-full h-full object-cover"
+                      onError={(e) => {
+                        e.currentTarget.src = '/cruise-default.jpg';
+                      }}
+                    />
+                    <div className="absolute bottom-2 right-2 bg-black bg-opacity-60 text-white px-2 py-1 rounded text-xs">
+                      {index + 1}/{displayImages.length}
+                    </div>
+                    {imageCaptions[index] && (
+                      <div className="absolute bottom-0 left-0 right-0 bg-gradient-to-t from-black/90 to-transparent p-2">
+                        <p className="text-white text-xs line-clamp-2">{imageCaptions[index]}</p>
+                      </div>
+                    )}
+                  </motion.div>
+                ))}
+              </div>
             </div>
           </div>
         </div>
@@ -213,40 +258,6 @@ export default function CabinCategoryDetail() {
                       </svg>
                       <span className="text-gray-700">{amenity}</span>
                     </div>
-                  ))}
-                </div>
-              </motion.div>
-            )}
-
-            {/* All Cabin Images */}
-            {images.length > 4 && (
-              <motion.div
-                initial={{ opacity: 0, y: 20 }}
-                animate={{ opacity: 1, y: 0 }}
-                transition={{ duration: 0.6, delay: 0.3 }}
-                className="bg-white rounded-xl p-6 shadow-sm"
-              >
-                <h2 className="text-2xl font-bold text-[#8B4513] mb-4">Photo Gallery</h2>
-                <div className="grid grid-cols-2 md:grid-cols-3 gap-4">
-                  {images.map((image, index) => (
-                    <motion.div
-                      key={index}
-                      className={`relative h-48 rounded-lg overflow-hidden cursor-pointer ${
-                        selectedImage === index ? 'ring-4 ring-[#B8860B]' : ''
-                      }`}
-                      onClick={() => setSelectedImage(index)}
-                      whileHover={{ scale: 1.05 }}
-                      transition={{ duration: 0.2 }}
-                    >
-                      <img
-                        src={image}
-                        alt={`${cabin.name} - View ${index + 1}`}
-                        className="w-full h-full object-cover"
-                        onError={(e) => {
-                          e.currentTarget.src = '/cruise-default.jpg';
-                        }}
-                      />
-                    </motion.div>
                   ))}
                 </div>
               </motion.div>

@@ -532,7 +532,7 @@ function EditShipContent() {
                   <button
                     type="button"
                     onClick={() => removeArrayItem('ship_features', index)}
-                    className="text-red-600 hover:text-red-800 transition-colors"
+                    className="text-red-600 hover:text-red-800 !ml-2 transition-colors"
                   >
                     Remove
                   </button>
@@ -571,7 +571,7 @@ function EditShipContent() {
                   <button
                     type="button"
                     onClick={() => removeArrayItem('luxury_highlights', index)}
-                    className="text-red-600 hover:text-red-800 transition-colors"
+                    className="text-red-600 hover:text-red-800 !ml-2 transition-colors"
                   >
                     Remove
                   </button>

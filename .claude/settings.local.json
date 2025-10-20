@@ -6,7 +6,8 @@
       "Bash(git push)",
       "Bash(npx supabase:*)",
       "Bash(npm run build:*)",
-      "Bash(npm run dev:*)"
+      "Bash(npm run dev:*)",
+      "Read(//c/Users/reece/Downloads/**)"
     ],
     "deny": [],
     "ask": []

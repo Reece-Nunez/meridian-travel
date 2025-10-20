@@ -618,6 +618,7 @@ export interface Database {
           images: string[] | null
           quantity: string | null
           size_sqm: number | null
+          size_sqft: number | null
           max_occupancy: number | null
           amenities: string[] | null
         }
@@ -632,6 +633,7 @@ export interface Database {
           images?: string[] | null
           quantity?: string | null
           size_sqm?: number | null
+          size_sqft?: number | null
           max_occupancy?: number | null
           amenities?: string[] | null
         }
@@ -646,6 +648,7 @@ export interface Database {
           images?: string[] | null
           quantity?: string | null
           size_sqm?: number | null
+          size_sqft?: number | null
           max_occupancy?: number | null
           amenities?: string[] | null
         }

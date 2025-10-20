@@ -15,6 +15,27 @@ export default function ShipItineraries() {
   const [itineraries, setItineraries] = useState<TripPackage[]>([]);
   const [loading, setLoading] = useState(true);
 
+  // Save scroll position before navigating away
+  useEffect(() => {
+    const handleScroll = () => {
+      sessionStorage.setItem('shipItinerariesScrollPosition', window.scrollY.toString());
+    };
+
+    window.addEventListener('scroll', handleScroll);
+    return () => window.removeEventListener('scroll', handleScroll);
+  }, []);
+
+  // Restore scroll position on mount
+  useEffect(() => {
+    const savedPosition = sessionStorage.getItem('shipItinerariesScrollPosition');
+    if (savedPosition) {
+      // Wait for content to render before scrolling
+      setTimeout(() => {
+        window.scrollTo(0, parseInt(savedPosition));
+      }, 100);
+    }
+  }, [loading]); // Trigger after loading completes
+
   useEffect(() => {
     fetchShipData();
   }, [shipId]);

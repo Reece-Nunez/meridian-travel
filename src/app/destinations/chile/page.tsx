@@ -36,7 +36,7 @@ export default function Chile() {
           transition={{ duration: 0.6, delay: 0.4 }}
         >
           <h2 className="text-3xl font-bold text-[#8B4513] mb-6">
-            Chilean Adventures Coming Soon
+            Arctic Voyages Coming Soon
           </h2>
           <p className="text-lg text-gray-600 mb-8 leading-relaxed">
             We're designing incredible experiences across Chile's diverse geography. 

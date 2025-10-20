@@ -484,7 +484,9 @@ export default function ShipDetail() {
                                 <p className="text-gray-600 text-sm leading-relaxed mb-3 line-clamp-2">{cabin.description}</p>
                               )}
                               <div className="flex items-center gap-4 text-xs text-gray-500">
-                                {cabin.size_sqm && <span>📐 {Math.round(cabin.size_sqm * 10.764)} ft²</span>}
+                                {(cabin.size_sqft || cabin.size_sqm) && (
+                                  <span>📐 {cabin.size_sqft ? `${cabin.size_sqft} sq ft` : `${cabin.size_sqm} m²`}</span>
+                                )}
                                 {cabin.max_occupancy && <span>👥 Max {cabin.max_occupancy} guests</span>}
                                 {cabin.quantity && <span>✓ {cabin.quantity} available</span>}
                               </div>

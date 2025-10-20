@@ -60,6 +60,7 @@ interface ProcessedBoat {
   image: string;
   startingPrice: number;
   priceRange: string | null; // e.g., "$1500 - $3600" or null if no cabins
+  lowestCabinPrice: number | null; // Lowest cabin price as number
   boatType: string;
   features: string[];
   ship: Ship;
@@ -105,7 +106,7 @@ const locationDisplayInfo = [
   },
   {
     name: "Chile",
-    title: "Chilean Adventures",
+    title: "Arctic Voyages",
     description: "Navigate the dramatic fjords and channels of Chilean Patagonia, discovering glaciers, wildlife, and remote landscapes.",
     image: "/locations/chile-hero.webp",
     features: ["Glacier viewing", "Fjord navigation", "Wildlife watching", "Hiking excursions"]
@@ -131,6 +132,27 @@ export default function Cruises() {
   const [processedBoats, setProcessedBoats] = useState<ProcessedBoat[]>([]);
   const [loading, setLoading] = useState(true);
   const [locations, setLocations] = useState<LocationInfo[]>([]);
+
+  // Save scroll position before navigating away
+  useEffect(() => {
+    const handleScroll = () => {
+      sessionStorage.setItem('cruisesScrollPosition', window.scrollY.toString());
+    };
+
+    window.addEventListener('scroll', handleScroll);
+    return () => window.removeEventListener('scroll', handleScroll);
+  }, []);
+
+  // Restore scroll position on mount
+  useEffect(() => {
+    const savedPosition = sessionStorage.getItem('cruisesScrollPosition');
+    if (savedPosition) {
+      // Wait for content to render before scrolling
+      setTimeout(() => {
+        window.scrollTo(0, parseInt(savedPosition));
+      }, 100);
+    }
+  }, [loading]); // Trigger after loading completes
 
   const filteredBoats = selectedLocation
     ? processedBoats.filter(boat => boat.location === selectedLocation)
@@ -196,8 +218,9 @@ export default function Cruises() {
 
       console.log(`✅ Fetched ${cabinCategories?.length || 0} cabin categories`);
 
-      // Create a map to store cabin price ranges by ship_id
+      // Create maps to store cabin pricing by ship_id
       const priceRangesByShip = new Map<string, string>();
+      const lowestCabinPricesByShip = new Map<string, number>();
 
       if (cabinCategories) {
         const cabinsByShip = new Map<string, any[]>();
@@ -226,6 +249,10 @@ export default function Cruises() {
             const minPrice = Math.min(...prices);
             const maxPrice = Math.max(...prices);
 
+            // Store the lowest price as a number
+            lowestCabinPricesByShip.set(shipId, minPrice);
+
+            // Store the price range as a string (for reference)
             if (minPrice === maxPrice) {
               priceRangesByShip.set(shipId, `$${minPrice.toLocaleString()}`);
             } else {
@@ -288,6 +315,7 @@ export default function Cruises() {
             image: ship.images && ship.images[0] ? ship.images[0] : '', // No default image
             startingPrice: startingPrice,
             priceRange: priceRangesByShip.get(ship.id) || null,
+            lowestCabinPrice: lowestCabinPricesByShip.get(ship.id) || null,
             boatType: ship.ship_type || 'Diving Ship',
             features: ship.luxury_highlights?.slice(0, 3) || ship.ship_features?.slice(0, 3) || [],
             ship: ship,
@@ -324,6 +352,7 @@ export default function Cruises() {
               image: ship.images && ship.images[0] ? ship.images[0] : '', // No default image
               startingPrice: startingPrice,
               priceRange: priceRangesByShip.get(ship.id) || null,
+              lowestCabinPrice: lowestCabinPricesByShip.get(ship.id) || null,
               boatType: ship.ship_type || 'Expedition',
               features: ship.luxury_highlights?.slice(0, 3) || ship.ship_features?.slice(0, 3) || [],
               ship: ship,
@@ -602,7 +631,7 @@ export default function Cruises() {
                 <div className="p-6">
                   <h3 className="text-xl font-bold text-[#8B4513] mb-2">{boat.name}</h3>
                   <p className="text-2xl font-bold text-[#B8860B] mb-4">
-                    {boat.priceRange ? `Price: ${boat.priceRange}` : 'Price: N/A'}
+                    {boat.lowestCabinPrice ? `Starting from: $${boat.lowestCabinPrice.toLocaleString()}` : 'Price: N/A'}
                   </p>
 
                   {boat.features.length > 0 && (
@@ -745,7 +774,7 @@ export default function Cruises() {
                         <div className="p-6">
                           <h3 className="text-xl font-bold text-[#8B4513] mb-2">{boat.name}</h3>
                           <p className="text-2xl font-bold text-[#B8860B] mb-4">
-                            {boat.priceRange ? `Price: ${boat.priceRange}` : 'Price: N/A'}
+                            {boat.lowestCabinPrice ? `Starting from: $${boat.lowestCabinPrice.toLocaleString()}` : 'Price: N/A'}
                           </p>
 
                           {boat.features.length > 0 && (

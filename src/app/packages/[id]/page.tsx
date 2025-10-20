@@ -122,8 +122,8 @@ export default function PackageDetail() {
             <img
               src={pkg.images[selectedImageIndex]}
               alt={pkg.title}
-              className="w-full h-full md:h-[120%] object-cover md:-translate-y-[20%]"
-              style={{ objectPosition: 'center 30%' }}
+              className="w-full h-full min-w-full min-h-full object-cover"
+              style={{ objectPosition: 'center center' }}
               onError={(e) => {
                 e.currentTarget.style.display = 'none';
               }}
@@ -254,7 +254,7 @@ export default function PackageDetail() {
                               <svg className="w-4 h-4 mr-1" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M3 7v10a2 2 0 002 2h14a2 2 0 002-2V9a2 2 0 00-2-2H5a2 2 0 00-2-2z" />
                               </svg>
-                              <strong>Accommodation:</strong> {day.accommodation}
+                              <span><strong>Accommodation:</strong>&nbsp;{day.accommodation}</span>
                             </div>
                           )}
                           {/* Day Images */}

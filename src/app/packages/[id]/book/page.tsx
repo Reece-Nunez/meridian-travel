@@ -166,26 +166,26 @@ export default function BookPackage() {
     <div className="min-h-screen bg-gray-50">
       {/* Header */}
       <div className="bg-white shadow-sm border-b border-gray-200">
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-6">
-          <div className="flex items-center justify-between">
-            <div>
-              <nav className="flex items-center space-x-2 text-sm text-gray-500 mb-2">
+        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-4 sm:py-6">
+          <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3">
+            <div className="flex-1">
+              <nav className="flex items-center flex-wrap gap-2 text-xs sm:text-sm text-gray-500 mb-2">
                 <Link href="/packages" className="hover:text-[#B8860B]">
                   Packages
                 </Link>
                 <span>/</span>
-                <Link href={`/packages/${params.id}`} className="hover:text-[#B8860B]">
+                <Link href={`/packages/${params.id}`} className="hover:text-[#B8860B] truncate max-w-[120px] sm:max-w-none">
                   {pkg.title}
                 </Link>
                 <span>/</span>
                 <span className="text-gray-900">Book</span>
               </nav>
-              <h1 className="text-2xl font-bold text-[#8B4513]">Book Your Trip</h1>
-              <p className="text-gray-600 mt-1">{pkg.title} • {pkg.destination}</p>
+              <h1 className="text-xl sm:text-2xl font-bold text-[#8B4513]">Book Your Trip</h1>
+              <p className="text-sm sm:text-base text-gray-600 mt-1">{pkg.title} • {pkg.destination}</p>
             </div>
             <Link
               href={`/packages/${params.id}`}
-              className="text-[#B8860B] hover:text-[#DAA520] font-medium"
+              className="text-[#B8860B] hover:text-[#DAA520] font-medium text-sm sm:text-base whitespace-nowrap self-start sm:self-auto"
             >
               ← Back to Details
             </Link>
@@ -357,7 +357,7 @@ export default function BookPackage() {
                 <button
                   type="submit"
                   disabled={submitting || !profile?.first_name || !profile?.last_name}
-                  className="w-full bg-[#B8860B] hover:bg-[#DAA520] text-white py-3 rounded-md font-medium transition-colors duration-200 disabled:opacity-50 disabled:cursor-not-allowed"
+                  className="w-full bg-[#B8860B] hover:bg-[#DAA520] text-white py-3 sm:py-4 rounded-md text-base sm:text-lg font-medium transition-colors duration-200 disabled:opacity-50 disabled:cursor-not-allowed min-h-[44px]"
                 >
                   {submitting ? 'Processing...' : 'Submit Booking Request'}
                 </button>
@@ -371,8 +371,8 @@ export default function BookPackage() {
 
           {/* Booking Summary */}
           <div className="space-y-6">
-            <div className="bg-white rounded-lg shadow-sm border border-gray-200 p-6 sticky top-6">
-              <h3 className="text-lg font-semibold text-[#8B4513] mb-4">Booking Summary</h3>
+            <div className="bg-white rounded-lg shadow-sm border border-gray-200 p-4 sm:p-6 lg:sticky lg:top-6">
+              <h3 className="text-base sm:text-lg font-semibold text-[#8B4513] mb-4">Booking Summary</h3>
               
               {/* Trip Overview */}
               <div className="space-y-3 mb-6">

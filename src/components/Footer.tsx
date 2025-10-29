@@ -239,15 +239,15 @@ export default function Footer() {
             <p className="text-[#F5F5DC] text-sm mb-4">
               Get exclusive travel insights, destination guides, and special offers delivered to your inbox.
             </p>
-            <form className="flex">
+            <form className="flex flex-col sm:flex-row gap-2 sm:gap-0">
               <input
                 type="email"
                 placeholder="Enter your email"
-                className="flex-1 px-4 py-2 bg-white text-gray-900 rounded-l-md focus:outline-none focus:ring-2 focus:ring-[#B8860B]"
+                className="flex-1 px-4 py-3 sm:py-2 bg-white text-gray-900 rounded-md sm:rounded-l-md sm:rounded-r-none focus:outline-none focus:ring-2 focus:ring-[#B8860B] min-h-[44px]"
               />
               <button
                 type="submit"
-                className="px-6 py-2 bg-[#B8860B] hover:bg-[#DAA520] text-white rounded-r-md transition-colors duration-200 font-medium"
+                className="px-6 py-3 sm:py-2 bg-[#B8860B] hover:bg-[#DAA520] text-white rounded-md sm:rounded-r-md sm:rounded-l-none transition-colors duration-200 font-medium min-h-[44px] whitespace-nowrap"
               >
                 Subscribe
               </button>

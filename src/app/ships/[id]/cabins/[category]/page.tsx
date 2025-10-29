@@ -132,18 +132,20 @@ export default function CabinCategoryDetail() {
           {/* Image Gallery */}
           <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 mb-8">
             {/* Main Image */}
-            <div className="relative h-[400px] lg:h-[500px] rounded-xl overflow-hidden">
-              <img
-                src={displayImages[selectedImage] || '/cruise-default.jpg'}
-                alt={imageCaptions[selectedImage] || `${cabin.name} - View ${selectedImage + 1}`}
-                className="w-full h-full object-cover"
-                onError={(e) => {
-                  e.currentTarget.src = '/cruise-default.jpg';
-                }}
-              />
+            <div className="rounded-xl overflow-hidden shadow-lg border border-gray-200">
+              <div className="relative h-[400px] lg:h-[400px]">
+                <img
+                  src={displayImages[selectedImage] || '/cruise-default.jpg'}
+                  alt={imageCaptions[selectedImage] || `${cabin.name} - View ${selectedImage + 1}`}
+                  className="w-full h-full object-cover"
+                  onError={(e) => {
+                    e.currentTarget.src = '/cruise-default.jpg';
+                  }}
+                />
+              </div>
               {imageCaptions[selectedImage] && (
-                <div className="absolute bottom-0 left-0 right-0 bg-gradient-to-t from-black/80 via-black/50 to-transparent p-4">
-                  <p className="text-white text-sm font-medium">{imageCaptions[selectedImage]}</p>
+                <div className="bg-gray-900 text-white py-4 px-3">
+                  <p className="text-sm font-medium">{imageCaptions[selectedImage]}</p>
                 </div>
               )}
             </div>
@@ -154,27 +156,29 @@ export default function CabinCategoryDetail() {
                 {displayImages.map((image, index) => (
                   <motion.div
                     key={index}
-                    className={`relative h-[120px] rounded-lg overflow-hidden cursor-pointer ${
-                      selectedImage === index ? 'ring-4 ring-[#B8860B]' : ''
+                    className={`rounded-lg overflow-hidden shadow-md border cursor-pointer transition-all ${
+                      selectedImage === index ? 'ring-4 ring-[#B8860B] border-[#B8860B]' : 'border-gray-200 hover:border-[#B8860B]/50'
                     }`}
                     onClick={() => setSelectedImage(index)}
                     whileHover={{ scale: 1.02 }}
                     transition={{ duration: 0.2 }}
                   >
-                    <img
-                      src={image}
-                      alt={imageCaptions[index] || `${cabin.name} - View ${index + 1}`}
-                      className="w-full h-full object-cover"
-                      onError={(e) => {
-                        e.currentTarget.src = '/cruise-default.jpg';
-                      }}
-                    />
-                    <div className="absolute bottom-2 right-2 bg-black bg-opacity-60 text-white px-2 py-1 rounded text-xs">
-                      {index + 1}/{displayImages.length}
+                    <div className="relative h-[100px]">
+                      <img
+                        src={image}
+                        alt={imageCaptions[index] || `${cabin.name} - View ${index + 1}`}
+                        className="w-full h-full object-cover"
+                        onError={(e) => {
+                          e.currentTarget.src = '/cruise-default.jpg';
+                        }}
+                      />
+                      <div className="absolute top-2 right-2 bg-black/70 text-white px-2 py-1 rounded text-xs font-medium">
+                        {index + 1}/{displayImages.length}
+                      </div>
                     </div>
                     {imageCaptions[index] && (
-                      <div className="absolute bottom-0 left-0 right-0 bg-gradient-to-t from-black/90 to-transparent p-2">
-                        <p className="text-white text-xs line-clamp-2">{imageCaptions[index]}</p>
+                      <div className="bg-gray-900 text-white py-1.5 px-2">
+                        <p className="text-xs line-clamp-2 leading-tight">{imageCaptions[index]}</p>
                       </div>
                     )}
                   </motion.div>

@@ -149,7 +149,7 @@ export default function ComingSoon() {
                 placeholder="Enter your email address"
                 value={emailSignup}
                 onChange={(e) => setEmailSignup(e.target.value)}
-                className="flex-1 px-6 py-4 rounded-lg text-white placeholder-gray-300 bg-white/10 backdrop-blur-sm border-2 border-[#F5F5DC] focus:outline-none focus:ring-2 focus:ring-[#F5F5DC] focus:border-[#F5F5DC]"
+                className="flex-1 px-4 sm:px-6 py-3 sm:py-4 rounded-lg text-white placeholder-gray-300 bg-white/10 backdrop-blur-sm border-2 border-[#F5F5DC] focus:outline-none focus:ring-2 focus:ring-[#F5F5DC] focus:border-[#F5F5DC] min-h-[44px]"
                 required
                 disabled={signupStatus === 'submitting'}
               />

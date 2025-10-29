@@ -143,9 +143,10 @@ export default function PackageDetail() {
               <button
                 key={index}
                 onClick={() => setSelectedImageIndex(index)}
-                className={`w-3 h-3 rounded-full ${
+                className={`p-2 rounded-full ${
                   selectedImageIndex === index ? 'bg-white' : 'bg-white/50'
                 }`}
+                style={{ width: '12px', height: '12px', padding: '8px' }}
               />
             ))}
           </div>
@@ -260,13 +261,13 @@ export default function PackageDetail() {
                           {/* Day Images */}
                           {day.images && day.images.length > 0 && (
                             <div className="mt-4">
-                              <div className="grid grid-cols-2 md:grid-cols-3 gap-2">
+                              <div className="grid grid-cols-2 sm:grid-cols-3 gap-2 sm:gap-3">
                                 {day.images.map((image, imgIndex) => (
                                   <img
                                     key={imgIndex}
                                     src={image}
                                     alt={`${day.title} - Image ${imgIndex + 1}`}
-                                    className="w-full h-24 object-cover rounded-md border border-gray-200"
+                                    className="w-full h-20 sm:h-24 md:h-28 object-cover rounded-md border border-gray-200"
                                     onError={(e) => {
                                       e.currentTarget.style.display = 'none';
                                     }}

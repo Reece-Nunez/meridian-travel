@@ -265,7 +265,7 @@ export default function ShipDetail() {
 
             {/* Thumbnail Grid - All Same Size */}
             {images.length > 1 && (
-              <div className="grid grid-cols-4 sm:grid-cols-5 md:grid-cols-6 lg:grid-cols-8 gap-3">
+              <div className="grid grid-cols-3 sm:grid-cols-4 md:grid-cols-5 lg:grid-cols-6 gap-2 sm:gap-3">
                 {images.map((image, index) => (
                   <button
                     key={index}

@@ -335,7 +335,6 @@ export default function QuoteRequest() {
                   <span className="ml-2 text-gray-700">
                     Choose from our curated travel packages
                     {packages.length === 0 && loading && <span className="text-gray-500"> (loading...)</span>}
-                    {packages.length === 0 && !loading && <span className="text-gray-500"> (coming soon)</span>}
                   </span>
                 </label>
 
@@ -351,7 +350,6 @@ export default function QuoteRequest() {
                   <span className="ml-2 text-gray-700">
                     Choose from our luxury cruise experiences
                     {cruises.length === 0 && loading && <span className="text-gray-500"> (loading...)</span>}
-                    {cruises.length === 0 && !loading && <span className="text-gray-500"> (coming soon)</span>}
                   </span>
                 </label>
               </div>
@@ -449,11 +447,13 @@ export default function QuoteRequest() {
                   <option value="">No additional destinations</option>
                 )}
                 <option value="Peru">Peru</option>
-                <option value="Ecuador" disabled>Ecuador (Coming Soon)</option>
-                <option value="Galapagos" disabled>Galapagos Islands (Coming Soon)</option>
-                <option value="Bolivia" disabled>Bolivia (Coming Soon)</option>
-                <option value="Chile" disabled>Chile (Coming Soon)</option>
-                <option value="Argentina" disabled>Argentina (Coming Soon)</option>
+                <option value="Ecuador">Ecuador</option>
+                <option value="Galapagos">Galapagos Islands</option>
+                <option value="Bolivia">Bolivia</option>
+                <option value="Chile">Chile</option>
+                <option value="Argentina">Argentina</option>
+                <option value="Brazil">Brazil</option>
+                <option value="Antarctica">Antarctica</option>
               </select>
             </div>
 

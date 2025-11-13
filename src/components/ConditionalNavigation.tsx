@@ -6,10 +6,6 @@ import Navigation from './Navigation';
 export default function ConditionalNavigation() {
   const pathname = usePathname();
 
-  // Don't show navigation on the homepage (splash page)
-  if (pathname === '/') {
-    return null;
-  }
-
+  // Show navigation on all pages
   return <Navigation />;
 }

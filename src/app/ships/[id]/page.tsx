@@ -458,11 +458,17 @@ export default function ShipDetail() {
                         >
                           <div className="flex items-start gap-4 p-5 bg-gradient-to-r from-[#F5F5DC] to-white border-2 border-[#B8860B]/20 rounded-lg hover:border-[#B8860B] hover:shadow-lg transition-all cursor-pointer group">
                             {imageUrl ? (
-                              <div className="flex-shrink-0 w-24 h-24 rounded-lg overflow-hidden">
+                              <div className="relative aspect-square w-32 rounded-lg overflow-hidden flex-shrink-0 bg-gray-200">
                                 <img
                                   src={imageUrl}
                                   alt={cabin.name}
-                                  className="w-full h-full object-cover"
+                                  className="absolute inset-0 w-full h-full object-cover"
+                                  style={{
+                                    objectFit: 'cover',
+                                    objectPosition: 'center',
+                                    width: '100%',
+                                    height: '100%'
+                                  }}
                                   onError={(e) => {
                                     e.currentTarget.style.display = 'none';
                                   }}
@@ -485,7 +491,7 @@ export default function ShipDetail() {
                               )}
                               <div className="flex items-center gap-4 text-xs text-gray-500">
                                 {(cabin.size_sqft || cabin.size_sqm) && (
-                                  <span>📐 {cabin.size_sqft ? `${cabin.size_sqft} sq ft` : `${cabin.size_sqm} m²`}</span>
+                                  <span>📐 {cabin.size_sqft || cabin.size_sqm} sq ft</span>
                                 )}
                                 {cabin.max_occupancy && <span>👥 Max {cabin.max_occupancy} guests</span>}
                                 {cabin.quantity && <span>✓ {cabin.quantity} available</span>}

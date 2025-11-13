@@ -115,24 +115,29 @@ export default function Footer() {
                 </Link>
               </li>
               <li>
-                <span className="text-gray-400 cursor-not-allowed">Galapagos/Ecuador</span>
-                <span className="text-xs text-gray-500 ml-2">Coming Soon</span>
+                <Link href="/destinations/galapagos-ecuador" className="text-[#F5F5DC] hover:text-[#B8860B] transition-colors duration-200">
+                  Galapagos/Ecuador
+                </Link>
               </li>
               <li>
-                <span className="text-gray-400 cursor-not-allowed">Brazil</span>
-                <span className="text-xs text-gray-500 ml-2">Coming Soon</span>
+                <Link href="/destinations/brazil" className="text-[#F5F5DC] hover:text-[#B8860B] transition-colors duration-200">
+                  Brazil
+                </Link>
               </li>
               <li>
-                <span className="text-gray-400 cursor-not-allowed">Argentina</span>
-                <span className="text-xs text-gray-500 ml-2">Coming Soon</span>
+                <Link href="/destinations/argentina" className="text-[#F5F5DC] hover:text-[#B8860B] transition-colors duration-200">
+                  Argentina
+                </Link>
               </li>
               <li>
-                <span className="text-gray-400 cursor-not-allowed">Chile</span>
-                <span className="text-xs text-gray-500 ml-2">Coming Soon</span>
+                <Link href="/destinations/chile" className="text-[#F5F5DC] hover:text-[#B8860B] transition-colors duration-200">
+                  Chile
+                </Link>
               </li>
               <li>
-                <span className="text-gray-400 cursor-not-allowed">Antarctica</span>
-                <span className="text-xs text-gray-500 ml-2">Coming Soon</span>
+                <Link href="/destinations/antarctica" className="text-[#F5F5DC] hover:text-[#B8860B] transition-colors duration-200">
+                  Antarctica
+                </Link>
               </li>
             </ul>
           </div>

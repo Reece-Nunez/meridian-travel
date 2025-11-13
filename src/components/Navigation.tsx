@@ -258,21 +258,36 @@ export default function Navigation() {
                       >
                         Peru
                       </Link>
-                      <div className="block px-4 py-2 text-sm text-gray-400 cursor-not-allowed">
-                        Galapagos/Ecuador - Coming Soon
-                      </div>
-                      <div className="block px-4 py-2 text-sm text-gray-400 cursor-not-allowed">
-                        Brazil - Coming Soon
-                      </div>
-                      <div className="block px-4 py-2 text-sm text-gray-400 cursor-not-allowed">
-                        Argentina - Coming Soon
-                      </div>
-                      <div className="block px-4 py-2 text-sm text-gray-400 cursor-not-allowed">
-                        Chile - Coming Soon
-                      </div>
-                      <div className="block px-4 py-2 text-sm text-gray-400 cursor-not-allowed">
-                        Antarctica - Coming Soon
-                      </div>
+                      <Link
+                        href="/destinations/galapagos-ecuador"
+                        className="block px-4 py-2 text-sm text-[#8B4513] hover:bg-gray-50 hover:text-[#B8860B]"
+                      >
+                        Galapagos/Ecuador
+                      </Link>
+                      <Link
+                        href="/destinations/brazil"
+                        className="block px-4 py-2 text-sm text-[#8B4513] hover:bg-gray-50 hover:text-[#B8860B]"
+                      >
+                        Brazil
+                      </Link>
+                      <Link
+                        href="/destinations/argentina"
+                        className="block px-4 py-2 text-sm text-[#8B4513] hover:bg-gray-50 hover:text-[#B8860B]"
+                      >
+                        Argentina
+                      </Link>
+                      <Link
+                        href="/destinations/chile"
+                        className="block px-4 py-2 text-sm text-[#8B4513] hover:bg-gray-50 hover:text-[#B8860B]"
+                      >
+                        Chile
+                      </Link>
+                      <Link
+                        href="/destinations/antarctica"
+                        className="block px-4 py-2 text-sm text-[#8B4513] hover:bg-gray-50 hover:text-[#B8860B]"
+                      >
+                        Antarctica
+                      </Link>
                     </div>
                   </div>
                 )}
@@ -344,21 +359,41 @@ export default function Navigation() {
                         >
                           Peru
                         </Link>
-                        <div className="block px-3 py-2 text-sm text-gray-400">
-                          Galapagos/Ecuador - Coming Soon
-                        </div>
-                        <div className="block px-3 py-2 text-sm text-gray-400">
-                          Brazil - Coming Soon
-                        </div>
-                        <div className="block px-3 py-2 text-sm text-gray-400">
-                          Argentina - Coming Soon
-                        </div>
-                        <div className="block px-3 py-2 text-sm text-gray-400">
-                          Chile - Coming Soon
-                        </div>
-                        <div className="block px-3 py-2 text-sm text-gray-400">
-                          Antarctica - Coming Soon
-                        </div>
+                        <Link
+                          href="/destinations/galapagos-ecuador"
+                          className="text-[#8B4513] hover:text-[#B8860B] block px-3 py-2 text-sm"
+                          onClick={() => setIsMobileMenuOpen(false)}
+                        >
+                          Galapagos/Ecuador
+                        </Link>
+                        <Link
+                          href="/destinations/brazil"
+                          className="text-[#8B4513] hover:text-[#B8860B] block px-3 py-2 text-sm"
+                          onClick={() => setIsMobileMenuOpen(false)}
+                        >
+                          Brazil
+                        </Link>
+                        <Link
+                          href="/destinations/argentina"
+                          className="text-[#8B4513] hover:text-[#B8860B] block px-3 py-2 text-sm"
+                          onClick={() => setIsMobileMenuOpen(false)}
+                        >
+                          Argentina
+                        </Link>
+                        <Link
+                          href="/destinations/chile"
+                          className="text-[#8B4513] hover:text-[#B8860B] block px-3 py-2 text-sm"
+                          onClick={() => setIsMobileMenuOpen(false)}
+                        >
+                          Chile
+                        </Link>
+                        <Link
+                          href="/destinations/antarctica"
+                          className="text-[#8B4513] hover:text-[#B8860B] block px-3 py-2 text-sm"
+                          onClick={() => setIsMobileMenuOpen(false)}
+                        >
+                          Antarctica
+                        </Link>
                       </div>
                     </div>
                   )}

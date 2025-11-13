@@ -228,7 +228,7 @@ export default function CabinCategoryDetail() {
                     <svg className="w-5 h-5 mr-2 text-[#B8860B]" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                       <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 8V4m0 0h4M4 4l5 5m11-1V4m0 0h-4m4 0l-5 5M4 16v4m0 0h4m-4 0l5-5m11 5l-5-5m5 5v-4m0 4h-4" />
                     </svg>
-                    {cabin.size_sqft ? `${cabin.size_sqft} sq ft` : `${cabin.size_sqm} m²`}
+                    {cabin.size_sqft || cabin.size_sqm} sq ft
                   </span>
                 )}
               </div>
@@ -313,7 +313,7 @@ export default function CabinCategoryDetail() {
                     <div className="flex justify-between items-center pb-3 border-b border-gray-200">
                       <span className="text-gray-600">Size</span>
                       <span className="font-semibold text-[#8B4513]">
-                        {cabin.size_sqft ? `${cabin.size_sqft} sq ft` : `${cabin.size_sqm} m²`}
+                        {cabin.size_sqft || cabin.size_sqm} sq ft
                       </span>
                     </div>
                   )}

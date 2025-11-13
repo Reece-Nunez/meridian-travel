@@ -536,12 +536,15 @@ export default function Cruises() {
                       src={location.image}
                       alt={location.title}
                       className="w-full h-full object-cover hover:scale-105 transition-transform duration-300"
+                      style={location.name === "Chile" || location.name === "Antarctica" ? { transform: 'translateY(-20%)' } : undefined}
                       onError={(e) => {
                         e.currentTarget.style.display = 'none';
                       }}
                     />
                     <div className="absolute top-4 left-4 bg-[#B8860B] text-white px-3 py-1 rounded-full text-sm font-medium">
-                      {locationStats ? `${locationStats.boatCount} boats available` : 'Coming Soon'}
+                      {locationStats && locationStats.boatCount > 0
+                        ? `${locationStats.boatCount} boats available`
+                        : 'Coming Soon'}
                     </div>
                     {locationStats && locationStats.startingPrice !== null && locationStats.startingPrice > 0 && (
                       <div className="absolute bottom-4 right-4 bg-black bg-opacity-75 text-white px-3 py-1 rounded-full text-sm">
@@ -814,7 +817,7 @@ export default function Cruises() {
                   ) : (
                     <div className="text-center py-12 bg-gray-50 rounded-lg">
                       <p className="text-lg text-gray-600">
-                        New vessels coming soon to this destination. Contact us to learn more about upcoming availability.
+                        Contact us to learn more about vessels operating in this destination.
                       </p>
                     </div>
                   )}

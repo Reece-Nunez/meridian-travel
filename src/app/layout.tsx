@@ -1,4 +1,4 @@
-import type { Metadata } from "next";
+import type { Metadata, Viewport } from "next";
 import { Geist, Geist_Mono } from "next/font/google";
 import localFont from "next/font/local";
 import Script from "next/script";
@@ -27,7 +27,7 @@ const leJourSerif = localFont({
     },
     {
       path: "../fonts/LeJourSerif.woff",
-      weight: "400", 
+      weight: "400",
       style: "normal",
     }
   ],
@@ -39,7 +39,11 @@ const leJourSerif = localFont({
 export const metadata: Metadata = {
   title: "Meridian Luxury Travel - Luxury South American Adventures",
   description: "Discover South America with expertly crafted travel experiences. Luxury tours to Machu Picchu, Amazon rainforest, and more. Request your custom quote today.",
-  viewport: "width=device-width, initial-scale=1",
+};
+
+export const viewport: Viewport = {
+  width: "device-width",
+  initialScale: 1,
   themeColor: "#0F172A",
 };
 

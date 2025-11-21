@@ -288,6 +288,12 @@ export default function Navigation() {
                       >
                         Antarctica
                       </Link>
+                      <Link
+                        href="/destinations/arctic"
+                        className="block px-4 py-2 text-sm text-[#8B4513] hover:bg-gray-50 hover:text-[#B8860B]"
+                      >
+                        Arctic
+                      </Link>
                     </div>
                   </div>
                 )}
@@ -393,6 +399,13 @@ export default function Navigation() {
                           onClick={() => setIsMobileMenuOpen(false)}
                         >
                           Antarctica
+                        </Link>
+                        <Link
+                          href="/destinations/arctic"
+                          className="text-[#8B4513] hover:text-[#B8860B] block px-3 py-2 text-sm"
+                          onClick={() => setIsMobileMenuOpen(false)}
+                        >
+                          Arctic
                         </Link>
                       </div>
                     </div>

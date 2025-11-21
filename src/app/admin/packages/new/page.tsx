@@ -311,7 +311,11 @@ function NewPackageContent() {
         // Include pricing fields - convert empty strings to null
         price_usd: formData.price_usd || null,
         price_eur: formData.price_eur || null,
-        price_gbp: formData.price_gbp || null
+        price_gbp: formData.price_gbp || null,
+        // Convert empty ship_id to null for land packages
+        ship_id: formData.ship_id || null,
+        ship_name: formData.ship_name || null,
+        cabin_category: formData.cabin_category || null
       };
 
       console.log('Inserting package data:', packageData);

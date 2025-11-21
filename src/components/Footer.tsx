@@ -139,6 +139,11 @@ export default function Footer() {
                   Antarctica
                 </Link>
               </li>
+              <li>
+                <Link href="/destinations/arctic" className="text-[#F5F5DC] hover:text-[#B8860B] transition-colors duration-200">
+                  Arctic
+                </Link>
+              </li>
             </ul>
           </div>
 

@@ -18,7 +18,7 @@ interface ProcessedCruise {
   ship: Ship;
 }
 
-export default function AntarcticaDestination() {
+export default function ArcticDestination() {
   const [cruises, setCruises] = useState<ProcessedCruise[]>([]);
   const [loading, setLoading] = useState(true);
 
@@ -38,7 +38,7 @@ export default function AntarcticaDestination() {
 
       if (shipsError) throw shipsError;
 
-      // Fetch cruise packages for Antarctica
+      // Fetch cruise packages
       const { data: packages, error: packagesError } = await supabase
         .from('trip_packages')
         .select('*')
@@ -89,15 +89,17 @@ export default function AntarcticaDestination() {
         }
       });
 
-      // Filter ships that operate in Antarctica
-      const antarcticShips = ships?.filter((ship: any) =>
+      // Filter ships that operate in Chile/Patagonia (Arctic Voyages section)
+      const arcticShips = ships?.filter((ship: any) =>
         ship.operating_regions?.some((region: string) =>
-          region.toLowerCase().includes('antarctica') || region.toLowerCase().includes('antarctic')
+          region.toLowerCase().includes('chile') ||
+          region.toLowerCase().includes('patagonia') ||
+          region.toLowerCase().includes('fjord')
         )
       ) || [];
 
       // Process ships into cruises
-      const processedCruises: ProcessedCruise[] = antarcticShips.map((ship: any) => ({
+      const processedCruises: ProcessedCruise[] = arcticShips.map((ship: any) => ({
         id: ship.id,
         name: ship.name,
         capacity: ship.capacity,
@@ -111,7 +113,7 @@ export default function AntarcticaDestination() {
 
       setCruises(processedCruises);
     } catch (error) {
-      console.error('Error fetching Antarctica cruises:', error);
+      console.error('Error fetching Arctic cruises:', error);
     } finally {
       setLoading(false);
     }
@@ -119,24 +121,20 @@ export default function AntarcticaDestination() {
 
   const highlights = [
     {
-      title: 'Wildlife Encounters',
-      description: 'Observe emperor penguins, Weddell seals, orcas, and humpback whales in their natural habitat',
-      icon: '🐧'
+      title: 'Dramatic Fjords',
+      description: 'Navigate through spectacular fjords carved by ancient glaciers with towering walls and pristine waters'
     },
     {
-      title: 'Dramatic Landscapes',
-      description: 'Towering icebergs, glacial formations, and pristine white wilderness stretching endlessly',
-      icon: '🏔️'
+      title: 'Glacial Landscapes',
+      description: 'Witness massive glaciers calving into the sea and explore ice fields that stretch to the horizon'
     },
     {
-      title: 'Scientific Heritage',
-      description: 'Visit historic research stations and learn about Antarctic exploration and climate research',
-      icon: '🔬'
+      title: 'Remote Wilderness',
+      description: 'Experience the untouched beauty of Patagonian channels and islands far from civilization'
     },
     {
-      title: 'Zodiac Expeditions',
-      description: 'Navigate between ice floes and land at remote locations inaccessible to larger vessels',
-      icon: '⛵'
+      title: 'Wildlife Viewing',
+      description: 'Spot sea lions, dolphins, Magellanic penguins, and diverse seabirds in their natural environment'
     }
   ];
 
@@ -144,26 +142,26 @@ export default function AntarcticaDestination() {
     {
       category: 'Best Time to Visit',
       details: [
-        'November-March: Antarctic summer season',
-        'December-January: Peak season, longest days',
-        'February-March: Best for whale watching'
+        'October-April: Austral summer season',
+        'December-February: Warmest weather, longest days',
+        'Best for glacier viewing year-round'
       ]
     },
     {
       category: 'What to Expect',
       details: [
-        'Temperatures: -2°C to 8°C (28°F to 46°F)',
-        '20+ hours of daylight during peak season',
-        'Drake Passage crossing (can be rough)'
+        'Temperatures: 5C to 15C (41F to 59F)',
+        'Variable weather - prepare for all conditions',
+        'Zodiac landings and kayaking opportunities'
       ]
     },
     {
       category: 'What to Pack',
       details: [
-        'Waterproof expedition jacket and pants',
-        'Warm layers (thermal underwear, fleece)',
-        'Waterproof gloves and warm hat',
-        'Seasickness medication recommended'
+        'Waterproof outer layers',
+        'Warm fleece and base layers',
+        'Comfortable waterproof boots',
+        'Binoculars for wildlife viewing'
       ]
     }
   ];
@@ -174,9 +172,10 @@ export default function AntarcticaDestination() {
       <div className="relative h-screen overflow-hidden">
         <div className="absolute inset-0">
           <img
-            src="/locations/antarctica-hero.jpg"
-            alt="Antarctica landscape"
+            src="/locations/chile-hero.webp"
+            alt="Arctic fjords landscape"
             className="w-full h-full object-cover"
+            style={{ objectPosition: 'center 30%' }}
             onError={(e) => {
               e.currentTarget.src = '/destinations/default.jpg';
             }}
@@ -191,7 +190,7 @@ export default function AntarcticaDestination() {
               animate={{ opacity: 1, y: 0 }}
               transition={{ duration: 0.8 }}
             >
-              Antarctica
+              Arctic Voyages
             </motion.h1>
             <motion.p
               className="text-xl sm:text-2xl mb-8 text-gray-200"
@@ -199,7 +198,7 @@ export default function AntarcticaDestination() {
               animate={{ opacity: 1, y: 0 }}
               transition={{ duration: 0.8, delay: 0.2 }}
             >
-              Earth's last pristine wilderness - a frozen continent of extraordinary beauty and wildlife
+              Navigate the dramatic fjords and channels of Chilean Patagonia - where glaciers meet the sea
             </motion.p>
             <motion.div
               className="flex flex-col sm:flex-row gap-4 justify-center"
@@ -211,7 +210,7 @@ export default function AntarcticaDestination() {
                 href="/cruises"
                 className="bg-[#B8860B] hover:bg-[#DAA520] text-white px-8 py-4 rounded-md text-lg font-medium transition-colors duration-200"
               >
-                View All Expeditions
+                View All Voyages
               </Link>
               <Link
                 href="/quote"
@@ -224,16 +223,16 @@ export default function AntarcticaDestination() {
         </div>
       </div>
 
-      {/* Why Antarctica Section */}
+      {/* Why Arctic Section */}
       <section className="py-20 bg-white">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
           <div className="text-center mb-16">
             <h2 className="text-4xl font-bold text-[#8B4513] mb-4">
-              Experience the White Continent
+              Discover Patagonian Wilderness
             </h2>
             <p className="text-xl text-gray-600 max-w-3xl mx-auto">
-              Antarctica offers an unparalleled adventure to the world's most remote and pristine environment,
-              where towering icebergs, majestic wildlife, and endless horizons create memories of a lifetime.
+              Sail through one of the world's most spectacular landscapes, where ancient glaciers carve through
+              mountains and fjords shelter incredible wildlife in pristine, remote waters.
             </p>
           </div>
 
@@ -241,13 +240,12 @@ export default function AntarcticaDestination() {
             {highlights.map((highlight, index) => (
               <motion.div
                 key={highlight.title}
-                className="text-center"
+                className="text-center p-6 bg-gray-50 rounded-lg"
                 initial={{ opacity: 0, y: 30 }}
                 whileInView={{ opacity: 1, y: 0 }}
                 viewport={{ once: true }}
                 transition={{ duration: 0.6, delay: index * 0.1 }}
               >
-                <div className="text-6xl mb-4">{highlight.icon}</div>
                 <h3 className="text-xl font-bold text-[#8B4513] mb-2">{highlight.title}</h3>
                 <p className="text-gray-600">{highlight.description}</p>
               </motion.div>
@@ -256,27 +254,27 @@ export default function AntarcticaDestination() {
         </div>
       </section>
 
-      {/* Available Expeditions Section */}
+      {/* Available Voyages Section */}
       <section className="py-20 bg-[#F5F5DC]">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
           <div className="text-center mb-16">
             <h2 className="text-4xl font-bold text-[#8B4513] mb-4">
-              Antarctic Expeditions
+              Arctic Voyages
             </h2>
             <p className="text-xl text-gray-600 max-w-3xl mx-auto">
-              Our carefully selected fleet of expedition vessels designed for polar exploration
+              Explore the Chilean fjords aboard our expedition vessels designed for navigating remote channels
             </p>
           </div>
 
           {loading ? (
             <div className="text-center py-12">
               <div className="inline-block animate-spin rounded-full h-12 w-12 border-b-2 border-[#B8860B]"></div>
-              <p className="mt-4 text-gray-600">Loading expeditions...</p>
+              <p className="mt-4 text-gray-600">Loading voyages...</p>
             </div>
           ) : cruises.length === 0 ? (
             <div className="text-center py-12 bg-white rounded-lg shadow-md">
               <p className="text-xl text-gray-600 mb-6">
-                New Antarctic expeditions coming soon!
+                New Arctic voyages coming soon!
               </p>
               <Link
                 href="/contact"
@@ -366,7 +364,7 @@ export default function AntarcticaDestination() {
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
           <div className="text-center mb-16">
             <h2 className="text-4xl font-bold text-[#8B4513] mb-4">
-              Plan Your Antarctic Expedition
+              Plan Your Arctic Voyage
             </h2>
           </div>
 
@@ -401,10 +399,10 @@ export default function AntarcticaDestination() {
       <section className="py-16 bg-[#2D5016]">
         <div className="px-4 sm:px-6 lg:px-8 max-w-4xl mx-auto text-center">
           <h3 className="text-3xl sm:text-4xl font-bold text-white mb-4">
-            Ready to Explore Antarctica?
+            Ready to Explore the Arctic?
           </h3>
           <p className="text-xl text-[#F5F5DC] mb-8">
-            Let our expedition specialists help you plan your once-in-a-lifetime Antarctic adventure.
+            Let our voyage specialists help you plan your Patagonian fjords adventure.
           </p>
           <Link
             href="/quote"

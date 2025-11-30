@@ -194,7 +194,7 @@ export default function QuoteRequest() {
       <div className="relative py-24 overflow-hidden">
         <div className="absolute inset-0">
           <img 
-            src="/quote.jpg" 
+            src="https://meridian-travel.s3.us-east-1.amazonaws.com/quote.webp" 
             alt="Request custom travel quote"
             className="w-full h-full object-cover"
             onError={(e) => {

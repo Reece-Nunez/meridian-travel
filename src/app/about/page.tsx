@@ -78,7 +78,7 @@ export default function About() {
       <div className="relative py-24 overflow-hidden">
         <div className="absolute inset-0">
           <img
-            src="/about-us.jpg"
+            src="https://meridian-travel.s3.us-east-1.amazonaws.com/about-us.webp"
             alt="About us team and travel experiences"
             className="w-full h-full object-cover"
             onError={(e) => {

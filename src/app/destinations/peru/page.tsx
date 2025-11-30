@@ -26,7 +26,7 @@ export default function PeruDestination() {
       highlights: ['Machu Picchu', 'Cusco', 'Sacred Valley', 'Rainbow Mountain', 'Lake Titicaca'],
       climate: 'Dry season: May-September (ideal for trekking)',
       altitude: 'Up to 4,200m (13,780ft)',
-      image: '/andean-highlands.jpg'
+      image: 'https://meridian-travel.s3.us-east-1.amazonaws.com/peru-highlands.webp'
     },
     {
       id: 'amazon',
@@ -36,7 +36,7 @@ export default function PeruDestination() {
       highlights: ['Manu National Park', 'Iquitos', 'Tambopata Reserve', 'Indigenous communities'],
       climate: 'Wet season: Nov-Apr, Dry season: May-Oct',
       altitude: '80-500m (260-1,640ft)',
-      image: '/rainforest.jpg'
+      image: 'https://meridian-travel.s3.us-east-1.amazonaws.com/peru-amazon.webp'
     },
     {
       id: 'coast',
@@ -46,7 +46,7 @@ export default function PeruDestination() {
       highlights: ['Lima', 'Nazca Lines', 'Huacachina Oasis', 'Paracas Peninsula'],
       climate: 'Mild year-round, very little rain',
       altitude: 'Sea level to 500m (1,640ft)',
-      image: '/pacific-coast.webp'
+      image: 'https://meridian-travel.s3.us-east-1.amazonaws.com/peru-coast.webp'
     }
   ];
 
@@ -114,7 +114,7 @@ export default function PeruDestination() {
       <div className="relative h-screen overflow-hidden">
         <div className="absolute inset-0">
           <img 
-            src="/peru-header.jpg" 
+            src="https://meridian-travel.s3.us-east-1.amazonaws.com/peru-header.webp" 
             alt="Peru landscape"
             className="w-full h-full object-cover"
           />
@@ -219,6 +219,7 @@ export default function PeruDestination() {
                     src={region.image}
                     alt={region.name}
                     className="absolute inset-0 w-full h-full object-cover group-hover:scale-105 transition-transform duration-300"
+                    style={{ objectPosition: 'center center' }}
                     onError={(e) => {
                       const target = e.currentTarget as HTMLImageElement;
                       target.src = '/destinations/default.jpg';

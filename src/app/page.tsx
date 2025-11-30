@@ -144,7 +144,7 @@ export default function Home() {
           loop
           playsInline
         >
-          <source src="/meridian-header.mp4" type="video/mp4" />
+          <source src="https://meridian-travel.s3.us-east-1.amazonaws.com/meridian-header-compressed.mp4" type="video/mp4" />
         </video>
         <div className="absolute inset-0 bg-black opacity-50"></div>
         <div className="relative z-10 text-center text-white px-4 sm:px-6 lg:px-8">
@@ -259,7 +259,7 @@ export default function Home() {
             >
               <div className="h-48 relative overflow-hidden bg-gray-200">
                 <img
-                  src="/machu.jpg"
+                  src="https://meridian-travel.s3.us-east-1.amazonaws.com/machu.webp"
                   alt="Machu Picchu ancient citadel ruins"
                   className="absolute inset-0 w-full h-full object-cover z-0"
                   onError={(e) => {
@@ -291,7 +291,7 @@ export default function Home() {
             >
               <div className="h-48 relative overflow-hidden bg-gray-200">
                 <img
-                  src="/rainforest.jpg"
+                  src="https://meridian-travel.s3.us-east-1.amazonaws.com/rainforest.webp"
                   alt="Amazon rainforest canopy and wildlife"
                   className="absolute inset-0 w-full h-full object-cover z-0"
                   onError={(e) => {
@@ -323,7 +323,7 @@ export default function Home() {
             >
               <div className="h-48 relative overflow-hidden bg-gray-200">
                 <img
-                  src="/sacred-valley.jpg"
+                  src="https://meridian-travel.s3.us-east-1.amazonaws.com/sacred-valley.webp"
                   alt="Sacred Valley terraced landscapes and Andean villages"
                   className="absolute inset-0 w-full h-full object-cover z-0"
                   onError={(e) => {

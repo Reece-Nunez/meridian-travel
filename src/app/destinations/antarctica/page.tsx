@@ -174,7 +174,7 @@ export default function AntarcticaDestination() {
       <div className="relative h-screen overflow-hidden">
         <div className="absolute inset-0">
           <img
-            src="/locations/antarctica-hero.jpg"
+            src="https://meridian-travel.s3.us-east-1.amazonaws.com/antarctica.webp"
             alt="Antarctica landscape"
             className="w-full h-full object-cover"
             onError={(e) => {

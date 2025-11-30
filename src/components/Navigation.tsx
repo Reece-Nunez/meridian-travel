@@ -74,7 +74,7 @@ export default function Navigation() {
           <div className="flex items-center space-x-2 sm:space-x-4">
             <Link href="/" className="flex-shrink-0">
               <img
-                src="/logo.png"
+                src="https://meridian-travel.s3.us-east-1.amazonaws.com/logo.png"
                 alt="Meridian Luxury Travel"
                 className="h-14 w-14 sm:h-16 sm:w-16 md:h-20 md:w-20"
                 onError={(e) => {
@@ -259,10 +259,10 @@ export default function Navigation() {
                         Peru
                       </Link>
                       <Link
-                        href="/destinations/galapagos-ecuador"
+                        href="/destinations/ecuador"
                         className="block px-4 py-2 text-sm text-[#8B4513] hover:bg-gray-50 hover:text-[#B8860B]"
                       >
-                        Galapagos/Ecuador
+                        Ecuador
                       </Link>
                       <Link
                         href="/destinations/brazil"
@@ -281,6 +281,12 @@ export default function Navigation() {
                         className="block px-4 py-2 text-sm text-[#8B4513] hover:bg-gray-50 hover:text-[#B8860B]"
                       >
                         Chile
+                      </Link>
+                      <Link
+                        href="/destinations/galapagos"
+                        className="block px-4 py-2 text-sm text-[#8B4513] hover:bg-gray-50 hover:text-[#B8860B]"
+                      >
+                        Galapagos Islands
                       </Link>
                       <Link
                         href="/destinations/antarctica"
@@ -366,11 +372,11 @@ export default function Navigation() {
                           Peru
                         </Link>
                         <Link
-                          href="/destinations/galapagos-ecuador"
+                          href="/destinations/ecuador"
                           className="text-[#8B4513] hover:text-[#B8860B] block px-3 py-2 text-sm"
                           onClick={() => setIsMobileMenuOpen(false)}
                         >
-                          Galapagos/Ecuador
+                          Ecuador
                         </Link>
                         <Link
                           href="/destinations/brazil"
@@ -392,6 +398,13 @@ export default function Navigation() {
                           onClick={() => setIsMobileMenuOpen(false)}
                         >
                           Chile
+                        </Link>
+                        <Link
+                          href="/destinations/galapagos"
+                          className="text-[#8B4513] hover:text-[#B8860B] block px-3 py-2 text-sm"
+                          onClick={() => setIsMobileMenuOpen(false)}
+                        >
+                          Galapagos Islands
                         </Link>
                         <Link
                           href="/destinations/antarctica"

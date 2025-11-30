@@ -87,35 +87,35 @@ const locationDisplayInfo = [
     name: "Galapagos",
     title: "Galapagos Discoveries",
     description: "Follow Darwin's footsteps through the enchanted islands where evolution comes alive with unique wildlife found nowhere else.",
-    image: "/locations/galapagos-hero.webp",
+    image: "https://meridian-travel.s3.us-east-1.amazonaws.com/galapagos-hero.webp",
     features: ["Unique wildlife", "Snorkeling", "Educational tours", "Multiple itineraries"]
   },
   {
     name: "Amazon",
     title: "Amazon Explorations",
     description: "Journey deep into the world's largest rainforest, discovering incredible biodiversity and indigenous cultures.",
-    image: "/locations/amazon-hero.png",
+    image: "https://meridian-travel.s3.us-east-1.amazonaws.com/amazon-hero.webp",
     features: ["Rainforest wildlife", "Indigenous culture", "River expeditions", "Birdwatching"]
   },
   {
     name: "Antarctica",
     title: "Antarctic Expeditions",
     description: "Experience the last pristine wilderness on Earth with encounters with penguins, whales, and dramatic ice formations.",
-    image: "/locations/antarctica-hero.jpg",
+    image: "https://meridian-travel.s3.us-east-1.amazonaws.com/antarctica.webp",
     features: ["Emperor penguins", "Massive icebergs", "Zodiac landings", "Expert guides"]
   },
   {
     name: "Chile",
     title: "Arctic Voyages",
     description: "Navigate the dramatic fjords and channels of Chilean Patagonia, discovering glaciers, wildlife, and remote landscapes.",
-    image: "/locations/chile-hero.webp",
+    image: "https://meridian-travel.s3.us-east-1.amazonaws.com/arctic.webp",
     features: ["Glacier viewing", "Fjord navigation", "Wildlife watching", "Hiking excursions"]
   },
   {
     name: "Diving",
     title: "Diving Cruises",
     description: "Explore the world's most spectacular dive sites aboard specialized diving vessels with expert crews and top-notch equipment.",
-    image: "/locations/diving-hero.jpg",
+    image: "https://meridian-travel.s3.us-east-1.amazonaws.com/diving-hero.webp",
     features: ["World-class dive sites", "Expert dive guides", "Modern equipment", "Small group expeditions"]
   }
 ];
@@ -439,7 +439,7 @@ export default function Cruises() {
       <div className="relative h-[500px] md:h-[700px] overflow-hidden bg-gray-900">
         <div className="absolute inset-0">
           <img
-            src="/cruise-ship.png"
+            src="https://meridian-travel.s3.us-east-1.amazonaws.com/cruise-ship.webp"
             alt="Luxury cruise ship"
             className="w-full h-full md:h-[120%] object-cover md:-translate-y-[20%]"
             style={{ objectPosition: 'center 30%' }}

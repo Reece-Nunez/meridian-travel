@@ -617,12 +617,13 @@ export default function EditPackage() {
                 >
                   <option value="">Select destination</option>
                   <option value="Peru">Peru</option>
+                  <option value="Ecuador">Ecuador</option>
+                  <option value="Brazil">Brazil</option>
                   <option value="Argentina">Argentina</option>
                   <option value="Chile">Chile</option>
-                  <option value="Brazil">Brazil</option>
-                  <option value="Ecuador">Ecuador</option>
                   <option value="Galapagos">Galapagos Islands</option>
                   <option value="Antarctica">Antarctica</option>
+                  <option value="Arctic">Arctic</option>
                 </select>
               </div>
 

@@ -115,7 +115,7 @@ export default function TravelStyles() {
       <div className="relative py-24 overflow-hidden">
         <div className="absolute inset-0">
           <img 
-            src="/luxury-travel.jpg" 
+            src="https://meridian-travel.s3.us-east-1.amazonaws.com/luxury-travel.webp" 
             alt="Luxury travel experience header"
             className="w-full h-full object-cover"
             onError={(e) => {

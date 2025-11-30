@@ -156,7 +156,7 @@ export default function Contact() {
       <div className="relative py-24 overflow-hidden">
         <div className="absolute inset-0">
           <img 
-            src="/contact.jpg" 
+            src="https://meridian-travel.s3.us-east-1.amazonaws.com/contact.webp" 
             alt="Contact us for travel planning"
             className="w-full h-full object-cover"
             onError={(e) => {

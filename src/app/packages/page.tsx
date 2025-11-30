@@ -77,22 +77,22 @@ export default function Packages() {
     Peru: {
       description: 'Ancient civilizations, dramatic landscapes, and rich cultural heritage',
       highlight: 'Home to Machu Picchu and the Amazon',
-      image: '/peru-packages.jpg'
+      image: 'https://meridian-travel.s3.us-east-1.amazonaws.com/peru-packages.webp'
     },
     Argentina: {
       description: 'From cosmopolitan Buenos Aires to the wild beauty of Patagonia',
       highlight: 'Tango, wine, and glaciers',
-      image: '/argentina-packages.jpg'
+      image: 'https://meridian-travel.s3.us-east-1.amazonaws.com/argentina-packages.webp'
     },
     Chile: {
       description: 'Diverse landscapes from Atacama Desert to Patagonian fjords',
       highlight: 'World\'s driest desert and Easter Island',
-      image: '/chile-packages.jpg'
+      image: 'https://meridian-travel.s3.us-east-1.amazonaws.com/chile-packages.webp'
     },
     Brazil: {
       description: 'Vibrant cities, pristine beaches, and Amazon rainforest',
       highlight: 'Rio de Janeiro and Iguazu Falls',
-      image: '/brazil-packages.jpg'
+      image: 'https://meridian-travel.s3.us-east-1.amazonaws.com/brazil-packages.webp'
     }
   };
 
@@ -181,7 +181,7 @@ export default function Packages() {
       <div className="relative py-32 overflow-hidden">
         <div className="absolute inset-0">
           <img 
-            src="/travel.jpg" 
+            src="https://meridian-travel.s3.us-east-1.amazonaws.com/travel.webp" 
             alt="Luxury travel experiences" 
             className="w-full h-full object-cover"
             onError={(e) => {

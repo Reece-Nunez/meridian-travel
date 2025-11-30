@@ -172,7 +172,7 @@ export default function ArcticDestination() {
       <div className="relative h-screen overflow-hidden">
         <div className="absolute inset-0">
           <img
-            src="/locations/chile-hero.webp"
+            src="https://meridian-travel.s3.us-east-1.amazonaws.com/arctic.webp"
             alt="Arctic fjords landscape"
             className="w-full h-full object-cover"
             style={{ objectPosition: 'center 30%' }}

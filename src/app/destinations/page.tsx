@@ -32,26 +32,26 @@ const destinations: Destination[] = [
     bestTime: 'May - September (Dry Season)',
     duration: '7-14 days',
     available: true,
-    image: '/peru-destinations.jpg',
+    image: 'https://meridian-travel.s3.us-east-1.amazonaws.com/peru-destinations.webp',
     slug: 'peru'
   },
   {
     id: '2',
-    name: 'Galapagos & Ecuador',
-    description: 'Experience unique wildlife and pristine nature in one of the world\'s most remarkable ecosystems.',
+    name: 'Ecuador',
+    description: 'Four worlds in one country - from volcanic highlands to Amazon rainforest and Pacific coast.',
     highlights: [
-      'Unique Wildlife Encounters',
-      'Pristine Marine Environment',
-      'Volcanic Landscapes',
       'Quito Colonial Architecture',
+      'Otavalo Indigenous Market',
       'Cloud Forest Adventures',
-      'Indigenous Markets'
+      'Amazon Rainforest',
+      'Avenue of Volcanoes',
+      'Middle of the World'
     ],
-    bestTime: 'December - May (Warm Season)',
+    bestTime: 'June - September (Dry Season)',
     duration: '8-12 days',
-    available: false,
-    image: '/galapagos.jpg',
-    slug: 'galapagos-ecuador'
+    available: true,
+    image: 'https://meridian-travel.s3.us-east-1.amazonaws.com/ecuador-hero.webp',
+    slug: 'ecuador'
   },
   {
     id: '3',
@@ -67,8 +67,8 @@ const destinations: Destination[] = [
     ],
     bestTime: 'April - October (Dry Season)',
     duration: '10-16 days',
-    available: false,
-    image: '/brazil.jpg',
+    available: true,
+    image: 'https://meridian-travel.s3.us-east-1.amazonaws.com/brazil.webp',
     slug: 'brazil'
   },
   {
@@ -85,8 +85,8 @@ const destinations: Destination[] = [
     ],
     bestTime: 'October - April (Spring/Summer)',
     duration: '12-18 days',
-    available: false,
-    image: '/argentina.jpg',
+    available: true,
+    image: 'https://meridian-travel.s3.us-east-1.amazonaws.com/argentina.webp',
     slug: 'argentina'
   },
   {
@@ -103,12 +103,30 @@ const destinations: Destination[] = [
     ],
     bestTime: 'October - March (Spring/Summer)',
     duration: '12-16 days',
-    available: false,
-    image: '/chile.jpg',
+    available: true,
+    image: 'https://meridian-travel.s3.us-east-1.amazonaws.com/chile.webp',
     slug: 'chile'
   },
   {
     id: '6',
+    name: 'Galapagos Islands',
+    description: 'Experience unique wildlife and pristine nature in one of the world\'s most remarkable ecosystems.',
+    highlights: [
+      'Giant Tortoises',
+      'Marine Iguanas',
+      'Blue-footed Boobies',
+      'Snorkeling with Sea Lions',
+      'Volcanic Landscapes',
+      'Darwin\'s Living Laboratory'
+    ],
+    bestTime: 'December - May (Warm Season)',
+    duration: '5-10 days',
+    available: true,
+    image: 'https://meridian-travel.s3.us-east-1.amazonaws.com/galapagos-hero.webp',
+    slug: 'galapagos'
+  },
+  {
+    id: '7',
     name: 'Antarctica',
     description: 'The ultimate wilderness adventure to the most remote and pristine continent on Earth.',
     highlights: [
@@ -121,9 +139,27 @@ const destinations: Destination[] = [
     ],
     bestTime: 'November - March (Antarctic Summer)',
     duration: '10-21 days',
-    available: false,
-    image: '/antarctica.jpg',
+    available: true,
+    image: 'https://meridian-travel.s3.us-east-1.amazonaws.com/antarctica.webp',
     slug: 'antarctica'
+  },
+  {
+    id: '8',
+    name: 'Arctic',
+    description: 'Explore the pristine wilderness of the Arctic Circle with polar bears, glaciers, and Northern Lights.',
+    highlights: [
+      'Polar Bear Sightings',
+      'Arctic Glaciers',
+      'Svalbard Wilderness',
+      'Zodiac Explorations',
+      'Northern Lights',
+      'Arctic Wildlife'
+    ],
+    bestTime: 'June - September (Arctic Summer)',
+    duration: '10-16 days',
+    available: true,
+    image: 'https://meridian-travel.s3.us-east-1.amazonaws.com/arctic.webp',
+    slug: 'arctic'
   }
 ];
 
@@ -136,7 +172,7 @@ export default function Destinations() {
       <div className="relative py-32 overflow-hidden">
         <div className="absolute inset-0">
           <img 
-            src="/destinations.jpg" 
+            src="https://meridian-travel.s3.us-east-1.amazonaws.com/destinations.webp" 
             alt="South American destinations" 
             className="w-full h-full object-cover"
             onError={(e) => {

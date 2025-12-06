@@ -205,7 +205,7 @@ export default function PackageDetail() {
             {/* Description */}
             <section>
               <h2 className="text-2xl font-bold text-[#8B4513] mb-4">About This Trip</h2>
-              <p className="text-gray-600 text-lg leading-relaxed">{pkg.description}</p>
+              <p className="text-gray-600 text-lg leading-relaxed whitespace-pre-line">{pkg.description}</p>
             </section>
 
             {/* Itinerary */}
@@ -242,7 +242,7 @@ export default function PackageDetail() {
                                     <div className="flex-1">
                                       <div className="font-medium text-gray-800">{activityName}</div>
                                       {activityDescription && (
-                                        <p className="text-gray-600 text-sm mt-1 leading-relaxed">{activityDescription}</p>
+                                        <p className="text-gray-600 text-sm mt-1 leading-relaxed whitespace-pre-line">{activityDescription}</p>
                                       )}
                                     </div>
                                   </div>

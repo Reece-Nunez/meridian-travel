@@ -83,7 +83,7 @@ export default function Navigation() {
                 }}
               />
             </Link>
-            <Link href="/" className="flex-shrink-0 hidden xs:block">
+            <Link href="/" className="flex-shrink-0 hidden sm:block">
               <div className="text-left">
                 <h1 className="text-base sm:text-lg md:text-xl lg:text-2xl font-serif font-bold text-[#8B4513] tracking-wide leading-tight">
                   Meridian Luxury Travel

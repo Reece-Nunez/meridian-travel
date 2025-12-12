@@ -115,7 +115,7 @@ export default function Packages() {
       animate={{ opacity: 1, y: 0 }}
       transition={{ duration: 0.6, delay: index * 0.1 }}
     >
-      <div className="h-56 relative overflow-hidden">
+      <div className="h-42 relative overflow-hidden">
         {pkg.images && pkg.images[0] ? (
           <img
             src={pkg.images[0]}

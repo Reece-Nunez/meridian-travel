@@ -6,6 +6,7 @@ import { useState, useEffect } from 'react';
 import { getContentByKey, getSettingByKey } from '@/lib/content';
 import { supabase } from '@/lib/supabase';
 import { TripPackage, Ship } from '@/types/database';
+import { useScrollRestoration } from '@/hooks/useScrollRestoration';
 
 // Helper function to extract numbers from pricing text
 const extractPriceFromText = (priceText: string): number | null => {
@@ -133,26 +134,8 @@ export default function Cruises() {
   const [loading, setLoading] = useState(true);
   const [locations, setLocations] = useState<LocationInfo[]>([]);
 
-  // Save scroll position before navigating away
-  useEffect(() => {
-    const handleScroll = () => {
-      sessionStorage.setItem('cruisesScrollPosition', window.scrollY.toString());
-    };
-
-    window.addEventListener('scroll', handleScroll);
-    return () => window.removeEventListener('scroll', handleScroll);
-  }, []);
-
-  // Restore scroll position on mount
-  useEffect(() => {
-    const savedPosition = sessionStorage.getItem('cruisesScrollPosition');
-    if (savedPosition) {
-      // Wait for content to render before scrolling
-      setTimeout(() => {
-        window.scrollTo(0, parseInt(savedPosition));
-      }, 100);
-    }
-  }, [loading]); // Trigger after loading completes
+  // Scroll restoration for back button navigation
+  useScrollRestoration('cruises', !loading);
 
   const filteredBoats = selectedLocation
     ? processedBoats.filter(boat => boat.location === selectedLocation)

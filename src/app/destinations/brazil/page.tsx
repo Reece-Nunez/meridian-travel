@@ -3,9 +3,13 @@
 import Link from 'next/link';
 import { motion, AnimatePresence } from 'framer-motion';
 import { useState } from 'react';
+import { useScrollRestoration } from '@/hooks/useScrollRestoration';
 
 export default function BrazilDestination() {
   const [selectedRegion, setSelectedRegion] = useState<string | null>(null);
+
+  // Scroll restoration for back button navigation
+  useScrollRestoration('destinationBrazil');
 
   const handleRegionClick = (regionId: string) => {
     const newSelection = selectedRegion === regionId ? null : regionId;

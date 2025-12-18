@@ -157,11 +157,6 @@ export default function Footer() {
                 </Link>
               </li>
               <li>
-                <Link href="/travel-styles" className="text-[#F5F5DC] hover:text-[#B8860B] transition-colors duration-200">
-                  Travel Styles
-                </Link>
-              </li>
-              <li>
                 <Link href="/contact" className="text-[#F5F5DC] hover:text-[#B8860B] transition-colors duration-200">
                   Contact
                 </Link>

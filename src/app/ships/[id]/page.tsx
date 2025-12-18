@@ -6,6 +6,7 @@ import Link from 'next/link';
 import { motion } from 'framer-motion';
 import { supabase } from '@/lib/supabase';
 import { Ship, TripPackage, CabinCategory, CabinImage } from '@/types/database';
+import { useScrollRestoration } from '@/hooks/useScrollRestoration';
 
 export default function ShipDetail() {
   const params = useParams();
@@ -17,6 +18,9 @@ export default function ShipDetail() {
   const [cabinImagesMap, setCabinImagesMap] = useState<Record<string, CabinImage[]>>({});
   const [loading, setLoading] = useState(true);
   const [selectedImage, setSelectedImage] = useState(0);
+
+  // Scroll restoration for back button navigation
+  useScrollRestoration('shipDetail', !loading);
 
   useEffect(() => {
     fetchShipData();

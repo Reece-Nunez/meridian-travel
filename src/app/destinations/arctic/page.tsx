@@ -5,7 +5,7 @@ import { motion } from 'framer-motion';
 import { useState, useEffect } from 'react';
 import { supabase } from '@/lib/supabase';
 import { Ship } from '@/types/database';
-import { useScrollRestoration } from '@/hooks/useScrollRestoration';
+import { usePercentageScrollRestoration } from '@/hooks/usePercentageScrollRestoration';
 
 interface ProcessedCruise {
   id: string;
@@ -23,8 +23,8 @@ export default function ArcticDestination() {
   const [cruises, setCruises] = useState<ProcessedCruise[]>([]);
   const [loading, setLoading] = useState(true);
 
-  // Scroll restoration for back button navigation
-  useScrollRestoration('destinationArctic', !loading);
+  // Scroll restoration for refresh and back button navigation
+  usePercentageScrollRestoration('destination-arctic', !loading);
 
   useEffect(() => {
     fetchCruises();

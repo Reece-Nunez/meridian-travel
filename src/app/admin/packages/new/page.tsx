@@ -6,6 +6,7 @@ import Link from 'next/link';
 import { useRouter, useSearchParams } from 'next/navigation';
 import { supabase } from '@/lib/supabase';
 import { useSimpleAdminAuth } from '@/hooks/useSimpleAdminAuth';
+import { usePercentageScrollRestoration } from '@/hooks/usePercentageScrollRestoration';
 import ImageUpload from '@/components/admin/ImageUpload';
 import { Ship } from '@/types/database';
 
@@ -31,7 +32,7 @@ interface PackageItineraryDay {
 }
 
 function NewPackageContent() {
-  const { loading: authLoading, isAuthenticated } = useSimpleAdminAuth();
+  const { loading: authLoading, isAuthenticated, refreshSession } = useSimpleAdminAuth();
   const router = useRouter();
   const searchParams = useSearchParams();
   const [loading, setLoading] = useState(false);
@@ -65,6 +66,9 @@ function NewPackageContent() {
   const [itinerary, setItinerary] = useState<PackageItineraryDay[]>([
     { day: 1, title: '', activities: [{ name: '', description: '' }], accommodation: '', images: [], pendingImages: [], imagesToDelete: [] }
   ]);
+
+  // Restore scroll position on refresh/back button
+  usePercentageScrollRestoration(`admin-package-new-${packageType}`, !authLoading);
 
   // Set the package type from URL params
   useEffect(() => {
@@ -293,7 +297,15 @@ function NewPackageContent() {
 
     try {
       console.log('Starting form submission...');
-      
+
+      // Refresh session before saving to prevent auth issues
+      const sessionValid = await refreshSession();
+      if (!sessionValid) {
+        alert('Your session has expired. Please log in again.');
+        setLoading(false);
+        return;
+      }
+
       // Upload all pending images first
       const { packageImages, updatedItinerary } = await uploadAllPendingImages();
       

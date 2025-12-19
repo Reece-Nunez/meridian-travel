@@ -3,7 +3,7 @@
 import { motion } from 'framer-motion';
 import Link from 'next/link';
 import { useState } from 'react';
-import { useScrollRestoration } from '@/hooks/useScrollRestoration';
+import { usePercentageScrollRestoration } from '@/hooks/usePercentageScrollRestoration';
 
 interface Destination {
   id: string;
@@ -167,8 +167,8 @@ const destinations: Destination[] = [
 export default function Destinations() {
   const [selectedDestination, setSelectedDestination] = useState<string | null>(null);
 
-  // Scroll restoration for back button navigation
-  useScrollRestoration('destinations');
+  // Scroll restoration for refresh and back button navigation
+  usePercentageScrollRestoration('destinations-list', true);
 
   return (
     <div className="min-h-screen bg-gray-50">

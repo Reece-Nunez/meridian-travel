@@ -1,6 +1,6 @@
 'use client';
 
-import { useEffect, useState, useRef } from 'react';
+import { useEffect, useState, useRef, useCallback } from 'react';
 import { useRouter } from 'next/navigation';
 import { useAuth } from '@/contexts/AuthContext';
 import { supabase } from '@/lib/supabase';
@@ -12,18 +12,36 @@ export function useSimpleAdminAuth() {
   const router = useRouter();
   const { signOut } = useAuth();
   const routerRef = useRef(router);
+  const isAdminRef = useRef(false);
 
   // Keep router ref up to date
   useEffect(() => {
     routerRef.current = router;
   }, [router]);
 
+  // Function to refresh session - can be called before save operations
+  const refreshSession = useCallback(async () => {
+    try {
+      console.log('🔄 [ADMIN AUTH] Refreshing session...');
+      const { data, error } = await supabase.auth.refreshSession();
+      if (error) {
+        console.error('🔴 [ADMIN AUTH] Session refresh error:', error);
+        return false;
+      }
+      console.log('🟢 [ADMIN AUTH] Session refreshed successfully');
+      return !!data.session;
+    } catch (error) {
+      console.error('🔴 [ADMIN AUTH] Session refresh exception:', error);
+      return false;
+    }
+  }, []);
+
   useEffect(() => {
     let isMounted = true;
 
     // Fallback timeout to prevent infinite loading - increased to 10 seconds
     const fallbackTimer = setTimeout(() => {
-      if (isMounted) {
+      if (isMounted && loading) {
         console.warn('Auth check timeout, forcing login redirect');
         setIsAuthenticated(false);
         setLoading(false);
@@ -76,6 +94,7 @@ export function useSimpleAdminAuth() {
         // Check if user has admin role in database
         const profile = await getUserProfile(session.user.id);
         const isAdmin = profile?.role === 'admin';
+        isAdminRef.current = isAdmin;
         console.log('🟣 [ADMIN AUTH] Admin check - isAdmin:', isAdmin, 'role:', profile?.role, 'email:', session.user.email);
 
         if (isAdmin) {
@@ -111,11 +130,48 @@ export function useSimpleAdminAuth() {
 
     checkAuth();
 
+    // Listen for auth state changes
+    const { data: { subscription } } = supabase.auth.onAuthStateChange(
+      async (event, session) => {
+        if (!isMounted) return;
+
+        console.log('🟣 [ADMIN AUTH] Auth state change:', event);
+
+        if (event === 'SIGNED_OUT' || event === 'USER_DELETED') {
+          console.log('🔴 [ADMIN AUTH] User signed out - redirecting to login');
+          setIsAuthenticated(false);
+          setLoading(false);
+          routerRef.current.push('/auth/signin');
+        } else if (event === 'TOKEN_REFRESHED') {
+          console.log('🟢 [ADMIN AUTH] Token refreshed');
+          // Session is still valid, no action needed
+        } else if (event === 'SIGNED_IN' && session) {
+          // Re-verify admin status on sign in
+          const profile = await getUserProfile(session.user.id);
+          const isAdmin = profile?.role === 'admin';
+          isAdminRef.current = isAdmin;
+          if (isAdmin) {
+            setIsAuthenticated(true);
+          }
+        }
+      }
+    );
+
+    // Set up periodic session refresh every 5 minutes to keep session alive
+    const refreshInterval = setInterval(async () => {
+      if (isMounted && isAdminRef.current) {
+        console.log('🔄 [ADMIN AUTH] Periodic session refresh...');
+        await refreshSession();
+      }
+    }, 5 * 60 * 1000); // 5 minutes
+
     // Cleanup function to prevent state updates on unmounted component
     return () => {
-      console.log('🧹 [ADMIN AUTH] Cleanup - clearing timeout and marking unmounted');
+      console.log('🧹 [ADMIN AUTH] Cleanup - clearing timeout, interval, and marking unmounted');
       isMounted = false;
       clearTimeout(fallbackTimer);
+      clearInterval(refreshInterval);
+      subscription.unsubscribe();
     };
   }, []); // Empty dependency array - only run once on mount
 
@@ -133,5 +189,5 @@ export function useSimpleAdminAuth() {
     }
   };
 
-  return { loading, isAuthenticated, logout };
+  return { loading, isAuthenticated, logout, refreshSession };
 }

@@ -7,6 +7,7 @@ import { useRouter, useParams } from 'next/navigation';
 import { supabase } from '@/lib/supabase';
 import { CustomQuote, TripPackage } from '@/types/database';
 import { useSimpleAdminAuth } from '@/hooks/useSimpleAdminAuth';
+import { usePercentageScrollRestoration } from '@/hooks/usePercentageScrollRestoration';
 import ItineraryBuilder from '@/components/ItineraryBuilder';
 import PDFInvoiceGenerator from '@/components/PDFInvoiceGenerator';
 import Modal from '@/components/Modal';
@@ -15,7 +16,7 @@ import CustomerInvoicePreview from '@/components/CustomerInvoicePreview';
 import { parseGroupDetails } from '@/utils/parseQuoteDetails';
 
 export default function QuoteDetail() {
-  const { loading: authLoading, isAuthenticated } = useSimpleAdminAuth();
+  const { loading: authLoading, isAuthenticated, refreshSession } = useSimpleAdminAuth();
   const router = useRouter();
   const params = useParams();
   const quoteId = params.id as string;
@@ -41,6 +42,9 @@ export default function QuoteDetail() {
     exclusions: [] as string[],
     pdf_title: ''
   });
+
+  // Restore scroll position on refresh/back button
+  usePercentageScrollRestoration(`admin-quote-${quoteId}`, !loading);
 
   useEffect(() => {
     if (isAuthenticated && quoteId) {
@@ -191,6 +195,14 @@ export default function QuoteDetail() {
     setSaving(true);
 
     try {
+      // Refresh session before saving to prevent auth issues
+      const sessionValid = await refreshSession();
+      if (!sessionValid) {
+        alert('Your session has expired. Please log in again.');
+        setSaving(false);
+        return;
+      }
+
       // Get admin email from session, with fallback to expected admin email
       const session = localStorage.getItem('admin_session');
       let adminEmail = session ? JSON.parse(session).email : '';

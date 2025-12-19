@@ -4,6 +4,11 @@ const nextConfig: NextConfig = {
   // Enable server-side rendering for Amplify
   output: 'standalone',
 
+  // Enable scroll restoration on navigation
+  experimental: {
+    scrollRestoration: true,
+  },
+
   // Ensure environment variables are accessible in API routes
   env: {
     NEXT_PUBLIC_SUPABASE_URL: process.env.NEXT_PUBLIC_SUPABASE_URL,

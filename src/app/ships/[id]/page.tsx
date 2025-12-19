@@ -6,7 +6,7 @@ import Link from 'next/link';
 import { motion } from 'framer-motion';
 import { supabase } from '@/lib/supabase';
 import { Ship, TripPackage, CabinCategory, CabinImage } from '@/types/database';
-import { useScrollRestoration } from '@/hooks/useScrollRestoration';
+import { usePercentageScrollRestoration } from '@/hooks/usePercentageScrollRestoration';
 
 export default function ShipDetail() {
   const params = useParams();
@@ -19,8 +19,8 @@ export default function ShipDetail() {
   const [loading, setLoading] = useState(true);
   const [selectedImage, setSelectedImage] = useState(0);
 
-  // Scroll restoration for back button navigation
-  useScrollRestoration('shipDetail', !loading);
+  // Scroll restoration for refresh and back button navigation
+  usePercentageScrollRestoration(`ship-detail-${shipId}`, !loading);
 
   useEffect(() => {
     fetchShipData();

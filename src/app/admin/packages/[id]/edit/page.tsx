@@ -7,6 +7,7 @@ import { useRouter, useParams } from 'next/navigation';
 import { supabase } from '@/lib/supabase';
 import { TripPackage } from '@/types/database';
 import { useSimpleAdminAuth } from '@/hooks/useSimpleAdminAuth';
+import { usePercentageScrollRestoration } from '@/hooks/usePercentageScrollRestoration';
 import ImageUpload from '@/components/admin/ImageUpload';
 
 interface PendingImage {
@@ -31,7 +32,7 @@ interface PackageItineraryDay {
 }
 
 export default function EditPackage() {
-  const { loading: authLoading, isAuthenticated } = useSimpleAdminAuth();
+  const { loading: authLoading, isAuthenticated, refreshSession } = useSimpleAdminAuth();
   const router = useRouter();
   const params = useParams();
   const packageId = params.id as string;
@@ -60,6 +61,9 @@ export default function EditPackage() {
   const [itinerary, setItinerary] = useState<PackageItineraryDay[]>([
     { day: 1, title: '', activities: [{ name: '', description: '' }], accommodation: '', images: [], pendingImages: [], imagesToDelete: [] }
   ]);
+
+  // Restore scroll position on refresh/back button
+  usePercentageScrollRestoration(`admin-package-edit-${packageId}`, !loading);
 
   useEffect(() => {
     if (packageId) {
@@ -373,7 +377,14 @@ export default function EditPackage() {
 
     try {
       console.log('Starting form submission...');
-      
+
+      // Refresh session before saving to prevent auth issues
+      const sessionValid = await refreshSession();
+      if (!sessionValid) {
+        alert('Your session has expired. Please log in again.');
+        return;
+      }
+
       // Delete marked images first
       await deleteAllMarkedImages();
       console.log('Marked images deleted successfully');

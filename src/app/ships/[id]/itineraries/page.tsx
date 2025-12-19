@@ -6,7 +6,7 @@ import Link from 'next/link';
 import { motion } from 'framer-motion';
 import { supabase } from '@/lib/supabase';
 import { Ship, TripPackage } from '@/types/database';
-import { useScrollRestoration } from '@/hooks/useScrollRestoration';
+import { usePercentageScrollRestoration } from '@/hooks/usePercentageScrollRestoration';
 
 export default function ShipItineraries() {
   const params = useParams();
@@ -16,8 +16,8 @@ export default function ShipItineraries() {
   const [itineraries, setItineraries] = useState<TripPackage[]>([]);
   const [loading, setLoading] = useState(true);
 
-  // Scroll restoration for back button navigation
-  useScrollRestoration('shipItineraries', !loading);
+  // Scroll restoration for refresh and back button navigation
+  usePercentageScrollRestoration(`ship-itineraries-${shipId}`, !loading);
 
   useEffect(() => {
     fetchShipData();

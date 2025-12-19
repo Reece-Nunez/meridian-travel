@@ -5,7 +5,7 @@ import { motion } from 'framer-motion';
 import Link from 'next/link';
 import { supabase } from '@/lib/supabase';
 import { TripPackage } from '@/types/database';
-import { useScrollRestoration } from '@/hooks/useScrollRestoration';
+import { usePercentageScrollRestoration } from '@/hooks/usePercentageScrollRestoration';
 
 export default function Packages() {
   const [packages, setPackages] = useState<TripPackage[]>([]);
@@ -13,8 +13,8 @@ export default function Packages() {
   const [selectedDestination, setSelectedDestination] = useState<string>('all');
   const [viewMode, setViewMode] = useState<'grid' | 'grouped'>('grouped');
 
-  // Scroll restoration for back button navigation
-  useScrollRestoration('packages', !loading);
+  // Scroll restoration for refresh and back button navigation
+  usePercentageScrollRestoration('packages-list', !loading);
 
   useEffect(() => {
     fetchPackages();

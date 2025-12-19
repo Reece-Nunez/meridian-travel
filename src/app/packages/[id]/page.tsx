@@ -8,6 +8,7 @@ import { supabase } from '@/lib/supabase';
 import { TripPackage } from '@/types/database';
 import { getSettingByKey } from '@/lib/content';
 import { useAuth } from '@/contexts/AuthContext';
+import { usePercentageScrollRestoration } from '@/hooks/usePercentageScrollRestoration';
 
 interface PackageActivity {
   name: string;
@@ -34,6 +35,9 @@ export default function PackageDetail() {
     email: 'info@meridianluxurytravel.com'
   });
   const [contactLoading, setContactLoading] = useState(true);
+
+  // Restore scroll position on refresh/back button
+  usePercentageScrollRestoration(`package-${params.id}`, !loading);
 
   useEffect(() => {
     fetchPackage();

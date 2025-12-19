@@ -7,6 +7,7 @@ import ConditionalNavigation from "../components/ConditionalNavigation";
 import ConditionalFooter from "../components/ConditionalFooter";
 import { AuthProvider } from "../contexts/AuthContext";
 import SessionManager from "../components/SessionManager";
+import StructuredData from "../components/StructuredData";
 
 const geistSans = Geist({
   variable: "--font-geist-sans",
@@ -36,9 +37,76 @@ const leJourSerif = localFont({
   fallback: ["serif"],
 });
 
+const siteUrl = process.env.NEXT_PUBLIC_SITE_URL || 'https://meridianluxurytravel.com';
+
 export const metadata: Metadata = {
-  title: "Meridian Luxury Travel - Luxury South American Adventures",
-  description: "Discover South America with expertly crafted travel experiences. Luxury tours to Machu Picchu, Amazon rainforest, and more. Request your custom quote today.",
+  metadataBase: new URL(siteUrl),
+  title: {
+    default: "Meridian Luxury Travel - Luxury South American Adventures",
+    template: "%s | Meridian Luxury Travel",
+  },
+  description: "Discover South America with expertly crafted luxury travel experiences. Premium tours to Machu Picchu, Amazon rainforest, Galapagos Islands, Antarctica, and more. Request your custom quote today.",
+  keywords: [
+    "luxury travel",
+    "South America tours",
+    "Machu Picchu",
+    "Amazon rainforest",
+    "Galapagos Islands",
+    "Antarctica cruises",
+    "Peru travel",
+    "Argentina tours",
+    "Chile travel",
+    "Brazil tours",
+    "luxury cruises",
+    "custom travel",
+    "adventure travel",
+    "expedition cruises",
+  ],
+  authors: [{ name: "Meridian Luxury Travel" }],
+  creator: "Meridian Luxury Travel",
+  publisher: "Meridian Luxury Travel",
+  formatDetection: {
+    email: false,
+    address: false,
+    telephone: false,
+  },
+  openGraph: {
+    type: "website",
+    locale: "en_US",
+    url: siteUrl,
+    siteName: "Meridian Luxury Travel",
+    title: "Meridian Luxury Travel - Luxury South American Adventures",
+    description: "Discover South America with expertly crafted luxury travel experiences. Premium tours to Machu Picchu, Amazon rainforest, Galapagos Islands, Antarctica, and more.",
+    images: [
+      {
+        url: "https://meridian-travel.s3.us-east-1.amazonaws.com/og-image.webp",
+        width: 1200,
+        height: 630,
+        alt: "Meridian Luxury Travel - Luxury South American Adventures",
+      },
+    ],
+  },
+  twitter: {
+    card: "summary_large_image",
+    title: "Meridian Luxury Travel - Luxury South American Adventures",
+    description: "Discover South America with expertly crafted luxury travel experiences. Premium tours to Machu Picchu, Amazon rainforest, Galapagos Islands, and more.",
+    images: ["https://meridian-travel.s3.us-east-1.amazonaws.com/og-image.webp"],
+  },
+  robots: {
+    index: true,
+    follow: true,
+    googleBot: {
+      index: true,
+      follow: true,
+      "max-video-preview": -1,
+      "max-image-preview": "large",
+      "max-snippet": -1,
+    },
+  },
+  alternates: {
+    canonical: siteUrl,
+  },
+  category: "travel",
 };
 
 export const viewport: Viewport = {
@@ -54,6 +122,9 @@ export default function RootLayout({
 }>) {
   return (
     <html lang="en">
+      <head>
+        <StructuredData />
+      </head>
       <body
         className={`${geistSans.variable} ${geistMono.variable} ${leJourSerif.variable} antialiased`}
       >

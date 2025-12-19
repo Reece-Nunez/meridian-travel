@@ -137,7 +137,7 @@ export function useSimpleAdminAuth() {
 
         console.log('🟣 [ADMIN AUTH] Auth state change:', event);
 
-        if (event === 'SIGNED_OUT' || event === 'USER_DELETED') {
+        if (event === 'SIGNED_OUT') {
           console.log('🔴 [ADMIN AUTH] User signed out - redirecting to login');
           setIsAuthenticated(false);
           setLoading(false);

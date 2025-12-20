@@ -6,7 +6,7 @@ export const metadata: Metadata = {
   openGraph: {
     title: "About Us | Meridian Luxury Travel",
     description: "Learn about Meridian Luxury Travel, your trusted partner for luxury South American adventures.",
-    images: ["https://meridian-travel.s3.us-east-1.amazonaws.com/og-image.webp"],
+    images: ["https://meridian-travel.s3.us-east-1.amazonaws.com/og-image.png"],
   },
 };
 

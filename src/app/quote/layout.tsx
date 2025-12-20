@@ -6,7 +6,7 @@ export const metadata: Metadata = {
   openGraph: {
     title: "Request a Custom Quote | Meridian Luxury Travel",
     description: "Request a personalized travel quote for your dream South American adventure. Our experts will craft a bespoke itinerary tailored to you.",
-    images: ["https://meridian-travel.s3.us-east-1.amazonaws.com/og-image.webp"],
+    images: ["https://meridian-travel.s3.us-east-1.amazonaws.com/og-image.png"],
   },
 };
 

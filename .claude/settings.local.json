@@ -15,7 +15,10 @@
       "Bash(git push:*)",
       "Bash(node scripts/check-schema.js:*)",
       "Bash(node scripts/test-exact-form-data.js:*)",
-      "Bash(git config:*)"
+      "Bash(git config:*)",
+      "Bash(cat:*)",
+      "Bash(git status:*)",
+      "Bash(find:*)"
     ],
     "deny": [],
     "ask": []

@@ -79,7 +79,7 @@ export const metadata: Metadata = {
     description: "Discover South America with expertly crafted luxury travel experiences. Premium tours to Machu Picchu, Amazon rainforest, Galapagos Islands, Antarctica, and more.",
     images: [
       {
-        url: "https://meridian-travel.s3.us-east-1.amazonaws.com/og-image.webp",
+        url: "https://meridian-travel.s3.us-east-1.amazonaws.com/og-image.png",
         width: 1200,
         height: 630,
         alt: "Meridian Luxury Travel - Luxury South American Adventures",
@@ -90,7 +90,7 @@ export const metadata: Metadata = {
     card: "summary_large_image",
     title: "Meridian Luxury Travel - Luxury South American Adventures",
     description: "Discover South America with expertly crafted luxury travel experiences. Premium tours to Machu Picchu, Amazon rainforest, Galapagos Islands, and more.",
-    images: ["https://meridian-travel.s3.us-east-1.amazonaws.com/og-image.webp"],
+    images: ["https://meridian-travel.s3.us-east-1.amazonaws.com/og-image.png"],
   },
   robots: {
     index: true,

@@ -13,7 +13,7 @@ export default function StructuredData() {
       width: 300,
       height: 60,
     },
-    image: "https://meridian-travel.s3.us-east-1.amazonaws.com/og-image.webp",
+    image: "https://meridian-travel.s3.us-east-1.amazonaws.com/og-image.png",
     description: "Meridian Luxury Travel specializes in expertly crafted luxury travel experiences across South America, including Peru, Argentina, Brazil, Chile, Ecuador, Galapagos Islands, and Antarctica.",
     address: {
       "@type": "PostalAddress",

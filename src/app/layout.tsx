@@ -2,6 +2,7 @@ import type { Metadata, Viewport } from "next";
 import { Geist, Geist_Mono } from "next/font/google";
 import localFont from "next/font/local";
 import Script from "next/script";
+import { Toaster } from "sonner";
 import "./globals.css";
 import ConditionalNavigation from "../components/ConditionalNavigation";
 import ConditionalFooter from "../components/ConditionalFooter";
@@ -145,6 +146,18 @@ export default function RootLayout({
           {children}
           <ConditionalFooter />
           <SessionManager timeout={30} warningTime={5} />
+          <Toaster
+            position="bottom-right"
+            toastOptions={{
+              style: {
+                background: '#1f2937',
+                color: '#f9fafb',
+                border: '1px solid #374151',
+              },
+            }}
+            richColors
+            closeButton
+          />
         </AuthProvider>
       </body>
     </html>

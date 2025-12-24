@@ -1,9 +1,10 @@
 'use client';
 
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useMemo } from 'react';
 import { motion } from 'framer-motion';
 import Link from 'next/link';
-import { supabase } from '@/lib/supabase';
+import { toast } from 'sonner';
+import { createClient } from '@/lib/supabase/client';
 import { TripPackage } from '@/types/database';
 import { useSimpleAdminAuth } from '@/hooks/useSimpleAdminAuth';
 import TypeSelectionModal from '@/components/admin/TypeSelectionModal';
@@ -16,6 +17,9 @@ export default function AdminPackages() {
   const [error, setError] = useState<string | null>(null);
   const [isTypeModalOpen, setIsTypeModalOpen] = useState(false);
   const [filterType, setFilterType] = useState<'all' | 'package' | 'cruise'>('all');
+
+  // Create a stable Supabase client instance (uses cookies for auth)
+  const supabase = useMemo(() => createClient(), []);
 
   const getUsername = () => {
     try {
@@ -107,18 +111,51 @@ export default function AdminPackages() {
       return;
     }
 
+    const packageToDelete = packages.find(pkg => pkg.id === packageId);
+    const toastId = toast.loading('Deleting package...', {
+      description: packageToDelete?.title || 'Please wait',
+    });
+
     try {
-      const { error } = await supabase
+      const { error, count } = await supabase
         .from('trip_packages')
         .delete()
-        .eq('id', packageId);
+        .eq('id', packageId)
+        .select();
 
-      if (error) throw error;
+      if (error) {
+        console.error('Delete error details:', error);
+        throw error;
+      }
+
+      // Verify the delete actually happened
+      const { data: checkData } = await supabase
+        .from('trip_packages')
+        .select('id')
+        .eq('id', packageId)
+        .single();
+
+      if (checkData) {
+        // Package still exists - delete didn't work (likely RLS issue)
+        console.error('Package still exists after delete - possible RLS policy issue');
+        toast.error('Delete failed', {
+          id: toastId,
+          description: 'Permission denied. Please check your admin privileges.',
+        });
+        return;
+      }
 
       setPackages(packages.filter(pkg => pkg.id !== packageId));
-    } catch (err) {
+      toast.success('Package deleted', {
+        id: toastId,
+        description: packageToDelete?.title || 'Successfully removed',
+      });
+    } catch (err: any) {
       console.error('Error deleting package:', err);
-      alert('Failed to delete package');
+      toast.error('Failed to delete package', {
+        id: toastId,
+        description: err?.message || 'Please try again',
+      });
     }
   };
 

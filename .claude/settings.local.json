@@ -18,7 +18,8 @@
       "Bash(git config:*)",
       "Bash(cat:*)",
       "Bash(git status:*)",
-      "Bash(find:*)"
+      "Bash(find:*)",
+      "Bash(npm install:*)"
     ],
     "deny": [],
     "ask": []

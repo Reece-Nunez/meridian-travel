@@ -1,12 +1,17 @@
 'use client';
 
-import { useState, useRef, useEffect } from 'react';
-import { supabase } from '@/lib/supabase';
+import { useState, useRef } from 'react';
 import { useToast } from '@/hooks/useToast';
 import { ToastContainer } from '@/components/ui/Toast';
+import ImageCropper from './ImageCropper';
 
 interface PendingImage {
   id: string;
+  file: File;
+  previewUrl: string;
+}
+
+interface ImageToCrop {
   file: File;
   previewUrl: string;
 }
@@ -18,52 +23,149 @@ interface ImageUploadProps {
   imagesToDelete?: string[];
   maxImages?: number;
   bucketName?: string;
+  /** Enable cropping before upload. Defaults to true for package images. */
+  enableCropping?: boolean;
+  /** Default aspect ratio for cropping. Defaults to 16/9 for banner images. */
+  cropAspectRatio?: number;
 }
 
-export default function ImageUpload({ 
+export default function ImageUpload({
   onImagesChange,
   currentImages = [],
   pendingImages = [],
   imagesToDelete = [],
   maxImages = 5,
-  bucketName = 'content-images' 
+  bucketName = 'content-images',
+  enableCropping = true,
+  cropAspectRatio = 16 / 9
 }: ImageUploadProps) {
   const fileInputRef = useRef<HTMLInputElement>(null);
   const { toasts, removeToast, success, error, confirm } = useToast();
 
+  // State for cropping workflow
+  const [imagesToCrop, setImagesToCrop] = useState<ImageToCrop[]>([]);
+  const [currentCropIndex, setCurrentCropIndex] = useState(0);
+
+  const totalImages = currentImages.length + pendingImages.length;
+  const canUploadMore = totalImages < maxImages;
+
+  // Get the current image being cropped
+  const currentImageToCrop = imagesToCrop[currentCropIndex];
+
   const handleFileSelect = (event: React.ChangeEvent<HTMLInputElement>) => {
-    const file = event.target.files?.[0];
-    if (!file) return;
+    const files = Array.from(event.target.files || []);
+    if (files.length === 0) return;
 
-    // Validate file type
-    if (!file.type.startsWith('image/')) {
-      error('Invalid File Type', 'Please select an image file');
+    const availableSlots = maxImages - totalImages;
+    if (availableSlots <= 0) {
+      error('Maximum Images Reached', `You can only have ${maxImages} images total.`);
       return;
     }
 
-    // Validate file size (5MB limit)
-    if (file.size > 5 * 1024 * 1024) {
-      error('File Too Large', 'File size must be less than 5MB');
-      return;
+    // Limit to available slots
+    const filesToProcess = files.slice(0, availableSlots);
+    if (files.length > availableSlots) {
+      error('Some Images Skipped', `Only ${availableSlots} image(s) can be added. ${files.length - availableSlots} image(s) were skipped.`);
     }
 
-    // Create preview URL and add to pending images
-    const previewUrl = URL.createObjectURL(file);
-    const newPendingImage: PendingImage = {
-      id: Date.now().toString(),
-      file: file,
-      previewUrl: previewUrl
-    };
+    const validFiles: ImageToCrop[] = [];
+    const invalidFiles: string[] = [];
+    const oversizedFiles: string[] = [];
 
-    const updatedPendingImages = [...pendingImages, newPendingImage];
-    onImagesChange(currentImages, updatedPendingImages, imagesToDelete);
-    
-    success('Image Added', `${file.name} has been added and will be uploaded when you save.`);
-    
+    for (const file of filesToProcess) {
+      // Validate file type
+      if (!file.type.startsWith('image/')) {
+        invalidFiles.push(file.name);
+        continue;
+      }
+
+      // Validate file size (5MB limit)
+      if (file.size > 5 * 1024 * 1024) {
+        oversizedFiles.push(file.name);
+        continue;
+      }
+
+      // Create preview URL
+      const previewUrl = URL.createObjectURL(file);
+      validFiles.push({ file, previewUrl });
+    }
+
+    // Show error messages for invalid files
+    if (invalidFiles.length > 0) {
+      error('Invalid File Type', `${invalidFiles.join(', ')} - Please select image files only.`);
+    }
+    if (oversizedFiles.length > 0) {
+      error('Files Too Large', `${oversizedFiles.join(', ')} - File size must be less than 5MB.`);
+    }
+
+    if (validFiles.length > 0) {
+      if (enableCropping) {
+        // Queue files for cropping
+        setImagesToCrop(validFiles);
+        setCurrentCropIndex(0);
+      } else {
+        // Add directly without cropping
+        addFilesToPending(validFiles.map(v => v.file));
+        // Clean up preview URLs
+        validFiles.forEach(v => URL.revokeObjectURL(v.previewUrl));
+      }
+    }
+
     // Clear the input
     if (fileInputRef.current) {
       fileInputRef.current.value = '';
     }
+  };
+
+  // Add files directly to pending (used when cropping is disabled or after cropping)
+  const addFilesToPending = (files: File[]) => {
+    const newPendingImages: PendingImage[] = files.map(file => ({
+      id: `${Date.now()}-${Math.random().toString(36).substr(2, 9)}`,
+      file: file,
+      previewUrl: URL.createObjectURL(file)
+    }));
+
+    const updatedPendingImages = [...pendingImages, ...newPendingImages];
+    onImagesChange(currentImages, updatedPendingImages, imagesToDelete);
+
+    const imageText = newPendingImages.length === 1 ? 'image has' : 'images have';
+    success('Images Added', `${newPendingImages.length} ${imageText} been added and will be uploaded when you save.`);
+  };
+
+  // Handle crop completion for a single image
+  const handleCropComplete = (croppedFile: File) => {
+    // Clean up the preview URL for the cropped image
+    if (currentImageToCrop) {
+      URL.revokeObjectURL(currentImageToCrop.previewUrl);
+    }
+
+    // Add the cropped file to pending
+    const newPendingImage: PendingImage = {
+      id: `${Date.now()}-${Math.random().toString(36).substr(2, 9)}`,
+      file: croppedFile,
+      previewUrl: URL.createObjectURL(croppedFile)
+    };
+
+    const updatedPendingImages = [...pendingImages, newPendingImage];
+    onImagesChange(currentImages, updatedPendingImages, imagesToDelete);
+
+    // Move to next image or finish
+    if (currentCropIndex < imagesToCrop.length - 1) {
+      setCurrentCropIndex(prev => prev + 1);
+    } else {
+      // All done
+      setImagesToCrop([]);
+      setCurrentCropIndex(0);
+      success('Images Added', `${imagesToCrop.length} image${imagesToCrop.length > 1 ? 's have' : ' has'} been added and will be uploaded when you save.`);
+    }
+  };
+
+  // Handle cancel cropping
+  const handleCropCancel = () => {
+    // Clean up all preview URLs
+    imagesToCrop.forEach(img => URL.revokeObjectURL(img.previewUrl));
+    setImagesToCrop([]);
+    setCurrentCropIndex(0);
   };
 
   const removeCurrentImage = (imageUrl: string) => {
@@ -111,12 +213,30 @@ export default function ImageUpload({
     );
   };
 
-  const totalImages = currentImages.length + pendingImages.length;
-  const canUploadMore = totalImages < maxImages;
-
   return (
     <>
       <ToastContainer toasts={toasts} removeToast={removeToast} />
+
+      {/* Image Cropper Modal */}
+      {currentImageToCrop && (
+        <ImageCropper
+          imageSrc={currentImageToCrop.previewUrl}
+          fileName={currentImageToCrop.file.name}
+          onCropComplete={handleCropComplete}
+          onCancel={handleCropCancel}
+          aspectRatio={cropAspectRatio}
+        />
+      )}
+
+      {/* Cropping Progress Indicator */}
+      {imagesToCrop.length > 1 && currentImageToCrop && (
+        <div className="fixed top-4 left-1/2 transform -translate-x-1/2 z-[60] bg-white rounded-lg shadow-lg px-4 py-2 border border-gray-200">
+          <span className="text-sm text-gray-700">
+            Cropping image {currentCropIndex + 1} of {imagesToCrop.length}
+          </span>
+        </div>
+      )}
+
       <div className="space-y-4">
       <div>
         <label className="block text-sm font-medium text-gray-700 mb-2">
@@ -135,6 +255,7 @@ export default function ImageUpload({
               ref={fileInputRef}
               type="file"
               accept="image/*"
+              multiple
               onChange={handleFileSelect}
               className="hidden"
             />
@@ -146,7 +267,7 @@ export default function ImageUpload({
               <svg className="w-5 h-5 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 6v6m0 0v6m0-6h6m-6 0H6" />
               </svg>
-              Add Image
+              Add Images
             </button>
           </div>
         )}
@@ -215,6 +336,7 @@ export default function ImageUpload({
       {/* Help Text */}
       <p className="text-sm text-gray-600">
         Upload images in JPG, PNG, or WebP format. Maximum file size: 5MB.
+        {enableCropping && ' You can crop images to fit the banner area after selecting them.'}
       </p>
       </div>
     </>

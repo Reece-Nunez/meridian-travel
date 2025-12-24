@@ -1,10 +1,11 @@
 'use client';
 
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useMemo } from 'react';
 import { motion } from 'framer-motion';
 import Link from 'next/link';
 import { useRouter, useParams } from 'next/navigation';
-import { supabase } from '@/lib/supabase';
+import { toast } from 'sonner';
+import { createClient } from '@/lib/supabase/client';
 import { TripPackage } from '@/types/database';
 import { useSimpleAdminAuth } from '@/hooks/useSimpleAdminAuth';
 import { usePercentageScrollRestoration } from '@/hooks/usePercentageScrollRestoration';
@@ -36,6 +37,9 @@ export default function EditPackage() {
   const router = useRouter();
   const params = useParams();
   const packageId = params.id as string;
+
+  // Create a stable Supabase client instance
+  const supabase = useMemo(() => createClient(), []);
 
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
@@ -244,26 +248,45 @@ export default function EditPackage() {
     ));
   };
 
-  // Upload a single image file to Supabase storage
+  // Upload a single image file via API route with timeout
   const uploadImageFile = async (file: File, bucketName: string): Promise<string> => {
-    const fileExtension = file.name.split('.').pop();
-    const fileName = `${Date.now()}_${Math.random().toString(36).substring(2)}.${fileExtension}`;
-    const filePath = `${fileName}`;
+    const formData = new FormData();
+    formData.append('file', file);
+    formData.append('bucket', bucketName);
 
-    const { data, error } = await supabase.storage
-      .from(bucketName)
-      .upload(filePath, file);
+    // Create an AbortController for timeout
+    const controller = new AbortController();
+    const timeoutId = setTimeout(() => controller.abort(), 30000); // 30 second timeout
 
-    if (error) {
+    try {
+      console.log(`Uploading ${file.name} to ${bucketName}...`);
+
+      // Cookies are automatically sent with the request via @supabase/ssr
+      const response = await fetch('/api/admin/upload-package-image', {
+        method: 'POST',
+        body: formData,
+        credentials: 'include', // Ensure cookies are sent
+        signal: controller.signal
+      });
+
+      clearTimeout(timeoutId);
+
+      if (!response.ok) {
+        const errorData = await response.json();
+        throw new Error(errorData.error || `Upload failed with status ${response.status}`);
+      }
+
+      const data = await response.json();
+      console.log(`Successfully uploaded ${file.name}:`, data.url);
+      return data.url;
+    } catch (error: any) {
+      clearTimeout(timeoutId);
+      if (error.name === 'AbortError') {
+        throw new Error(`Upload timed out for ${file.name}. Please try again.`);
+      }
       console.error(`Error uploading ${file.name}:`, error);
       throw error;
     }
-
-    const { data: urlData } = supabase.storage
-      .from(bucketName)
-      .getPublicUrl(filePath);
-
-    return urlData.publicUrl;
   };
 
   // Delete a single image from Supabase storage
@@ -375,21 +398,43 @@ export default function EditPackage() {
     e.preventDefault();
     setSaving(true);
 
+    const totalPendingImages = pendingPackageImages.length +
+      itinerary.reduce((acc, day) => acc + (day.pendingImages?.length || 0), 0);
+    const totalImagesToDelete = packageImagesToDelete.length +
+      itinerary.reduce((acc, day) => acc + (day.imagesToDelete?.length || 0), 0);
+
+    // Create a progress toast
+    const toastId = toast.loading('Preparing to save changes...', {
+      description: 'Validating your session',
+    });
+
     try {
       console.log('Starting form submission...');
 
       // Refresh session before saving to prevent auth issues
       const sessionValid = await refreshSession();
       if (!sessionValid) {
-        alert('Your session has expired. Please log in again.');
+        toast.error('Your session has expired. Please log in again.', { id: toastId });
         return;
       }
 
       // Delete marked images first
+      if (totalImagesToDelete > 0) {
+        toast.loading('Removing deleted images...', {
+          id: toastId,
+          description: `Deleting ${totalImagesToDelete} image${totalImagesToDelete > 1 ? 's' : ''}`,
+        });
+      }
       await deleteAllMarkedImages();
       console.log('Marked images deleted successfully');
-      
+
       // Upload all pending images
+      if (totalPendingImages > 0) {
+        toast.loading(`Uploading ${totalPendingImages} image${totalPendingImages > 1 ? 's' : ''}...`, {
+          id: toastId,
+          description: 'This may take a moment',
+        });
+      }
       const { packageImages, updatedItinerary } = await uploadAllPendingImages();
       
       // Prepare package data - be defensive about new fields
@@ -449,6 +494,12 @@ export default function EditPackage() {
         updated_at: packageData.updated_at
       };
 
+      // Update toast for database step
+      toast.loading('Saving to database...', {
+        id: toastId,
+        description: `Updating "${formData.title}"`,
+      });
+
       console.log('📝 Updating basic fields for package:', packageId);
       console.log('📝 Basic data:', basicData);
 
@@ -481,26 +532,37 @@ export default function EditPackage() {
         console.error('Error details:', JSON.stringify(itineraryError, null, 2));
         // Don't throw - basic fields are already saved
         console.warn('⚠️ Itinerary update failed, but basic changes are saved');
-        alert('Warning: Basic fields saved but itinerary update failed. Error: ' + (itineraryError.message || JSON.stringify(itineraryError)));
+        toast.warning('Saved with warnings', {
+          id: toastId,
+          description: 'Basic fields saved but itinerary update failed',
+        });
       } else {
         console.log('✅ Itinerary updated successfully');
         console.log('✅ Itinerary update response:', itineraryData);
+        // Success toast
+        toast.success('Package updated successfully!', {
+          id: toastId,
+          description: `"${formData.title}" has been saved`,
+        });
       }
 
       console.log('✅ Save successful, redirecting...');
-      
+
       // Clear pending images and deletion state since everything is now saved
       setPendingPackageImages([]);
       setPackageImagesToDelete([]);
       setItinerary(prev => prev.map(day => ({ ...day, pendingImages: [], imagesToDelete: [] })));
-      
+
       router.push('/admin/packages');
     } catch (error) {
       console.error('Error updating package:', error);
       if (error instanceof Error) {
         console.error('Error message:', error.message);
       }
-      alert(`Failed to update package: ${error instanceof Error ? error.message : JSON.stringify(error)}`);
+      toast.error('Failed to update package', {
+        id: toastId,
+        description: error instanceof Error ? error.message : 'Please try again',
+      });
     } finally {
       console.log('🏁 Setting saving to false');
       setSaving(false);

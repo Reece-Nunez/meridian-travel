@@ -1,10 +1,10 @@
 'use client';
 
-import { useEffect, useState, useRef, useCallback } from 'react';
+import { useEffect, useState, useRef, useCallback, useMemo } from 'react';
 import { useRouter } from 'next/navigation';
+import { Session, AuthChangeEvent } from '@supabase/supabase-js';
 import { useAuth } from '@/contexts/AuthContext';
-import { supabase } from '@/lib/supabase';
-import { getUserProfile } from '@/lib/auth';
+import { createClient } from '@/lib/supabase/client';
 
 export function useSimpleAdminAuth() {
   const [loading, setLoading] = useState(true);
@@ -14,27 +14,67 @@ export function useSimpleAdminAuth() {
   const routerRef = useRef(router);
   const isAdminRef = useRef(false);
 
+  // Create a stable Supabase client instance
+  const supabase = useMemo(() => createClient(), []);
+
   // Keep router ref up to date
   useEffect(() => {
     routerRef.current = router;
   }, [router]);
 
+  // Helper to get user profile from database
+  const getUserProfile = useCallback(async (userId: string) => {
+    const { data, error } = await supabase
+      .from('profiles')
+      .select('*')
+      .eq('id', userId)
+      .single();
+
+    if (error) {
+      console.error('Error fetching user profile:', error);
+      return null;
+    }
+    return data;
+  }, [supabase]);
+
   // Function to refresh session - can be called before save operations
+  // Uses getUser() instead of getSession() for proper cookie-based SSR auth validation
   const refreshSession = useCallback(async () => {
     try {
-      console.log('🔄 [ADMIN AUTH] Refreshing session...');
-      const { data, error } = await supabase.auth.refreshSession();
+      console.log('🔄 [ADMIN AUTH] Validating session...');
+      const startTime = Date.now();
+
+      // Use getUser() which validates against server/cookies (not local cache)
+      // This is the recommended approach for SSR cookie-based auth
+      const { data: { user }, error } = await supabase.auth.getUser();
+
+      console.log(`🔄 [ADMIN AUTH] Session validation took ${Date.now() - startTime}ms`);
+
       if (error) {
-        console.error('🔴 [ADMIN AUTH] Session refresh error:', error);
-        return false;
+        console.error('🔴 [ADMIN AUTH] Session validation error:', error);
+        // Try to refresh the session if validation failed
+        console.log('🔄 [ADMIN AUTH] Attempting session refresh...');
+        const { data: refreshData, error: refreshError } = await supabase.auth.refreshSession();
+        if (refreshError || !refreshData.session) {
+          console.error('🔴 [ADMIN AUTH] Session refresh failed:', refreshError);
+          return false;
+        }
+        console.log('🟢 [ADMIN AUTH] Session refreshed successfully');
+        return true;
       }
-      console.log('🟢 [ADMIN AUTH] Session refreshed successfully');
-      return !!data.session;
-    } catch (error) {
-      console.error('🔴 [ADMIN AUTH] Session refresh exception:', error);
+
+      if (user) {
+        console.log(`🟢 [ADMIN AUTH] Session valid for user: ${user.email} (validated in ${Date.now() - startTime}ms)`);
+        return true;
+      }
+
+      console.log('🔴 [ADMIN AUTH] No user found in session');
+      return false;
+    } catch (error: any) {
+      console.error('🔴 [ADMIN AUTH] Session validation exception:', error?.message || error);
       return false;
     }
-  }, []);
+  }, [supabase]);
 
   useEffect(() => {
     let isMounted = true;
@@ -57,18 +97,20 @@ export function useSimpleAdminAuth() {
           return;
         }
 
-        // Check actual Supabase session instead of localStorage
-        console.log('🟣 [ADMIN AUTH] Checking Supabase session...');
-        const { data: { session }, error } = await supabase.auth.getSession();
-        console.log('🟣 [ADMIN AUTH] Session result:', {
-          hasSession: !!session,
-          email: session?.user?.email,
+        // Use getUser() for proper cookie-based SSR auth validation
+        // getSession() reads from cache, getUser() validates against server
+        console.log('🟣 [ADMIN AUTH] Validating user session...');
+        const { data: { user }, error } = await supabase.auth.getUser();
+        console.log('🟣 [ADMIN AUTH] User validation result:', {
+          hasUser: !!user,
+          email: user?.email,
           hasError: !!error,
+          errorMessage: error?.message,
           timestamp: new Date().toISOString()
         });
 
         if (error) {
-          console.error('🔴 [ADMIN AUTH] Session check error:', error);
+          console.error('🔴 [ADMIN AUTH] User validation error:', error);
           if (isMounted) {
             console.log('🔴 [ADMIN AUTH] Error - redirecting to /auth/signin');
             clearTimeout(fallbackTimer);
@@ -79,10 +121,10 @@ export function useSimpleAdminAuth() {
           return;
         }
 
-        if (!session) {
-          // No session - redirect to login
+        if (!user) {
+          // No user - redirect to login
           if (isMounted) {
-            console.log('🔴 [ADMIN AUTH] No session - redirecting to /auth/signin');
+            console.log('🔴 [ADMIN AUTH] No user found - redirecting to /auth/signin');
             clearTimeout(fallbackTimer);
             setIsAuthenticated(false);
             setLoading(false);
@@ -92,10 +134,10 @@ export function useSimpleAdminAuth() {
         }
 
         // Check if user has admin role in database
-        const profile = await getUserProfile(session.user.id);
+        const profile = await getUserProfile(user.id);
         const isAdmin = profile?.role === 'admin';
         isAdminRef.current = isAdmin;
-        console.log('🟣 [ADMIN AUTH] Admin check - isAdmin:', isAdmin, 'role:', profile?.role, 'email:', session.user.email);
+        console.log('🟣 [ADMIN AUTH] Admin check - isAdmin:', isAdmin, 'role:', profile?.role, 'email:', user.email);
 
         if (isAdmin) {
           if (isMounted) {
@@ -132,7 +174,7 @@ export function useSimpleAdminAuth() {
 
     // Listen for auth state changes
     const { data: { subscription } } = supabase.auth.onAuthStateChange(
-      async (event, session) => {
+      async (event: AuthChangeEvent, session: Session | null) => {
         if (!isMounted) return;
 
         console.log('🟣 [ADMIN AUTH] Auth state change:', event);
@@ -173,7 +215,7 @@ export function useSimpleAdminAuth() {
       clearInterval(refreshInterval);
       subscription.unsubscribe();
     };
-  }, []); // Empty dependency array - only run once on mount
+  }, [supabase, getUserProfile, refreshSession, router]);
 
   const logout = async () => {
     try {

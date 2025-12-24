@@ -1,8 +1,8 @@
 'use client';
 
-import React, { createContext, useContext, useEffect, useState } from 'react';
-import { User, Session, AuthError } from '@supabase/supabase-js';
-import { supabase } from '@/lib/supabase';
+import React, { createContext, useContext, useEffect, useState, useMemo } from 'react';
+import { User, Session, AuthError, AuthChangeEvent } from '@supabase/supabase-js';
+import { createClient } from '@/lib/supabase/client';
 import { Profile } from '@/types/database';
 
 interface AuthContextType {
@@ -26,13 +26,22 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   const [profile, setProfile] = useState<Profile | null>(null);
   const [loading, setLoading] = useState(true);
 
-  // Helper function to check if we're using a dummy Supabase client
+  // Create a stable Supabase client instance
+  const supabase = useMemo(() => {
+    try {
+      return createClient();
+    } catch {
+      return null;
+    }
+  }, []);
+
+  // Helper function to check if we're using a valid Supabase client
   const isDummyClient = () => {
-    const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL;
-    return !supabaseUrl || supabaseUrl === 'https://dummy.supabase.co';
+    return !supabase;
   };
 
   const fetchProfile = async (userId: string) => {
+    if (!supabase) return null;
     try {
       const { data, error } = await supabase
         .from('profiles')
@@ -61,8 +70,8 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   };
 
   useEffect(() => {
-    if (isDummyClient()) {
-      console.warn('Using dummy Supabase client - authentication disabled');
+    if (!supabase) {
+      console.warn('Supabase client not available - authentication disabled');
       setLoading(false);
       return;
     }
@@ -71,39 +80,45 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
 
     const initializeAuth = async () => {
       try {
-        // Race session fetch against timeout to prevent hanging
-        const sessionPromise = supabase.auth.getSession();
+        // Use getUser() for proper cookie-based SSR auth validation
+        // getSession() reads from local cache, getUser() validates against server
+        const userPromise = supabase.auth.getUser();
         const timeoutPromise = new Promise<never>((_, reject) => {
-          setTimeout(() => reject(new Error('Session fetch timeout')), 2000);
+          setTimeout(() => reject(new Error('Auth validation timeout')), 5000);
         });
 
-        const { data: { session }, error } = await Promise.race([sessionPromise, timeoutPromise]);
+        const { data: { user }, error } = await Promise.race([userPromise, timeoutPromise]);
 
         if (!isMounted) return;
 
         if (error) {
-          console.error('Error getting session:', error);
+          console.error('Error validating user:', error);
           setLoading(false);
           return;
         }
 
-        setSession(session);
-        setUser(session?.user ?? null);
+        // If we have a user, also get the session for token access
+        if (user) {
+          const { data: { session } } = await supabase.auth.getSession();
+          setSession(session);
+          setUser(user);
 
-        if (session?.user) {
           // Fetch profile without awaiting - let it load in background
-          fetchProfile(session.user.id).then(profileData => {
+          fetchProfile(user.id).then(profileData => {
             if (isMounted) {
               setProfile(profileData);
             }
           });
+        } else {
+          setSession(null);
+          setUser(null);
         }
 
         if (isMounted) {
           setLoading(false);
         }
       } catch (error) {
-        console.warn('Session initialization error or timeout:', error);
+        console.warn('Auth initialization error or timeout:', error);
         if (isMounted) {
           setLoading(false);
         }
@@ -122,7 +137,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
 
     // Listen for auth changes
     const { data: { subscription } } = supabase.auth.onAuthStateChange(
-      async (event, session) => {
+      async (event: AuthChangeEvent, session: Session | null) => {
         if (!isMounted) return;
 
         console.log('Auth state change:', event, 'session:', !!session?.user);
@@ -170,31 +185,31 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       clearTimeout(safetyTimeout);
       subscription.unsubscribe();
     };
-  }, []);
+  }, [supabase]);
 
   const signUp = async (email: string, password: string) => {
-    if (isDummyClient()) {
-      return { data: null, error: { message: 'Authentication is disabled - Supabase environment variables missing' } as AuthError };
+    if (!supabase) {
+      return { data: null, error: { message: 'Authentication is disabled - Supabase not configured' } as AuthError };
     }
 
     const { data, error } = await supabase.auth.signUp({
       email,
       password,
     });
-    
+
     return { data, error };
   };
 
   const signIn = async (email: string, password: string) => {
-    if (isDummyClient()) {
-      return { data: null, error: { message: 'Authentication is disabled - Supabase environment variables missing' } as AuthError };
+    if (!supabase) {
+      return { data: null, error: { message: 'Authentication is disabled - Supabase not configured' } as AuthError };
     }
 
     const { data, error } = await supabase.auth.signInWithPassword({
       email,
       password,
     });
-    
+
     return { data, error };
   };
 
@@ -202,9 +217,8 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     try {
       console.log('AuthContext: Starting signOut process...');
 
-      if (isDummyClient()) {
-        console.warn('AuthContext: Using dummy client - skipping Supabase signOut');
-        // Just clear local state for dummy client
+      if (!supabase) {
+        console.warn('AuthContext: Supabase not available - clearing local state only');
         setUser(null);
         setSession(null);
         setProfile(null);
@@ -272,17 +286,24 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   };
 
   const signInWithOAuth = async (provider: 'google' | 'github' | 'apple') => {
+    if (!supabase) {
+      return { error: { message: 'Authentication is disabled - Supabase not configured' } as AuthError };
+    }
+
     const { error } = await supabase.auth.signInWithOAuth({
       provider,
       options: {
         redirectTo: `${window.location.origin}/auth/callback`
       }
     });
-    
+
     return { error };
   };
 
   const updateProfile = async (updates: Partial<Profile>) => {
+    if (!supabase) {
+      return { error: new Error('Supabase not configured') };
+    }
     if (!user) {
       return { error: new Error('No user logged in') };
     }

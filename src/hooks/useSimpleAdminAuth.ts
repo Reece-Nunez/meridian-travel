@@ -41,37 +41,21 @@ export function useSimpleAdminAuth() {
   // Uses getUser() instead of getSession() for proper cookie-based SSR auth validation
   const refreshSession = useCallback(async () => {
     try {
-      console.log('🔄 [ADMIN AUTH] Validating session...');
-      const startTime = Date.now();
-
       // Use getUser() which validates against server/cookies (not local cache)
-      // This is the recommended approach for SSR cookie-based auth
       const { data: { user }, error } = await supabase.auth.getUser();
 
-      console.log(`🔄 [ADMIN AUTH] Session validation took ${Date.now() - startTime}ms`);
-
       if (error) {
-        console.error('🔴 [ADMIN AUTH] Session validation error:', error);
         // Try to refresh the session if validation failed
-        console.log('🔄 [ADMIN AUTH] Attempting session refresh...');
         const { data: refreshData, error: refreshError } = await supabase.auth.refreshSession();
         if (refreshError || !refreshData.session) {
-          console.error('🔴 [ADMIN AUTH] Session refresh failed:', refreshError);
           return false;
         }
-        console.log('🟢 [ADMIN AUTH] Session refreshed successfully');
         return true;
       }
 
-      if (user) {
-        console.log(`🟢 [ADMIN AUTH] Session valid for user: ${user.email} (validated in ${Date.now() - startTime}ms)`);
-        return true;
-      }
-
-      console.log('🔴 [ADMIN AUTH] No user found in session');
-      return false;
-    } catch (error: any) {
-      console.error('🔴 [ADMIN AUTH] Session validation exception:', error?.message || error);
+      return !!user;
+    } catch (error) {
+      console.error('Session validation error:', error);
       return false;
     }
   }, [supabase]);
@@ -79,40 +63,24 @@ export function useSimpleAdminAuth() {
   useEffect(() => {
     let isMounted = true;
 
-    // Fallback timeout to prevent infinite loading - increased to 10 seconds
+    // Fallback timeout to prevent infinite loading
     const fallbackTimer = setTimeout(() => {
       if (isMounted && loading) {
-        console.warn('Auth check timeout, forcing login redirect');
         setIsAuthenticated(false);
         setLoading(false);
         routerRef.current.push('/auth/signin');
       }
-    }, 10000); // 10 second timeout
+    }, 10000);
 
     const checkAuth = async () => {
-      console.log('🟣 [ADMIN AUTH] checkAuth started, isMounted:', isMounted);
       try {
-        if (!isMounted) {
-          console.log('🟣 [ADMIN AUTH] Component unmounted, exiting');
-          return;
-        }
+        if (!isMounted) return;
 
         // Use getUser() for proper cookie-based SSR auth validation
-        // getSession() reads from cache, getUser() validates against server
-        console.log('🟣 [ADMIN AUTH] Validating user session...');
         const { data: { user }, error } = await supabase.auth.getUser();
-        console.log('🟣 [ADMIN AUTH] User validation result:', {
-          hasUser: !!user,
-          email: user?.email,
-          hasError: !!error,
-          errorMessage: error?.message,
-          timestamp: new Date().toISOString()
-        });
 
         if (error) {
-          console.error('🔴 [ADMIN AUTH] User validation error:', error);
           if (isMounted) {
-            console.log('🔴 [ADMIN AUTH] Error - redirecting to /auth/signin');
             clearTimeout(fallbackTimer);
             setIsAuthenticated(false);
             setLoading(false);
@@ -122,9 +90,7 @@ export function useSimpleAdminAuth() {
         }
 
         if (!user) {
-          // No user - redirect to login
           if (isMounted) {
-            console.log('🔴 [ADMIN AUTH] No user found - redirecting to /auth/signin');
             clearTimeout(fallbackTimer);
             setIsAuthenticated(false);
             setLoading(false);
@@ -137,31 +103,24 @@ export function useSimpleAdminAuth() {
         const profile = await getUserProfile(user.id);
         const isAdmin = profile?.role === 'admin';
         isAdminRef.current = isAdmin;
-        console.log('🟣 [ADMIN AUTH] Admin check - isAdmin:', isAdmin, 'role:', profile?.role, 'email:', user.email);
 
         if (isAdmin) {
           if (isMounted) {
-            console.log('🟢 [ADMIN AUTH] Admin verified - setting authenticated=true, clearing timeout');
             clearTimeout(fallbackTimer);
             setIsAuthenticated(true);
             setLoading(false);
-          } else {
-            console.log('🟡 [ADMIN AUTH] Admin verified but component unmounted');
           }
         } else {
-          // Not an admin - redirect
           if (isMounted) {
-            console.log('🔴 [ADMIN AUTH] Not admin - redirecting to /dashboard');
             clearTimeout(fallbackTimer);
             setIsAuthenticated(false);
             setLoading(false);
-            routerRef.current.push('/dashboard'); // Regular users go to dashboard
+            routerRef.current.push('/dashboard');
           }
         }
       } catch (error) {
-        console.error('🔴 [ADMIN AUTH] Auth check error:', error);
+        console.error('Auth check error:', error);
         if (isMounted) {
-          console.log('🔴 [ADMIN AUTH] Exception - redirecting to /auth/signin');
           clearTimeout(fallbackTimer);
           setIsAuthenticated(false);
           setLoading(false);
@@ -177,16 +136,10 @@ export function useSimpleAdminAuth() {
       async (event: AuthChangeEvent, session: Session | null) => {
         if (!isMounted) return;
 
-        console.log('🟣 [ADMIN AUTH] Auth state change:', event);
-
         if (event === 'SIGNED_OUT') {
-          console.log('🔴 [ADMIN AUTH] User signed out - redirecting to login');
           setIsAuthenticated(false);
           setLoading(false);
           routerRef.current.push('/auth/signin');
-        } else if (event === 'TOKEN_REFRESHED') {
-          console.log('🟢 [ADMIN AUTH] Token refreshed');
-          // Session is still valid, no action needed
         } else if (event === 'SIGNED_IN' && session) {
           // Re-verify admin status on sign in
           const profile = await getUserProfile(session.user.id);
@@ -202,14 +155,11 @@ export function useSimpleAdminAuth() {
     // Set up periodic session refresh every 5 minutes to keep session alive
     const refreshInterval = setInterval(async () => {
       if (isMounted && isAdminRef.current) {
-        console.log('🔄 [ADMIN AUTH] Periodic session refresh...');
         await refreshSession();
       }
-    }, 5 * 60 * 1000); // 5 minutes
+    }, 5 * 60 * 1000);
 
-    // Cleanup function to prevent state updates on unmounted component
     return () => {
-      console.log('🧹 [ADMIN AUTH] Cleanup - clearing timeout, interval, and marking unmounted');
       isMounted = false;
       clearTimeout(fallbackTimer);
       clearInterval(refreshInterval);
@@ -219,14 +169,11 @@ export function useSimpleAdminAuth() {
 
   const logout = async () => {
     try {
-      // Clear any legacy admin session
       localStorage.removeItem('admin_session');
-      // Sign out from Supabase
       await signOut();
       routerRef.current.push('/auth/signin');
     } catch (error) {
       console.error('Admin logout error:', error);
-      // Still redirect even if signOut fails
       routerRef.current.push('/auth/signin');
     }
   };

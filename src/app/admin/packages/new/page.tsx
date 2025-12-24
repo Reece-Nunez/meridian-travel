@@ -225,13 +225,10 @@ function NewPackageContent() {
     const timeoutId = setTimeout(() => controller.abort(), 30000); // 30 second timeout
 
     try {
-      console.log(`Uploading ${file.name} to ${bucketName}...`);
-
-      // Cookies are automatically sent with the request via @supabase/ssr
       const response = await fetch('/api/admin/upload-package-image', {
         method: 'POST',
         body: formData,
-        credentials: 'include', // Ensure cookies are sent
+        credentials: 'include',
         signal: controller.signal
       });
 
@@ -243,41 +240,26 @@ function NewPackageContent() {
       }
 
       const data = await response.json();
-      console.log(`Successfully uploaded ${file.name}:`, data.url);
       return data.url;
     } catch (error: any) {
       clearTimeout(timeoutId);
       if (error.name === 'AbortError') {
         throw new Error(`Upload timed out for ${file.name}. Please try again.`);
       }
-      console.error(`Error uploading ${file.name}:`, error);
       throw error;
     }
   };
 
   // Upload all pending images and return updated image arrays
   const uploadAllPendingImages = async () => {
-    console.log('📤 [UPLOAD] Starting uploadAllPendingImages...');
-    console.log('📤 [UPLOAD] Package images to upload:', pendingPackageImages.length);
-    console.log('📤 [UPLOAD] Itinerary days:', itinerary.length);
-
     const uploadedPackageImages: string[] = [];
     const updatedItinerary = [...itinerary];
 
     // Upload package images
-    for (let i = 0; i < pendingPackageImages.length; i++) {
-      const pendingImage = pendingPackageImages[i];
-      try {
-        console.log(`📤 [UPLOAD] Uploading package image ${i + 1}/${pendingPackageImages.length}: ${pendingImage.file.name} (${(pendingImage.file.size / 1024).toFixed(1)}KB)`);
-        const uploadedUrl = await uploadImageFile(pendingImage.file, 'package-images');
-        uploadedPackageImages.push(uploadedUrl);
-        console.log(`📤 [UPLOAD] Package image ${i + 1} uploaded successfully`);
-        // Clean up the preview URL
-        URL.revokeObjectURL(pendingImage.previewUrl);
-      } catch (error) {
-        console.error(`📤 [UPLOAD] Failed to upload package image ${i + 1}:`, error);
-        throw error;
-      }
+    for (const pendingImage of pendingPackageImages) {
+      const uploadedUrl = await uploadImageFile(pendingImage.file, 'package-images');
+      uploadedPackageImages.push(uploadedUrl);
+      URL.revokeObjectURL(pendingImage.previewUrl);
     }
 
     // Upload itinerary day images
@@ -286,24 +268,13 @@ function NewPackageContent() {
       const uploadedDayImages: string[] = [];
 
       if (day.pendingImages && day.pendingImages.length > 0) {
-        console.log(`📤 [UPLOAD] Day ${dayIndex + 1}: ${day.pendingImages.length} images to upload`);
-        for (let i = 0; i < day.pendingImages.length; i++) {
-          const pendingImage = day.pendingImages[i];
-          try {
-            console.log(`📤 [UPLOAD] Uploading day ${dayIndex + 1} image ${i + 1}/${day.pendingImages.length}: ${pendingImage.file.name}`);
-            const uploadedUrl = await uploadImageFile(pendingImage.file, 'itinerary-images');
-            uploadedDayImages.push(uploadedUrl);
-            console.log(`📤 [UPLOAD] Day ${dayIndex + 1} image ${i + 1} uploaded successfully`);
-            // Clean up the preview URL
-            URL.revokeObjectURL(pendingImage.previewUrl);
-          } catch (error) {
-            console.error(`📤 [UPLOAD] Failed to upload day ${dayIndex + 1} image ${i + 1}:`, error);
-            throw error;
-          }
+        for (const pendingImage of day.pendingImages) {
+          const uploadedUrl = await uploadImageFile(pendingImage.file, 'itinerary-images');
+          uploadedDayImages.push(uploadedUrl);
+          URL.revokeObjectURL(pendingImage.previewUrl);
         }
       }
 
-      // Update the day with new uploaded images and clear pending
       updatedItinerary[dayIndex] = {
         ...day,
         images: [...(day.images || []), ...uploadedDayImages],
@@ -312,7 +283,6 @@ function NewPackageContent() {
       };
     }
 
-    console.log('📤 [UPLOAD] All uploads complete. Total package images:', uploadedPackageImages.length);
     return {
       packageImages: [...formData.images, ...uploadedPackageImages],
       updatedItinerary
@@ -321,42 +291,27 @@ function NewPackageContent() {
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    console.log('📦 [PACKAGE CREATE] Form submit triggered');
 
     const totalImages = pendingPackageImages.length +
       itinerary.reduce((acc, day) => acc + (day.pendingImages?.length || 0), 0);
-
-    console.log('📦 [PACKAGE CREATE] Current state:', {
-      pendingPackageImages: pendingPackageImages.length,
-      itineraryDays: itinerary.length,
-      totalItineraryPendingImages: itinerary.reduce((acc, day) => acc + (day.pendingImages?.length || 0), 0)
-    });
 
     setLoading(true);
 
     // Validate cruise packages require a ship
     if (formData.type === 'cruise' && !formData.ship_id) {
-      console.log('📦 [PACKAGE CREATE] Validation failed: No ship selected for cruise');
       toast.error('Please select a ship for cruise packages.');
       setLoading(false);
       return;
     }
 
-    // Create a progress toast that we'll update
     const toastId = toast.loading('Preparing to create package...', {
       description: 'Validating your session',
     });
 
     try {
-      console.log('📦 [PACKAGE CREATE] Step 1: Refreshing session...');
-      const startTime = Date.now();
-
-      // Refresh session before saving to prevent auth issues
       const sessionValid = await refreshSession();
-      console.log(`📦 [PACKAGE CREATE] Step 1 complete: Session valid=${sessionValid} (took ${Date.now() - startTime}ms)`);
 
       if (!sessionValid) {
-        console.log('📦 [PACKAGE CREATE] Session invalid - aborting');
         toast.error('Your session has expired. Please log in again.', { id: toastId });
         setLoading(false);
         return;
@@ -375,11 +330,7 @@ function NewPackageContent() {
         });
       }
 
-      // Upload all pending images first
-      console.log('📦 [PACKAGE CREATE] Step 2: Starting image uploads...');
-      const uploadStartTime = Date.now();
       const { packageImages, updatedItinerary } = await uploadAllPendingImages();
-      console.log(`📦 [PACKAGE CREATE] Step 2 complete: Images uploaded (took ${Date.now() - uploadStartTime}ms)`);
 
       const packageData = {
         ...formData,
@@ -402,54 +353,32 @@ function NewPackageContent() {
         cabin_category: formData.cabin_category || null
       };
 
-      // Update toast for database step
       toast.loading('Saving to database...', {
         id: toastId,
         description: `Creating "${formData.title}"`,
       });
 
-      console.log('📦 [PACKAGE CREATE] Step 3: Inserting package to database...');
-      console.log('📦 [PACKAGE CREATE] Package data summary:', {
-        title: packageData.title,
-        destination: packageData.destination,
-        imageCount: packageData.images.length,
-        itineraryDays: packageData.itinerary.length
-      });
-
-      const dbStartTime = Date.now();
       const { error } = await supabase
         .from('trip_packages')
         .insert([packageData]);
 
-      console.log(`📦 [PACKAGE CREATE] Step 3 complete: Database insert (took ${Date.now() - dbStartTime}ms)`);
-
       if (error) {
-        console.error('📦 [PACKAGE CREATE] Database error:', error);
         throw error;
       }
 
-      // Success toast
       toast.success('Package created successfully!', {
         id: toastId,
         description: `"${formData.title}" is now live`,
       });
 
-      console.log('📦 [PACKAGE CREATE] Step 4: Redirecting to packages list...');
       router.push('/admin/packages');
     } catch (error: any) {
-      console.error('📦 [PACKAGE CREATE] ERROR:', error);
-      console.error('📦 [PACKAGE CREATE] Error details:', {
-        message: error?.message,
-        code: error?.code,
-        details: error?.details,
-        hint: error?.hint
-      });
+      console.error('Package creation error:', error);
       toast.error('Failed to create package', {
         id: toastId,
         description: error?.message || 'Please try again',
       });
     } finally {
-      console.log('📦 [PACKAGE CREATE] Finished (loading=false)');
       setLoading(false);
     }
   };

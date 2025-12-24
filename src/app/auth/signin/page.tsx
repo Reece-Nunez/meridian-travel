@@ -24,31 +24,18 @@ function SignInForm() {
 
   // Redirect authenticated users (only once)
   useEffect(() => {
-    console.log('🔵 [SIGNIN] useEffect triggered:', {
-      hasUser: !!user,
-      userEmail: user?.email,
-      authLoading,
-      hasRedirected,
-      timestamp: new Date().toISOString()
-    });
-
     if (user && !authLoading && !hasRedirected) {
-      console.log('🟢 [SIGNIN] Conditions met for redirect, setting hasRedirected=true');
       setHasRedirected(true);
 
       // Check user role from database
       getUserProfile(user.id).then((profile) => {
         const isAdmin = profile?.role === 'admin';
-        const targetPath = isAdmin ? '/admin' : redirectTo;
-        console.log('🟢 [SIGNIN] Redirecting to:', targetPath, '(isAdmin:', isAdmin + ')');
         if (isAdmin) {
           router.replace('/admin');
         } else {
           router.replace(redirectTo);
         }
       });
-    } else {
-      console.log('🔴 [SIGNIN] Redirect blocked - conditions not met');
     }
   }, [user, authLoading, hasRedirected, router, redirectTo]);
 

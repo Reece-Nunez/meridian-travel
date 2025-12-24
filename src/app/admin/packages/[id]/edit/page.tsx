@@ -120,10 +120,9 @@ export default function EditPackage() {
         if (data.itinerary && data.itinerary.length > 0) {
           const processedItinerary = data.itinerary.map((day: any, dayIndex: number) => {
             const processedActivities = day.activities && day.activities.length > 0 
-              ? day.activities.map((activity: any, actIndex: number) => {
+              ? day.activities.map((activity: any) => {
                   // Fix corrupted activity data - if it has numeric keys, it's corrupted
                   if (activity && typeof activity === 'object' && activity.hasOwnProperty('0')) {
-                    console.log(`🔧 Fixed corrupted activity data for day ${dayIndex + 1}, activity ${actIndex + 1}`);
                     return {
                       name: activity.name || '',
                       description: activity.description || ''
@@ -259,13 +258,10 @@ export default function EditPackage() {
     const timeoutId = setTimeout(() => controller.abort(), 30000); // 30 second timeout
 
     try {
-      console.log(`Uploading ${file.name} to ${bucketName}...`);
-
-      // Cookies are automatically sent with the request via @supabase/ssr
       const response = await fetch('/api/admin/upload-package-image', {
         method: 'POST',
         body: formData,
-        credentials: 'include', // Ensure cookies are sent
+        credentials: 'include',
         signal: controller.signal
       });
 
@@ -277,39 +273,26 @@ export default function EditPackage() {
       }
 
       const data = await response.json();
-      console.log(`Successfully uploaded ${file.name}:`, data.url);
       return data.url;
     } catch (error: any) {
       clearTimeout(timeoutId);
       if (error.name === 'AbortError') {
         throw new Error(`Upload timed out for ${file.name}. Please try again.`);
       }
-      console.error(`Error uploading ${file.name}:`, error);
       throw error;
     }
   };
 
   // Delete a single image from Supabase storage
   const deleteImageFromStorage = async (imageUrl: string, bucketName: string) => {
-    try {
-      // Extract the file path from the public URL
-      const urlParts = imageUrl.split('/');
-      const fileName = urlParts[urlParts.length - 1];
-      
-      console.log(`Deleting ${fileName} from ${bucketName}`);
-      
-      const { error } = await supabase.storage
-        .from(bucketName)
-        .remove([fileName]);
+    const urlParts = imageUrl.split('/');
+    const fileName = urlParts[urlParts.length - 1];
 
-      if (error) {
-        console.error(`Error deleting ${fileName}:`, error);
-        throw error;
-      }
+    const { error } = await supabase.storage
+      .from(bucketName)
+      .remove([fileName]);
 
-      console.log(`Successfully deleted ${fileName}`);
-    } catch (error) {
-      console.error('Failed to delete image:', error);
+    if (error) {
       throw error;
     }
   };
@@ -409,9 +392,6 @@ export default function EditPackage() {
     });
 
     try {
-      console.log('Starting form submission...');
-
-      // Refresh session before saving to prevent auth issues
       const sessionValid = await refreshSession();
       if (!sessionValid) {
         toast.error('Your session has expired. Please log in again.', { id: toastId });
@@ -426,7 +406,6 @@ export default function EditPackage() {
         });
       }
       await deleteAllMarkedImages();
-      console.log('Marked images deleted successfully');
 
       // Upload all pending images
       if (totalPendingImages > 0) {
@@ -494,77 +473,49 @@ export default function EditPackage() {
         updated_at: packageData.updated_at
       };
 
-      // Update toast for database step
       toast.loading('Saving to database...', {
         id: toastId,
         description: `Updating "${formData.title}"`,
       });
 
-      console.log('📝 Updating basic fields for package:', packageId);
-      console.log('📝 Basic data:', basicData);
-
-      // Direct update without timeout to diagnose the issue
-      const { data: basicUpdateData, error: basicError } = await supabase
+      const { error: basicError } = await supabase
         .from('trip_packages')
         .update(basicData)
         .eq('id', packageId);
 
       if (basicError) {
-        console.error('❌ Basic update error:', basicError);
-        console.error('Error details:', JSON.stringify(basicError, null, 2));
         throw basicError;
       }
 
-      console.log('✅ Basic fields updated successfully');
-      console.log('✅ Update response:', basicUpdateData);
-
-      // Now update the itinerary
-      console.log('📝 Updating itinerary...');
-      console.log('📝 Itinerary data:', packageData.itinerary);
-
-      const { data: itineraryData, error: itineraryError } = await supabase
+      const { error: itineraryError } = await supabase
         .from('trip_packages')
         .update({ itinerary: packageData.itinerary })
         .eq('id', packageId);
 
       if (itineraryError) {
-        console.error('❌ Itinerary update error:', itineraryError);
-        console.error('Error details:', JSON.stringify(itineraryError, null, 2));
-        // Don't throw - basic fields are already saved
-        console.warn('⚠️ Itinerary update failed, but basic changes are saved');
         toast.warning('Saved with warnings', {
           id: toastId,
           description: 'Basic fields saved but itinerary update failed',
         });
       } else {
-        console.log('✅ Itinerary updated successfully');
-        console.log('✅ Itinerary update response:', itineraryData);
-        // Success toast
         toast.success('Package updated successfully!', {
           id: toastId,
           description: `"${formData.title}" has been saved`,
         });
       }
 
-      console.log('✅ Save successful, redirecting...');
-
-      // Clear pending images and deletion state since everything is now saved
       setPendingPackageImages([]);
       setPackageImagesToDelete([]);
       setItinerary(prev => prev.map(day => ({ ...day, pendingImages: [], imagesToDelete: [] })));
 
       router.push('/admin/packages');
     } catch (error) {
-      console.error('Error updating package:', error);
-      if (error instanceof Error) {
-        console.error('Error message:', error.message);
-      }
+      console.error('Package update error:', error);
       toast.error('Failed to update package', {
         id: toastId,
         description: error instanceof Error ? error.message : 'Please try again',
       });
     } finally {
-      console.log('🏁 Setting saving to false');
       setSaving(false);
     }
   };

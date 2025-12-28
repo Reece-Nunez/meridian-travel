@@ -1,10 +1,10 @@
 'use client';
 
-import { useState, useEffect, Suspense } from 'react';
+import { useState, useEffect, Suspense, useMemo } from 'react';
 import { motion } from 'framer-motion';
 import Link from 'next/link';
 import { useRouter } from 'next/navigation';
-import { supabase } from '@/lib/supabase';
+import { createClient } from '@/lib/supabase/client';
 import { useSimpleAdminAuth } from '@/hooks/useSimpleAdminAuth';
 import ImageUploadWithCaptions, { ImageWithCaption } from '@/components/admin/ImageUploadWithCaptions';
 
@@ -20,6 +20,7 @@ interface PendingImage {
 function NewShipContent() {
   const { loading: authLoading, isAuthenticated } = useSimpleAdminAuth();
   const router = useRouter();
+  const supabase = useMemo(() => createClient(), []);
   const [loading, setLoading] = useState(false);
 
   // Force refresh data on mount to avoid stale cache

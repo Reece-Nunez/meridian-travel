@@ -2,7 +2,7 @@
 
 import { useState, useEffect, useMemo, useCallback, useRef } from 'react';
 import Link from 'next/link';
-import { supabase } from '@/lib/supabase';
+import { createClient } from '@/lib/supabase/client';
 import { useSimpleAdminAuth } from '@/hooks/useSimpleAdminAuth';
 import { clearContentCache } from '@/lib/content';
 import RichTextEditor from '@/components/RichTextEditor';
@@ -176,6 +176,7 @@ export default function AdminContent() {
   const [showPreview, setShowPreview] = useState(false);
   const [bulkSelection, setBulkSelection] = useState<Set<string>>(new Set());
   const [searchQuery, setSearchQuery] = useState('');
+  const supabase = useMemo(() => createClient(), []);
   
   // Auto-save states
   const [autoSaving, setAutoSaving] = useState(false);

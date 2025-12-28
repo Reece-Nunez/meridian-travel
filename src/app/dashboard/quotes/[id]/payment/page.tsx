@@ -2,8 +2,8 @@
 
 import { useAuth } from '@/contexts/AuthContext';
 import { useRouter, useParams, useSearchParams } from 'next/navigation';
-import { useEffect, useState, Suspense } from 'react';
-import { supabase } from '@/lib/supabase';
+import { useEffect, useState, Suspense, useMemo } from 'react';
+import { createClient } from '@/lib/supabase/client';
 import { CustomQuote } from '@/types/database';
 import { loadStripe } from '@stripe/stripe-js';
 import { Elements, CardElement, useStripe, useElements } from '@stripe/react-stripe-js';
@@ -232,6 +232,7 @@ function PaymentPageContent() {
   const searchParams = useSearchParams();
   const quoteId = params.id as string;
   const clientSecret = searchParams?.get('client_secret');
+  const supabase = useMemo(() => createClient(), []);
 
   useEffect(() => {
     if (!authLoading && !user) {

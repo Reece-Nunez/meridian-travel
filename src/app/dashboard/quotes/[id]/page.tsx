@@ -2,8 +2,8 @@
 
 import { useAuth } from '@/contexts/AuthContext';
 import { useRouter, useParams, useSearchParams } from 'next/navigation';
-import { useEffect, useState, Suspense } from 'react';
-import { supabase } from '@/lib/supabase';
+import { useEffect, useState, Suspense, useMemo } from 'react';
+import { createClient } from '@/lib/supabase/client';
 import Link from 'next/link';
 import { CustomQuote } from '@/types/database';
 import ItineraryDisplay from '@/components/ItineraryDisplay';
@@ -22,6 +22,7 @@ function QuoteDetailsContent() {
   const params = useParams();
   const searchParams = useSearchParams();
   const quoteId = params.id as string;
+  const supabase = useMemo(() => createClient(), []);
 
   useEffect(() => {
     if (!authLoading && !user) {

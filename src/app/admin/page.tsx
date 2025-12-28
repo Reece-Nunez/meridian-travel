@@ -1,10 +1,10 @@
 'use client';
 
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useMemo } from 'react';
 import { motion } from 'framer-motion';
 import Link from 'next/link';
 import { useSimpleAdminAuth } from '@/hooks/useSimpleAdminAuth';
-import { supabase } from '@/lib/supabase';
+import { createClient } from '@/lib/supabase/client';
 
 export default function AdminDashboard() {
   const { loading, isAuthenticated, logout } = useSimpleAdminAuth();
@@ -16,11 +16,14 @@ export default function AdminDashboard() {
   });
   const [statsLoading, setStatsLoading] = useState(true);
 
+  // Use the same Supabase client as AuthContext to avoid multiple instances
+  const supabase = useMemo(() => createClient(), []);
+
   useEffect(() => {
     if (isAuthenticated && !loading) {
       fetchStats();
     }
-  }, [isAuthenticated, loading]);
+  }, [isAuthenticated, loading, supabase]);
 
   // Fallback to ensure stats loading doesn't hang
   useEffect(() => {

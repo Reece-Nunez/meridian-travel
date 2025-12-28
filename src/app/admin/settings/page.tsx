@@ -1,9 +1,9 @@
 'use client';
 
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useMemo } from 'react';
 import { motion } from 'framer-motion';
 import Link from 'next/link';
-import { supabase } from '@/lib/supabase';
+import { createClient } from '@/lib/supabase/client';
 import { useSimpleAdminAuth } from '@/hooks/useSimpleAdminAuth';
 import { clearContentCache } from '@/lib/content';
 import { SiteSetting } from '@/types/database';
@@ -15,6 +15,7 @@ export default function AdminSettings() {
   const [saving, setSaving] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [activeTab, setActiveTab] = useState<'general' | 'contact' | 'admin' | 'system'>('general');
+  const supabase = useMemo(() => createClient(), []);
 
   // Form states
   const [generalForm, setGeneralForm] = useState<{[key: string]: string}>({});

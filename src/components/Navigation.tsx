@@ -157,7 +157,7 @@ export default function Navigation() {
                                   // Force clear any cached auth state and redirect
                                   localStorage.clear();
                                   sessionStorage.clear();
-                                  window.location.href = '/';
+                                  window.location.href = '/auth/signin';
                                 }
                               } catch (e) {
                                 console.error('Navigation desktop: Sign out exception:', e);
@@ -506,7 +506,7 @@ export default function Navigation() {
                           // Force clear any cached auth state and redirect
                           localStorage.clear();
                           sessionStorage.clear();
-                          window.location.href = '/';
+                          window.location.href = '/auth/signin';
                         }
                       } catch (e) {
                         console.error('Navigation mobile: Sign out exception:', e);

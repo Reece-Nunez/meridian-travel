@@ -1,10 +1,10 @@
 'use client';
 
-import { useState, useEffect, Suspense } from 'react';
+import { useState, useEffect, Suspense, useMemo } from 'react';
 import { motion } from 'framer-motion';
 import Link from 'next/link';
 import { useRouter, useParams } from 'next/navigation';
-import { supabase } from '@/lib/supabase';
+import { createClient } from '@/lib/supabase/client';
 import { useSimpleAdminAuth } from '@/hooks/useSimpleAdminAuth';
 import ImageUploadWithCaptions, { ImageWithCaption } from '@/components/admin/ImageUploadWithCaptions';
 import { Ship, CabinCategory, CabinImage } from '@/types/database';
@@ -27,6 +27,7 @@ function CabinCategoriesContent() {
   const router = useRouter();
   const params = useParams();
   const shipId = params.id as string;
+  const supabase = useMemo(() => createClient(), []);
 
   const [ship, setShip] = useState<Ship | null>(null);
   const [cabins, setCabins] = useState<CabinCategory[]>([]);

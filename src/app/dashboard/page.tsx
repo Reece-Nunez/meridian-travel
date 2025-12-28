@@ -2,8 +2,8 @@
 
 import { useAuth } from '@/contexts/AuthContext';
 import { useRouter, useSearchParams } from 'next/navigation';
-import { useEffect, useState, Suspense } from 'react';
-import { supabase } from '@/lib/supabase';
+import { useEffect, useState, Suspense, useMemo } from 'react';
+import { createClient } from '@/lib/supabase/client';
 import Link from 'next/link';
 import { Booking, CustomQuote } from '@/types/database';
 import LoadingFallback from '@/components/LoadingFallback';
@@ -17,6 +17,7 @@ function DashboardContent() {
   const [dataLoaded, setDataLoaded] = useState(false);
   const router = useRouter();
   const searchParams = useSearchParams();
+  const supabase = useMemo(() => createClient(), []);
 
   // Simple auth check - redirect if no user
   useEffect(() => {

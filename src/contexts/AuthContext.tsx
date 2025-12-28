@@ -80,8 +80,39 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
 
     const initializeAuth = async () => {
       try {
-        // Use getUser() for proper cookie-based SSR auth validation
-        // getSession() reads from local cache, getUser() validates against server
+        // First try getSession() which reads from local storage/cookies
+        // This is faster and works for client-side navigation
+        const { data: { session: existingSession } } = await supabase.auth.getSession();
+
+        if (!isMounted) return;
+
+        if (existingSession?.user) {
+          // We have a cached session, use it immediately
+          setSession(existingSession);
+          setUser(existingSession.user);
+          setLoading(false);
+
+          // Fetch profile in background
+          fetchProfile(existingSession.user.id).then(profileData => {
+            if (isMounted) {
+              setProfile(profileData);
+            }
+          });
+
+          // Optionally validate against server in background (non-blocking)
+          supabase.auth.getUser().then(({ error }) => {
+            if (error && isMounted) {
+              // Session was invalid, clear it
+              console.warn('Session validation failed, clearing auth state');
+              setSession(null);
+              setUser(null);
+              setProfile(null);
+            }
+          });
+          return;
+        }
+
+        // No cached session, try getUser() with timeout for server validation
         const userPromise = supabase.auth.getUser();
         const timeoutPromise = new Promise<never>((_, reject) => {
           setTimeout(() => reject(new Error('Auth validation timeout')), 5000);
@@ -92,7 +123,10 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
         if (!isMounted) return;
 
         if (error) {
-          console.error('Error validating user:', error);
+          // Auth session missing is expected for logged out users, don't treat as error
+          if (!error.message?.includes('Auth session missing')) {
+            console.error('Error validating user:', error);
+          }
           setLoading(false);
           return;
         }

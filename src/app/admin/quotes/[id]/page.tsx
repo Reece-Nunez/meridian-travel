@@ -1,10 +1,10 @@
 'use client';
 
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useMemo } from 'react';
 import { motion } from 'framer-motion';
 import Link from 'next/link';
 import { useRouter, useParams } from 'next/navigation';
-import { supabase } from '@/lib/supabase';
+import { createClient } from '@/lib/supabase/client';
 import { CustomQuote, TripPackage } from '@/types/database';
 import { useSimpleAdminAuth } from '@/hooks/useSimpleAdminAuth';
 import { usePercentageScrollRestoration } from '@/hooks/usePercentageScrollRestoration';
@@ -20,6 +20,7 @@ export default function QuoteDetail() {
   const router = useRouter();
   const params = useParams();
   const quoteId = params.id as string;
+  const supabase = useMemo(() => createClient(), []);
 
   const [quote, setQuote] = useState<CustomQuote | null>(null);
   const [selectedPackage, setSelectedPackage] = useState<TripPackage | null>(null);

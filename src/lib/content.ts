@@ -7,9 +7,18 @@ let settingsCache: SiteSetting[] | null = null;
 let cacheTimestamp: number = 0;
 const CACHE_DURATION = 5 * 60 * 1000; // 5 minutes
 
-export async function getAllContent(): Promise<ContentSection[]> {
-  // Check if cache is valid
-  if (contentCache && Date.now() - cacheTimestamp < CACHE_DURATION) {
+// Check if we're in preview mode (client-side only)
+export function isPreviewMode(): boolean {
+  if (typeof window === 'undefined') return false;
+  return new URLSearchParams(window.location.search).get('preview') === 'true';
+}
+
+export async function getAllContent(includePreview: boolean = false): Promise<ContentSection[]> {
+  // Check preview mode from URL if not explicitly set
+  const usePreview = includePreview || (typeof window !== 'undefined' && isPreviewMode());
+
+  // Don't use cache in preview mode
+  if (!usePreview && contentCache && Date.now() - cacheTimestamp < CACHE_DURATION) {
     return contentCache;
   }
 
@@ -32,9 +41,23 @@ export async function getAllContent(): Promise<ContentSection[]> {
       return getFallbackContent();
     }
 
-    contentCache = data || [];
-    cacheTimestamp = Date.now();
-    return contentCache;
+    let content = data || [];
+
+    // In preview mode, use draft_content if available
+    if (usePreview) {
+      content = content.map(item => ({
+        ...item,
+        content: item.draft_content || item.content
+      }));
+    }
+
+    // Only cache non-preview content
+    if (!usePreview) {
+      contentCache = content;
+      cacheTimestamp = Date.now();
+    }
+
+    return content;
   } catch (error) {
     console.log('Error fetching content (likely timeout), using fallbacks');
     return getFallbackContent();
@@ -96,46 +119,59 @@ export async function getContentByType(sectionType: string): Promise<ContentSect
 
 // Fallback content if database is not available
 function getFallbackContent(): ContentSection[] {
+  const now = new Date().toISOString();
   return [
     {
       id: '1',
-      created_at: new Date().toISOString(),
-      updated_at: new Date().toISOString(),
+      created_at: now,
+      updated_at: now,
       section_key: 'hero_title',
       title: 'Hero Title',
       content: 'Discover Extraordinary Adventures',
       section_type: 'hero',
-      is_active: true
+      is_active: true,
+      status: 'published',
+      draft_content: null,
+      published_at: now
     },
     {
       id: '2',
-      created_at: new Date().toISOString(),
-      updated_at: new Date().toISOString(),
+      created_at: now,
+      updated_at: now,
       section_key: 'hero_subtitle',
       title: 'Hero Subtitle',
       content: 'Embark on carefully curated luxury travel experiences that create lasting memories.',
       section_type: 'hero',
-      is_active: true
+      is_active: true,
+      status: 'published',
+      draft_content: null,
+      published_at: now
     },
     {
       id: '3',
-      created_at: new Date().toISOString(),
-      updated_at: new Date().toISOString(),
+      created_at: now,
+      updated_at: now,
       section_key: 'about_title',
       title: 'About Us Title',
       content: 'About Meridian Luxury Travel',
       section_type: 'about',
-      is_active: true
+      is_active: true,
+      status: 'published',
+      draft_content: null,
+      published_at: now
     },
     {
       id: '4',
-      created_at: new Date().toISOString(),
-      updated_at: new Date().toISOString(),
+      created_at: now,
+      updated_at: now,
       section_key: 'about_content',
       title: 'About Us Content',
       content: 'We specialize in creating bespoke travel experiences that exceed expectations. Our team of travel experts carefully crafts each journey to ensure unforgettable adventures that create lasting memories.',
       section_type: 'about',
-      is_active: true
+      is_active: true,
+      status: 'published',
+      draft_content: null,
+      published_at: now
     }
   ];
 }

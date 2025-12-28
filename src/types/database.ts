@@ -499,6 +499,9 @@ export interface Database {
           content: string
           section_type: 'hero' | 'about' | 'services' | 'contact' | 'footer'
           is_active: boolean
+          status: 'draft' | 'published'
+          draft_content: string | null
+          published_at: string | null
         }
         Insert: {
           id?: string
@@ -509,6 +512,9 @@ export interface Database {
           content: string
           section_type: 'hero' | 'about' | 'services' | 'contact' | 'footer'
           is_active?: boolean
+          status?: 'draft' | 'published'
+          draft_content?: string | null
+          published_at?: string | null
         }
         Update: {
           id?: string
@@ -519,6 +525,9 @@ export interface Database {
           content?: string
           section_type?: 'hero' | 'about' | 'services' | 'contact' | 'footer'
           is_active?: boolean
+          status?: 'draft' | 'published'
+          draft_content?: string | null
+          published_at?: string | null
         }
       }
       site_settings: {

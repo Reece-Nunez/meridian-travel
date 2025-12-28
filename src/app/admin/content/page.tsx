@@ -16,6 +16,9 @@ interface ContentSection {
   is_active: boolean;
   created_at: string;
   updated_at: string | null;
+  status?: 'draft' | 'published';
+  draft_content?: string | null;
+  published_at?: string | null;
 }
 
 // Define the page structure and editable sections
@@ -201,45 +204,27 @@ export default function AdminContent() {
     return PAGE_SECTIONS[selectedPage].sections;
   }, [selectedPage]);
 
-  // Validation configuration
+  // Validation configuration - simplified to just content
   const validationRules = {
-    title: {
-      required: true,
-      minLength: 3,
-      maxLength: 200,
-      message: 'Title must be 3-200 characters'
-    },
     content: {
       required: true,
-      minLength: 10,
+      minLength: 1, // Allow short content like button text
       maxLength: 5000,
-      message: 'Content must be 10-5000 characters'
+      message: 'Content is required'
     }
   };
 
   // Validation function
   const validateForm = useCallback((form: typeof contentForm) => {
     const errors: Record<string, string> = {};
-    
+
     // Get plain text from HTML content
     const getPlainText = (html: string) => html.replace(/<[^>]*>/g, '').trim();
-    
-    // Validate title
-    const title = form.title.trim();
-    if (validationRules.title.required && !title) {
-      errors.title = 'Title is required';
-    } else if (title.length < validationRules.title.minLength) {
-      errors.title = `Title must be at least ${validationRules.title.minLength} characters`;
-    } else if (title.length > validationRules.title.maxLength) {
-      errors.title = `Title must be no more than ${validationRules.title.maxLength} characters`;
-    }
 
-    // Validate content
+    // Validate content only
     const plainContent = getPlainText(form.content);
     if (validationRules.content.required && !plainContent) {
       errors.content = 'Content is required';
-    } else if (plainContent.length < validationRules.content.minLength) {
-      errors.content = `Content must be at least ${validationRules.content.minLength} characters`;
     } else if (plainContent.length > validationRules.content.maxLength) {
       errors.content = `Content must be no more than ${validationRules.content.maxLength} characters`;
     }
@@ -429,22 +414,31 @@ export default function AdminContent() {
       }
     }
     
-    // If no draft found, load from database
+    // If no localStorage draft found, load from database
     if (!savedDraft) {
       const existingContent = contentSections.find((cs) => cs.section_key === sectionKey);
 
       if (existingContent) {
+        // Prioritize draft_content if it exists (unpublished changes)
+        const contentToEdit = existingContent.draft_content || existingContent.content || '';
+        const hasDraft = !!existingContent.draft_content;
+
         setContentForm({
-          title: existingContent.title ?? sectionTitle,
-          content: existingContent.content ?? '',
+          title: sectionTitle, // Always use the section label as the title
+          content: contentToEdit,
           is_active: existingContent.is_active,
         });
+
+        if (hasDraft) {
+          setHasUnsavedChanges(true); // Mark as having unpublished draft
+        }
+
         setLastSaved(existingContent.updated_at ? new Date(existingContent.updated_at) : new Date(existingContent.created_at));
       } else {
         setContentForm({
-          title: sectionTitle,
+          title: sectionTitle, // Use section label as the title
           content: '',
-          is_active: false, // Set new content as inactive by default
+          is_active: true, // Set new content as active by default
         });
       }
     }
@@ -453,7 +447,8 @@ export default function AdminContent() {
     setSuccess(null);
   };
 
-  const handleSaveContent = async () => {
+  // Save content as a draft (to draft_content field in database)
+  const handleSaveDraft = async () => {
     if (!selectedSection) {
       setError('Please select a section');
       return;
@@ -476,13 +471,94 @@ export default function AdminContent() {
         (selectedPage ? PAGE_SECTIONS[selectedPage].key : 'hero') ?? 'hero';
 
       if (existingContent) {
+        // Update existing content with draft
         const { error } = await supabase
           .from('content_sections')
           .update({
             title: contentForm.title,
-            content: contentForm.content,
+            draft_content: contentForm.content,
             is_active: contentForm.is_active,
+            status: 'draft',
             updated_at: new Date().toISOString(),
+          })
+          .eq('id', existingContent.id);
+
+        if (error) throw error;
+      } else {
+        // Create new content as draft
+        const { error } = await supabase.from('content_sections').insert({
+          section_key: selectedSection,
+          title: contentForm.title,
+          content: '', // Empty published content
+          draft_content: contentForm.content, // Content goes to draft
+          section_type: pageKey,
+          is_active: contentForm.is_active,
+          status: 'draft',
+        });
+
+        if (error) throw error;
+      }
+
+      await fetchContentSections();
+
+      // Reset auto-save states
+      setHasUnsavedChanges(false);
+      setLastSaved(new Date());
+
+      // Clear any pending auto-save
+      if (autoSaveTimeoutRef.current) {
+        clearTimeout(autoSaveTimeoutRef.current);
+        autoSaveTimeoutRef.current = null;
+      }
+
+      // Clear the localStorage draft
+      const draftKey = `content_draft_${selectedSection}`;
+      localStorage.removeItem(draftKey);
+
+      setSuccess('Draft saved successfully!');
+      setTimeout(() => setSuccess(null), 3000);
+    } catch {
+      setError('Failed to save draft');
+    } finally {
+      setSaving(false);
+    }
+  };
+
+  // Publish content (copies draft to content and sets status to published)
+  const handlePublish = async () => {
+    if (!selectedSection) {
+      setError('Please select a section');
+      return;
+    }
+
+    // Validate form before publishing
+    const errors = validateForm(contentForm);
+    if (Object.keys(errors).length > 0) {
+      setValidationErrors(errors);
+      setError('Please fix validation errors before publishing');
+      return;
+    }
+
+    try {
+      setSaving(true);
+      setError(null);
+
+      const existingContent = contentSections.find((cs) => cs.section_key === selectedSection);
+      const pageKey =
+        (selectedPage ? PAGE_SECTIONS[selectedPage].key : 'hero') ?? 'hero';
+      const now = new Date().toISOString();
+
+      if (existingContent) {
+        const { error } = await supabase
+          .from('content_sections')
+          .update({
+            title: contentForm.title,
+            content: contentForm.content, // Publish to main content
+            draft_content: null, // Clear draft
+            is_active: contentForm.is_active,
+            status: 'published',
+            published_at: now,
+            updated_at: now,
           })
           .eq('id', existingContent.id);
 
@@ -492,8 +568,11 @@ export default function AdminContent() {
           section_key: selectedSection,
           title: contentForm.title,
           content: contentForm.content,
+          draft_content: null,
           section_type: pageKey,
           is_active: contentForm.is_active,
+          status: 'published',
+          published_at: now,
         });
 
         if (error) throw error;
@@ -508,26 +587,52 @@ export default function AdminContent() {
 
       await fetchContentSections();
 
-      // Reset auto-save states after manual save
+      // Reset auto-save states after publishing
       setHasUnsavedChanges(false);
       setLastSaved(new Date());
-      
+
       // Clear any pending auto-save
       if (autoSaveTimeoutRef.current) {
         clearTimeout(autoSaveTimeoutRef.current);
         autoSaveTimeoutRef.current = null;
       }
 
-      // Clear the draft since we've published the content
+      // Clear the localStorage draft since we've published
       const draftKey = `content_draft_${selectedSection}`;
       localStorage.removeItem(draftKey);
 
       setSuccess('Content published successfully!');
       setTimeout(() => setSuccess(null), 3000);
     } catch {
-      setError('Failed to save content');
+      setError('Failed to publish content');
     } finally {
       setSaving(false);
+    }
+  };
+
+  // Get the preview URL for the current section
+  const getPreviewUrl = () => {
+    if (!selectedPage) return null;
+
+    const pageRoutes: Record<string, string> = {
+      'Home': '/',
+      'About Us': '/about',
+      'Contact': '/contact',
+      'Destinations': '/destinations',
+      'Cruises': '/cruises',
+      'Navigation & Global': '/',
+      'Footer': '/',
+    };
+
+    const route = pageRoutes[selectedPage] || '/';
+    return `${route}?preview=true`;
+  };
+
+  // Open preview in new tab
+  const handlePreviewOnSite = () => {
+    const previewUrl = getPreviewUrl();
+    if (previewUrl) {
+      window.open(previewUrl, '_blank');
     }
   };
 
@@ -561,6 +666,15 @@ export default function AdminContent() {
               <h1 className="text-2xl font-bold text-[#8B4513]">Website Content Manager</h1>
             </div>
             <div className="flex items-center space-x-4">
+              <Link
+                href="/admin/media"
+                className="flex items-center gap-2 px-3 py-1.5 bg-[#F5F5DC] text-[#8B4513] rounded-md hover:bg-[#E8E4C9] transition-colors text-sm font-medium"
+              >
+                <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z" />
+                </svg>
+                Media Library
+              </Link>
               <span className="text-sm text-gray-700">Welcome, {getUsername()}</span>
               <button
                 onClick={logout}
@@ -581,34 +695,62 @@ export default function AdminContent() {
           </div>
         ) : !selectedSection ? (
           /* Page Grid View */
-          <div>
-            <div className="mb-8">
-              <div className="flex items-center justify-between">
+          <div className="space-y-8">
+            {/* Header Card */}
+            <div className="bg-gradient-to-r from-[#8B4513] via-[#A0522D] to-[#8B4513] rounded-2xl shadow-xl p-8 text-white">
+              <div className="flex flex-col lg:flex-row lg:items-center lg:justify-between gap-6">
                 <div>
-                  <h2 className="text-2xl font-bold text-[#8B4513] mb-2">Website Content Manager</h2>
-                  <p className="text-gray-600">Click any section below to edit its content</p>
+                  <h2 className="text-3xl font-bold mb-2">Content Manager</h2>
+                  <p className="text-white/80 text-lg">Manage and publish your website content</p>
                 </div>
 
-                {/* Search and Bulk Actions */}
-                <div className="flex flex-col sm:flex-row items-start sm:items-center space-y-4 sm:space-y-0 sm:space-x-4">
+                {/* Search */}
+                <div className="flex flex-col sm:flex-row items-stretch sm:items-center gap-4">
                   <div className="relative">
                     <input
                       type="text"
-                      placeholder="Search content..."
+                      placeholder="Search sections..."
                       value={searchQuery}
                       onChange={(e) => setSearchQuery(e.target.value)}
-                      className="pl-10 pr-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-[#B8860B] focus:border-transparent text-sm w-64"
+                      className="w-full sm:w-72 pl-11 pr-4 py-3 bg-white/10 backdrop-blur-sm border border-white/20 rounded-xl text-white placeholder-white/50 focus:outline-none focus:ring-2 focus:ring-white/30 focus:border-transparent text-sm"
                     />
-                    <svg className="w-4 h-4 text-gray-400 absolute left-3 top-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <svg className="w-5 h-5 text-white/50 absolute left-4 top-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                       <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
                     </svg>
                   </div>
+                </div>
+              </div>
 
-                  {bulkSelection.size > 0 && (
-                    <div className="flex items-center space-x-2">
-                      <span className="text-sm text-gray-600">{bulkSelection.size} selected</span>
+              {/* Status Legend */}
+              <div className="mt-6 pt-6 border-t border-white/20">
+                <div className="flex flex-wrap items-center gap-6 text-sm">
+                  <div className="flex items-center gap-2">
+                    <span className="w-3 h-3 rounded-full bg-emerald-400 shadow-lg shadow-emerald-400/50" />
+                    <span className="text-white/90">Published</span>
+                  </div>
+                  <div className="flex items-center gap-2">
+                    <span className="w-3 h-3 rounded-full bg-orange-400 shadow-lg shadow-orange-400/50" />
+                    <span className="text-white/90">Has Draft</span>
+                  </div>
+                  <div className="flex items-center gap-2">
+                    <span className="w-3 h-3 rounded-full bg-amber-400 shadow-lg shadow-amber-400/50" />
+                    <span className="text-white/90">Empty</span>
+                  </div>
+                  <div className="flex items-center gap-2">
+                    <span className="w-3 h-3 rounded-full bg-gray-400" />
+                    <span className="text-white/90">Inactive</span>
+                  </div>
+                </div>
+              </div>
+
+              {/* Bulk Actions */}
+              {bulkSelection.size > 0 && (
+                <div className="mt-4 pt-4 border-t border-white/20">
+                  <div className="flex items-center gap-4">
+                    <span className="text-sm font-medium">{bulkSelection.size} selected</span>
+                    <div className="flex items-center gap-2">
                       <button
-                        className="px-3 py-1 bg-green-100 text-green-800 text-xs rounded-full hover:bg-green-200 transition-colors"
+                        className="px-4 py-2 bg-white/20 hover:bg-white/30 text-white text-sm font-medium rounded-lg transition-colors"
                         onClick={async () => {
                           const keys = Array.from(bulkSelection);
                           if (!keys.length) return;
@@ -632,7 +774,7 @@ export default function AdminContent() {
                         Activate All
                       </button>
                       <button
-                        className="px-3 py-1 bg-gray-100 text-gray-800 text-xs rounded-full hover:bg-gray-200 transition-colors"
+                        className="px-4 py-2 bg-white/20 hover:bg-white/30 text-white text-sm font-medium rounded-lg transition-colors"
                         onClick={async () => {
                           const keys = Array.from(bulkSelection);
                           if (!keys.length) return;
@@ -657,60 +799,62 @@ export default function AdminContent() {
                       </button>
                       <button
                         onClick={() => setBulkSelection(new Set())}
-                        className="px-3 py-1 bg-red-100 text-red-800 text-xs rounded-full hover:bg-red-200 transition-colors"
+                        className="px-4 py-2 bg-red-500/30 hover:bg-red-500/40 text-white text-sm font-medium rounded-lg transition-colors"
                       >
                         Clear
                       </button>
                     </div>
-                  )}
-
-                  <div className="flex items-center space-x-4 text-sm">
-                    <div className="flex items-center">
-                      <span className="w-3 h-3 rounded-full bg-green-400 mr-2" />
-                      <span className="text-gray-600">Has Content</span>
-                    </div>
-                    <div className="flex items-center">
-                      <span className="w-3 h-3 rounded-full bg-yellow-400 mr-2" />
-                      <span className="text-gray-600">Empty</span>
-                    </div>
-                    <div className="flex items-center">
-                      <span className="w-3 h-3 rounded-full bg-gray-400 mr-2" />
-                      <span className="text-gray-600">Inactive</span>
-                    </div>
                   </div>
                 </div>
-              </div>
+              )}
+            </div>
 
-              <div className="grid gap-8">
-                {Object.entries(PAGE_SECTIONS).map(([pageName, pageData]) => {
-                  const totalSections = Object.keys(pageData.sections).length || 1;
-                  const completedSections = Object.values(pageData.sections).filter((sectionKey) => {
-                    const content = contentSections.find((cs) => cs.section_key === sectionKey);
-                    return Boolean(content && content.content && content.content.trim().length > 0 && content.is_active);
-                  }).length;
+            {/* Page Sections Grid */}
+            <div className="grid gap-6">
+              {Object.entries(PAGE_SECTIONS).map(([pageName, pageData]) => {
+                const totalSections = Object.keys(pageData.sections).length || 1;
+                const completedSections = Object.values(pageData.sections).filter((sectionKey) => {
+                  const content = contentSections.find((cs) => cs.section_key === sectionKey);
+                  return Boolean(content && content.content && content.content.trim().length > 0 && content.is_active);
+                }).length;
+                const progressPercent = Math.round((completedSections / totalSections) * 100);
 
-                  return (
-                    <div key={pageName} className="bg-white rounded-lg shadow-sm border border-gray-200 p-6">
-                      <div className="flex items-center justify-between mb-4">
-                        <h3 className="text-xl font-semibold text-[#8B4513] flex items-center">
-                          <svg className="w-5 h-5 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
-                          </svg>
-                          {pageName}
-                        </h3>
-                        <div className="text-sm text-gray-500">{completedSections}/{totalSections} complete</div>
-                      </div>
-
-                      <div className="mb-3">
-                        <div className="w-full bg-gray-200 rounded-full h-2">
-                          <div
-                            className="bg-green-500 h-2 rounded-full transition-all duration-300"
-                            style={{ width: `${(completedSections / totalSections) * 100}%` }}
-                          />
+                return (
+                  <div key={pageName} className="bg-white rounded-xl shadow-md border border-gray-100 overflow-hidden hover:shadow-lg transition-shadow duration-300">
+                    {/* Page Header */}
+                    <div className="px-6 py-5 border-b border-gray-100 bg-gradient-to-r from-gray-50 to-white">
+                      <div className="flex items-center justify-between">
+                        <div className="flex items-center gap-4">
+                          <div className="w-12 h-12 rounded-xl bg-gradient-to-br from-[#8B4513] to-[#A0522D] flex items-center justify-center shadow-lg shadow-[#8B4513]/20">
+                            <svg className="w-6 h-6 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
+                            </svg>
+                          </div>
+                          <div>
+                            <h3 className="text-xl font-bold text-gray-900">{pageName}</h3>
+                            <p className="text-sm text-gray-500">{totalSections} content sections</p>
+                          </div>
+                        </div>
+                        <div className="text-right">
+                          <div className="text-2xl font-bold text-[#8B4513]">{progressPercent}%</div>
+                          <div className="text-xs text-gray-500">{completedSections} of {totalSections} complete</div>
                         </div>
                       </div>
 
-                      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-3">
+                      {/* Progress Bar */}
+                      <div className="mt-4">
+                        <div className="w-full bg-gray-100 rounded-full h-2 overflow-hidden">
+                          <div
+                            className="h-full rounded-full bg-gradient-to-r from-emerald-400 to-emerald-500 transition-all duration-500 ease-out"
+                            style={{ width: `${progressPercent}%` }}
+                          />
+                        </div>
+                      </div>
+                    </div>
+
+                    {/* Section Cards */}
+                    <div className="p-6">
+                      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4">
                         {Object.entries(pageData.sections)
                           .filter(([sectionTitle, sectionKey]) => {
                             if (!searchQuery) return true;
@@ -721,13 +865,14 @@ export default function AdminContent() {
                             const existingContent = contentSections.find((cs) => cs.section_key === sectionKey);
                             const hasContent =
                               !!(existingContent && existingContent.content && existingContent.content.trim().length > 0);
+                            const hasDraft = !!(existingContent?.draft_content);
                             const isActive = existingContent?.is_active ?? true;
                             const isSelected = bulkSelection.has(String(sectionKey));
 
                             return (
                               <div key={String(sectionKey)} className="relative group">
                                 {/* Bulk selection checkbox */}
-                                <div className="absolute top-2 left-2 opacity-0 group-hover:opacity-100 transition-opacity z-10">
+                                <div className="absolute top-3 left-3 opacity-0 group-hover:opacity-100 transition-all duration-200 z-10">
                                   <input
                                     type="checkbox"
                                     checked={isSelected}
@@ -738,7 +883,7 @@ export default function AdminContent() {
                                       else newSelection.delete(String(sectionKey));
                                       setBulkSelection(newSelection);
                                     }}
-                                    className="rounded border-gray-300 text-[#B8860B] focus:ring-[#B8860B]"
+                                    className="w-4 h-4 rounded border-gray-300 text-[#8B4513] focus:ring-[#8B4513] shadow-sm"
                                   />
                                 </div>
 
@@ -747,51 +892,76 @@ export default function AdminContent() {
                                     handlePageChange(pageName as PageKey);
                                     handleSectionChange(String(sectionKey), sectionTitle);
                                   }}
-                                  className={`p-4 border rounded-lg cursor-pointer transition-all hover:shadow-md hover:scale-[1.02] ${
+                                  className={`relative p-4 rounded-xl cursor-pointer transition-all duration-200 hover:shadow-lg hover:-translate-y-0.5 border-2 ${
                                     isSelected
-                                      ? 'border-blue-300 bg-blue-50'
+                                      ? 'border-indigo-400 bg-indigo-50 shadow-md'
+                                      : hasDraft
+                                      ? 'border-orange-200 bg-gradient-to-br from-orange-50 to-white hover:border-orange-300'
                                       : hasContent && isActive
-                                      ? 'border-green-200 bg-green-50 hover:bg-green-100'
+                                      ? 'border-emerald-200 bg-gradient-to-br from-emerald-50 to-white hover:border-emerald-300'
                                       : hasContent && !isActive
-                                      ? 'border-gray-300 bg-gray-100 hover:bg-gray-200'  /* fixed invalid gray-150 */
-                                      : 'border-amber-200 bg-amber-50 hover:bg-amber-100'
+                                      ? 'border-gray-200 bg-gradient-to-br from-gray-50 to-white hover:border-gray-300'
+                                      : 'border-amber-200 bg-gradient-to-br from-amber-50 to-white hover:border-amber-300'
                                   }`}
                                 >
-                                  <div className="flex items-start justify-between">
-                                    <div className="flex-1">
-                                      <h4 className="font-medium text-gray-900 text-sm mb-2">{sectionTitle}</h4>
-                                      {hasContent ? (
-                                        <div>
-                                          <p className="text-xs text-gray-600 line-clamp-2 mb-2">
-                                            {existingContent?.content?.substring(0, 100)}
-                                            {(existingContent?.content?.length ?? 0) > 100 ? '...' : ''}
-                                          </p>
-                                          <p className="text-xs text-gray-400">
-                                            {(existingContent?.content?.length ?? 0)} characters
-                                          </p>
-                                        </div>
-                                      ) : (
-                                        <p className="text-xs text-amber-600 italic font-medium">Click to add content</p>
-                                      )}
+                                  {/* Status indicator dot */}
+                                  <div className="absolute top-3 right-3">
+                                    <span
+                                      className={`block w-3 h-3 rounded-full shadow-sm ${
+                                        hasDraft
+                                          ? 'bg-orange-500 animate-pulse'
+                                          : hasContent && isActive
+                                          ? 'bg-emerald-500'
+                                          : hasContent && !isActive
+                                          ? 'bg-gray-400'
+                                          : 'bg-amber-400'
+                                      }`}
+                                    />
+                                  </div>
+
+                                  <div className="pr-6">
+                                    <div className="flex items-center gap-2 mb-2">
+                                      <h4 className="font-semibold text-gray-900 text-sm leading-tight">{sectionTitle}</h4>
                                     </div>
 
-                                    <div className="flex flex-col items-center ml-3">
-                                      {!isActive && (
-                                        <svg className="w-4 h-4 text-gray-400 mb-1" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                    {hasDraft && (
+                                      <span className="inline-flex items-center gap-1 px-2 py-0.5 text-[10px] font-semibold bg-orange-100 text-orange-700 rounded-full mb-2">
+                                        <span className="w-1 h-1 rounded-full bg-orange-500" />
+                                        Unpublished Draft
+                                      </span>
+                                    )}
+
+                                    {hasContent ? (
+                                      <div>
+                                        <p className="text-xs text-gray-600 line-clamp-2 leading-relaxed">
+                                          {existingContent?.content?.replace(/<[^>]*>/g, '').substring(0, 80)}
+                                          {(existingContent?.content?.replace(/<[^>]*>/g, '').length ?? 0) > 80 ? '...' : ''}
+                                        </p>
+                                      </div>
+                                    ) : hasDraft ? (
+                                      <p className="text-xs text-orange-600 font-medium">Draft ready to publish</p>
+                                    ) : (
+                                      <p className="text-xs text-amber-600 font-medium flex items-center gap-1">
+                                        <svg className="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 4v16m8-8H4" />
+                                        </svg>
+                                        Add content
+                                      </p>
+                                    )}
+
+                                    {!isActive && hasContent && (
+                                      <div className="mt-2 flex items-center gap-1 text-[10px] text-gray-500">
+                                        <svg className="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                           <path
                                             strokeLinecap="round"
                                             strokeLinejoin="round"
                                             strokeWidth={2}
-                                            d="M13.875 18.825A10.05 10.05 0 0112 19c-4.478 0-8.268-2.943-9.543-7a9.97 9.97 0 011.563-3.029m5.858.908a3 3 0 114.243 4.243M9.878 9.878l4.242 4.242M9.878 9.878L12 12l3.29-3.29m-6.412 6.412L12 12m-3.128-3.128l-4.242-4.242"
+                                            d="M13.875 18.825A10.05 10.05 0 0112 19c-4.478 0-8.268-2.943-9.543-7a9.97 9.97 0 011.563-3.029m5.858.908a3 3 0 114.243 4.243M9.878 9.878l4.242 4.242M9.878 9.878L12 12l3.29-3.29"
                                           />
                                         </svg>
-                                      )}
-                                      <span
-                                        className={`w-3 h-3 rounded-full shadow-sm ${
-                                          hasContent && isActive ? 'bg-green-500' : hasContent && !isActive ? 'bg-gray-400' : 'bg-amber-400'
-                                        }`}
-                                      />
-                                    </div>
+                                        Hidden from website
+                                      </div>
+                                    )}
                                   </div>
                                 </div>
                               </div>
@@ -799,9 +969,9 @@ export default function AdminContent() {
                           })}
                       </div>
                     </div>
-                  );
-                })}
-              </div>
+                  </div>
+                );
+              })}
             </div>
           </div>
         ) : (
@@ -809,64 +979,146 @@ export default function AdminContent() {
           <div className="max-w-7xl mx-auto">
             <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
               {/* Editor Panel */}
-              <div className="bg-white rounded-lg shadow-sm border border-gray-200 p-6">
-                <div className="flex items-center justify-between mb-6">
-                  <div>
-                    <button
-                      onClick={() => {
-                        setSelectedSection('');
-                        setSelectedPage('');
-                        setContentForm({ title: '', content: '', is_active: true });
-                        setError(null);
-                        setSuccess(null);
-                      }}
-                      className="inline-flex items-center text-gray-500 hover:text-[#8B4513] mb-2"
-                    >
-                      <svg className="w-4 h-4 mr-1" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 19l-7-7 7-7" />
-                      </svg>
-                      Back to Content Overview
-                    </button>
-                    <h2 className="text-xl font-semibold text-[#8B4513]">
-                      Edit {selectedPage}{' '}
-                      {/* find section label from key */}
-                      -
-                      {' '}
-                      {Object.entries(PAGE_SECTIONS[selectedPage as PageKey]?.sections || {}).find(
-                        ([, key]) => key === selectedSection,
-                      )?.[0] || 'Content'}
-                    </h2>
-                  </div>
+              <div className="bg-white rounded-xl shadow-lg border border-gray-100 overflow-hidden">
+                {/* Editor Header */}
+                <div className="bg-gradient-to-r from-[#8B4513] to-[#A0522D] px-6 py-4">
+                  <div className="flex items-center justify-between">
+                    <div>
+                      <button
+                        onClick={() => {
+                          setSelectedSection('');
+                          setSelectedPage('');
+                          setContentForm({ title: '', content: '', is_active: true });
+                          setError(null);
+                          setSuccess(null);
+                        }}
+                        className="inline-flex items-center text-white/80 hover:text-white text-sm font-medium transition-colors mb-1"
+                      >
+                        <svg className="w-4 h-4 mr-1.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 19l-7-7 7-7" />
+                        </svg>
+                        Back to Overview
+                      </button>
+                      <h2 className="text-xl font-semibold text-white">
+                        {Object.entries(PAGE_SECTIONS[selectedPage as PageKey]?.sections || {}).find(
+                          ([, key]) => key === selectedSection,
+                        )?.[0] || 'Content'}
+                      </h2>
+                      <p className="text-white/70 text-sm mt-0.5">{selectedPage} Section</p>
+                    </div>
 
-                  <div className="flex items-center space-x-4">
-                    <button
-                      onClick={() => setShowPreview((s) => !s)}
-                      className={`px-3 py-1 text-xs rounded-full transition-colors ${
-                        showPreview ? 'bg-blue-100 text-blue-800' : 'bg-gray-100 text-gray-600 hover:bg-gray-200'
-                      }`}
-                    >
-                      {showPreview ? 'Hide Preview' : 'Show Preview'}
-                    </button>
-                    <span
-                      className={`px-2 py-1 text-xs rounded-full ${
-                        contentForm.is_active ? 'bg-green-100 text-green-800' : 'bg-gray-100 text-gray-800'
-                      }`}
-                    >
-                      {contentForm.is_active ? 'Active' : 'Inactive'}
-                    </span>
+                    <div className="flex items-center gap-2">
+                      {/* Status badges */}
+                      {(() => {
+                        const existingContent = contentSections.find((cs) => cs.section_key === selectedSection);
+                        const hasDraft = !!(existingContent?.draft_content);
+                        const isPublished = !!(existingContent?.content);
+
+                        return (
+                          <>
+                            {hasDraft && (
+                              <span className="inline-flex items-center gap-1.5 px-3 py-1.5 text-xs font-medium rounded-full bg-orange-500/20 text-orange-100 backdrop-blur-sm border border-orange-400/30">
+                                <span className="w-1.5 h-1.5 rounded-full bg-orange-300 animate-pulse" />
+                                Draft
+                              </span>
+                            )}
+                            {isPublished && !hasDraft && (
+                              <span className="inline-flex items-center gap-1.5 px-3 py-1.5 text-xs font-medium rounded-full bg-emerald-500/20 text-emerald-100 backdrop-blur-sm border border-emerald-400/30">
+                                <span className="w-1.5 h-1.5 rounded-full bg-emerald-300" />
+                                Published
+                              </span>
+                            )}
+                            {!isPublished && !hasDraft && (
+                              <span className="inline-flex items-center gap-1.5 px-3 py-1.5 text-xs font-medium rounded-full bg-amber-500/20 text-amber-100 backdrop-blur-sm border border-amber-400/30">
+                                <span className="w-1.5 h-1.5 rounded-full bg-amber-300" />
+                                New
+                              </span>
+                            )}
+                            <span className={`inline-flex items-center gap-1.5 px-3 py-1.5 text-xs font-medium rounded-full backdrop-blur-sm border ${
+                              contentForm.is_active
+                                ? 'bg-green-500/20 text-green-100 border-green-400/30'
+                                : 'bg-gray-500/20 text-gray-200 border-gray-400/30'
+                            }`}>
+                              <span className={`w-1.5 h-1.5 rounded-full ${contentForm.is_active ? 'bg-green-300' : 'bg-gray-400'}`} />
+                              {contentForm.is_active ? 'Active' : 'Inactive'}
+                            </span>
+                          </>
+                        );
+                      })()}
+                    </div>
                   </div>
                 </div>
 
-                <div className="space-y-6">
-                  {/* Content Templates */}
-                  <div className="bg-blue-50 border border-blue-200 rounded-lg p-4">
-                    <h4 className="text-sm font-medium text-blue-900 mb-2">Quick Templates</h4>
-                    <div className="flex flex-wrap gap-2">
+                {/* Toolbar */}
+                <div className="px-6 py-3 bg-gray-50 border-b border-gray-100 flex items-center justify-between">
+                  <button
+                    onClick={() => setShowPreview((s) => !s)}
+                    className={`inline-flex items-center gap-2 px-4 py-2 text-sm font-medium rounded-lg transition-all duration-200 ${
+                      showPreview
+                        ? 'bg-indigo-100 text-indigo-700 shadow-sm'
+                        : 'text-gray-600 hover:bg-gray-100 hover:text-gray-900'
+                    }`}
+                  >
+                    <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 5a1 1 0 011-1h14a1 1 0 011 1v2a1 1 0 01-1 1H5a1 1 0 01-1-1V5zM4 13a1 1 0 011-1h6a1 1 0 011 1v6a1 1 0 01-1 1H5a1 1 0 01-1-1v-6zM16 13a1 1 0 011-1h2a1 1 0 011 1v6a1 1 0 01-1 1h-2a1 1 0 01-1-1v-6z" />
+                    </svg>
+                    {showPreview ? 'Hide Preview' : 'Show Preview'}
+                  </button>
+
+                  <button
+                    onClick={handlePreviewOnSite}
+                    className="inline-flex items-center gap-2 px-4 py-2 text-sm font-medium text-gray-600 hover:text-gray-900 hover:bg-gray-100 rounded-lg transition-all duration-200"
+                  >
+                    <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M10 6H6a2 2 0 00-2 2v10a2 2 0 002 2h10a2 2 0 002-2v-4M14 4h6m0 0v6m0-6L10 14" />
+                    </svg>
+                    Preview on Site
+                  </button>
+                </div>
+
+                <div className="p-6 space-y-6">
+                  {/* Current Live Content Reference */}
+                  {(() => {
+                    const existingContent = contentSections.find((cs) => cs.section_key === selectedSection);
+                    const currentLiveContent = existingContent?.content;
+
+                    if (currentLiveContent) {
+                      return (
+                        <div className="bg-gray-50 border border-gray-200 rounded-lg p-4">
+                          <div className="flex items-center gap-2 mb-2">
+                            <svg className="w-4 h-4 text-gray-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" />
+                              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z" />
+                            </svg>
+                            <h4 className="text-sm font-medium text-gray-700">Currently Live on Website</h4>
+                          </div>
+                          <div className="bg-white border border-gray-200 rounded p-3 text-gray-800 text-sm">
+                            <div dangerouslySetInnerHTML={{ __html: currentLiveContent.substring(0, 300) + (currentLiveContent.length > 300 ? '...' : '') }} />
+                          </div>
+                          {existingContent?.draft_content && (
+                            <p className="mt-2 text-xs text-orange-600 flex items-center gap-1">
+                              <svg className="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z" />
+                              </svg>
+                              You have unpublished draft changes below
+                            </p>
+                          )}
+                        </div>
+                      );
+                    }
+                    return null;
+                  })()}
+
+                  {/* Content Templates - Collapsed by default */}
+                  <details className="bg-blue-50 border border-blue-200 rounded-lg">
+                    <summary className="p-4 cursor-pointer text-sm font-medium text-blue-900 hover:bg-blue-100 rounded-lg transition-colors">
+                      Quick Templates (click to expand)
+                    </summary>
+                    <div className="px-4 pb-4 flex flex-wrap gap-2">
                       <button
                         onClick={() =>
                           setContentForm((f) => ({
                             ...f,
-                            title: 'Experience Amazing [Destination]',
                             content:
                               'Discover the magic of [destination name] with our expertly crafted itineraries. From [highlight 1] to [highlight 2], every moment is designed to create lasting memories.',
                           }))
@@ -879,7 +1131,6 @@ export default function AdminContent() {
                         onClick={() =>
                           setContentForm((f) => ({
                             ...f,
-                            title: 'Premium [Service Name]',
                             content:
                               'Our [service] ensures exceptional quality and attention to detail. With years of expertise, we deliver personalized experiences that exceed expectations.',
                           }))
@@ -892,7 +1143,6 @@ export default function AdminContent() {
                         onClick={() =>
                           setContentForm((f) => ({
                             ...f,
-                            title: 'Get in Touch',
                             content:
                               'Ready to start planning your adventure? Contact our travel specialists today. We are here to help you create the perfect journey tailored to your dreams.',
                           }))
@@ -905,7 +1155,6 @@ export default function AdminContent() {
                         onClick={() =>
                           setContentForm((f) => ({
                             ...f,
-                            title: 'Frequently Asked Question',
                             content:
                               'Question: [Insert your question here]\n\nAnswer: [Provide a detailed, helpful answer that addresses the customer concern and builds confidence in your services.]',
                           }))
@@ -915,34 +1164,11 @@ export default function AdminContent() {
                         FAQ Template
                       </button>
                     </div>
-                  </div>
+                  </details>
 
                   <div>
                     <label className="block text-sm font-medium text-gray-700 mb-2">
-                      Section Title <span className="text-red-500">*</span>
-                    </label>
-                    <input
-                      type="text"
-                      value={contentForm.title}
-                      onChange={(e) => setContentForm({ ...contentForm, title: e.target.value })}
-                      className={`w-full px-3 py-2 border rounded-md focus:outline-none focus:ring-2 text-black ${
-                        validationErrors.title 
-                          ? 'border-red-500 focus:ring-red-500 focus:border-red-500' 
-                          : 'border-gray-300 focus:ring-[#B8860B] focus:border-[#B8860B]'
-                      }`}
-                      placeholder="Enter section title..."
-                    />
-                    {validationErrors.title && (
-                      <p className="mt-1 text-sm text-red-600">{validationErrors.title}</p>
-                    )}
-                    <p className="mt-1 text-xs text-gray-500">
-                      {contentForm.title.length}/{validationRules.title.maxLength} characters
-                    </p>
-                  </div>
-
-                  <div>
-                    <label className="block text-sm font-medium text-gray-700 mb-2">
-                      Content <span className="text-red-500">*</span>
+                      Edit Content <span className="text-red-500">*</span>
                     </label>
                     <RichTextEditor
                       value={contentForm.content}
@@ -1005,11 +1231,12 @@ export default function AdminContent() {
                       )}
                     </div>
                     <div className="text-xs text-gray-400">
-                      Auto-saves drafts locally • Click "Update Content" to publish
+                      Auto-saves drafts locally • Use "Save as Draft" to save to database • Use "Publish" to go live
                     </div>
                   </div>
 
-                  <div className="flex justify-end space-x-4 pt-4 border-t border-gray-200">
+                  {/* Action Buttons */}
+                  <div className="flex flex-col sm:flex-row justify-between gap-4 pt-6 mt-6 border-t border-gray-200">
                     <button
                       onClick={() => {
                         setSelectedSection('');
@@ -1018,30 +1245,80 @@ export default function AdminContent() {
                         setError(null);
                         setSuccess(null);
                       }}
-                      className="px-6 py-2 border border-gray-300 rounded-md text-gray-700 hover:bg-gray-50 transition-colors"
+                      className="inline-flex items-center justify-center gap-2 px-5 py-2.5 text-sm font-medium text-gray-600 bg-white border border-gray-200 rounded-lg hover:bg-gray-50 hover:border-gray-300 hover:text-gray-900 transition-all duration-200 shadow-sm"
                     >
+                      <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
+                      </svg>
                       Cancel
                     </button>
-                    <button
-                      onClick={handleSaveContent}
-                      disabled={saving || Object.keys(validationErrors).length > 0}
-                      className="px-6 py-2 bg-[#B8860B] hover:bg-[#DAA520] text-white rounded-md font-medium transition-colors disabled:opacity-50"
-                    >
-                      {saving ? 'Saving...' : Object.keys(validationErrors).length > 0 ? 'Fix Errors to Save' : 'Update Content'}
-                    </button>
+                    <div className="flex items-center gap-3">
+                      <button
+                        onClick={handleSaveDraft}
+                        disabled={saving || Object.keys(validationErrors).length > 0}
+                        className="inline-flex items-center justify-center gap-2 px-6 py-2.5 text-sm font-medium text-gray-700 bg-white border border-gray-300 rounded-lg hover:bg-gray-50 hover:shadow-md transition-all duration-200 shadow-sm disabled:opacity-50 disabled:cursor-not-allowed disabled:hover:shadow-sm"
+                      >
+                        {saving ? (
+                          <svg className="w-4 h-4 animate-spin" fill="none" viewBox="0 0 24 24">
+                            <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4" />
+                            <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z" />
+                          </svg>
+                        ) : (
+                          <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8 7H5a2 2 0 00-2 2v9a2 2 0 002 2h14a2 2 0 002-2V9a2 2 0 00-2-2h-3m-1 4l-3 3m0 0l-3-3m3 3V4" />
+                          </svg>
+                        )}
+                        {saving ? 'Saving...' : 'Save Draft'}
+                      </button>
+                      <button
+                        onClick={handlePublish}
+                        disabled={saving || Object.keys(validationErrors).length > 0}
+                        className="inline-flex items-center justify-center gap-2 px-6 py-2.5 text-sm font-semibold text-white bg-gradient-to-r from-emerald-500 to-emerald-600 rounded-lg hover:from-emerald-600 hover:to-emerald-700 hover:shadow-lg hover:shadow-emerald-500/25 transition-all duration-200 shadow-md disabled:opacity-50 disabled:cursor-not-allowed disabled:hover:shadow-md disabled:hover:from-emerald-500 disabled:hover:to-emerald-600"
+                      >
+                        {saving ? (
+                          <svg className="w-4 h-4 animate-spin" fill="none" viewBox="0 0 24 24">
+                            <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4" />
+                            <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z" />
+                          </svg>
+                        ) : (
+                          <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" />
+                          </svg>
+                        )}
+                        {saving ? 'Publishing...' : Object.keys(validationErrors).length > 0 ? 'Fix Errors' : 'Publish'}
+                      </button>
+                    </div>
                   </div>
                 </div>
               </div>
 
               {/* Live Preview Panel */}
               {showPreview && (
-                <div className="bg-white rounded-lg shadow-sm border border-gray-200 p-6">
-                  <div className="flex items-center justify-between mb-6">
-                    <h3 className="text-lg font-semibold text-[#8B4513]">Live Preview</h3>
-                    <span className="text-xs text-gray-500">Updates as you type</span>
+                <div className="bg-white rounded-xl shadow-lg border border-gray-100 overflow-hidden">
+                  <div className="bg-gradient-to-r from-indigo-500 to-indigo-600 px-6 py-4">
+                    <div className="flex items-center justify-between">
+                      <div className="flex items-center gap-3">
+                        <div className="w-8 h-8 rounded-lg bg-white/20 backdrop-blur-sm flex items-center justify-center">
+                          <svg className="w-4 h-4 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" />
+                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z" />
+                          </svg>
+                        </div>
+                        <div>
+                          <h3 className="text-lg font-semibold text-white">Live Preview</h3>
+                          <p className="text-indigo-100 text-xs">Updates as you type</p>
+                        </div>
+                      </div>
+                      <div className="flex items-center gap-1.5">
+                        <span className="w-2 h-2 rounded-full bg-red-400" />
+                        <span className="w-2 h-2 rounded-full bg-yellow-400" />
+                        <span className="w-2 h-2 rounded-full bg-green-400" />
+                      </div>
+                    </div>
                   </div>
 
-                  <div className="border border-gray-200 rounded-lg p-4 bg-gray-50 min-h-[300px] relative">
+                  <div className="p-6">
+                    <div className="border border-gray-200 rounded-xl p-6 bg-gradient-to-br from-gray-50 to-white min-h-[300px] relative">
                     {selectedSection.includes('hero') ? (
                       <div className="text-center py-8">
                         <h1 className="text-3xl font-bold text-[#8B4513] mb-4">{contentForm.title || 'Preview Title'}</h1>
@@ -1101,10 +1378,14 @@ export default function AdminContent() {
                         </div>
                       </div>
                     )}
-                  </div>
+                    </div>
 
-                  <div className="mt-4 text-xs text-gray-500">
-                    <p>💡 This preview shows approximately how your content will appear on the website. Actual styling may vary slightly.</p>
+                    <div className="mt-4 flex items-center gap-2 text-xs text-gray-500">
+                      <svg className="w-4 h-4 text-indigo-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
+                      </svg>
+                      <p>This preview shows approximately how your content will appear. Actual styling may vary.</p>
+                    </div>
                   </div>
                 </div>
               )}

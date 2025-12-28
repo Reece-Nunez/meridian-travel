@@ -9,6 +9,7 @@ import ConditionalFooter from "../components/ConditionalFooter";
 import { AuthProvider } from "../contexts/AuthContext";
 import SessionManager from "../components/SessionManager";
 import StructuredData from "../components/StructuredData";
+import PreviewBanner from "../components/PreviewBanner";
 
 const geistSans = Geist({
   variable: "--font-geist-sans",
@@ -142,6 +143,7 @@ export default function RootLayout({
           `}
         </Script>
         <AuthProvider>
+          <PreviewBanner />
           <ConditionalNavigation />
           {children}
           <ConditionalFooter />

@@ -628,11 +628,55 @@ export default function AdminContent() {
     return `${route}?preview=true`;
   };
 
-  // Open preview in new tab
-  const handlePreviewOnSite = () => {
+  // Open preview in new tab - saves draft first so changes are visible
+  const handlePreviewOnSite = async () => {
+    if (!selectedSection) {
+      setError('Please select a section first');
+      return;
+    }
+
     const previewUrl = getPreviewUrl();
-    if (previewUrl) {
+    if (!previewUrl) return;
+
+    // Save current content as draft first so preview shows the changes
+    try {
+      setSaving(true);
+      const existingContent = contentSections.find((cs) => cs.section_key === selectedSection);
+      const pageKey = selectedPage ? PAGE_SECTIONS[selectedPage].key : 'hero';
+
+      if (existingContent) {
+        // Update existing content with draft
+        await supabase
+          .from('content_sections')
+          .update({
+            title: contentForm.title,
+            draft_content: contentForm.content,
+            updated_at: new Date().toISOString(),
+          })
+          .eq('id', existingContent.id);
+      } else {
+        // Create new content as draft
+        await supabase.from('content_sections').insert({
+          section_key: selectedSection,
+          title: contentForm.title,
+          content: '',
+          draft_content: contentForm.content,
+          section_type: pageKey,
+          is_active: contentForm.is_active,
+          status: 'draft',
+        });
+      }
+
+      // Clear cache so preview fetches fresh data
+      clearContentCache();
+
+      // Open preview in new tab
       window.open(previewUrl, '_blank');
+    } catch (err) {
+      console.error('Error saving draft for preview:', err);
+      setError('Failed to save draft for preview');
+    } finally {
+      setSaving(false);
     }
   };
 

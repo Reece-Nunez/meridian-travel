@@ -22,7 +22,8 @@
       "Bash(npm install:*)",
       "Bash(grep:*)",
       "Bash(npx tsc:*)",
-      "Bash(taskkill:*)"
+      "Bash(taskkill:*)",
+      "Bash(git diff:*)"
     ],
     "deny": [],
     "ask": []

@@ -510,23 +510,41 @@ function NewPackageContent() {
                   name="destination"
                   required
                   value={formData.destination}
-                  onChange={handleInputChange}
+                  onChange={(e) => {
+                    const newDestination = e.target.value;
+                    // Check if this is a diving-specific destination
+                    const isDivingDestination = DIVING_DESTINATIONS.some(d => d.value === newDestination);
+
+                    if (packageType === 'special' && isDivingDestination) {
+                      // Auto-set special_type to diving when a diving destination is selected
+                      setFormData(prev => ({
+                        ...prev,
+                        destination: newDestination,
+                        special_type: 'diving'
+                      }));
+                    } else {
+                      handleInputChange(e);
+                    }
+                  }}
                   className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-[#B8860B] focus:border-[#B8860B] text-gray-900"
                 >
                   <option value="">Select destination</option>
-                  {packageType === 'special' && formData.special_type === 'diving' && (
-                    <optgroup label="Diving Destinations">
-                      {DIVING_DESTINATIONS.map(dest => (
-                        <option key={dest.value} value={dest.value}>{dest.label}</option>
-                      ))}
-                    </optgroup>
-                  )}
-                  <optgroup label={packageType === 'special' && formData.special_type === 'diving' ? 'Standard Destinations' : 'Destinations'}>
+                  <optgroup label="Diving Destinations">
+                    {DIVING_DESTINATIONS.map(dest => (
+                      <option key={dest.value} value={dest.value}>{dest.label}</option>
+                    ))}
+                  </optgroup>
+                  <optgroup label="Standard Destinations">
                     {STANDARD_DESTINATIONS.map(dest => (
                       <option key={dest.value} value={dest.value}>{dest.label}</option>
                     ))}
                   </optgroup>
                 </select>
+                {packageType === 'special' && (
+                  <p className="mt-1 text-sm text-gray-500">
+                    Selecting a diving destination will automatically set the special type to Diving.
+                  </p>
+                )}
               </div>
 
 
@@ -740,11 +758,24 @@ function NewPackageContent() {
                     value={formData.special_type || ''}
                     onChange={(e) => {
                       const value = e.target.value as 'diving' | '';
-                      setFormData(prev => ({
-                        ...prev,
-                        special_type: value || null,
-                        destination: '' // Reset destination when type changes
-                      }));
+                      const isDivingDestination = DIVING_DESTINATIONS.some(d => d.value === formData.destination);
+
+                      // If changing away from diving but a diving-only destination is selected, reset destination
+                      if (value !== 'diving' && isDivingDestination) {
+                        setFormData(prev => ({
+                          ...prev,
+                          special_type: value || null,
+                          destination: '' // Reset destination since it's not compatible
+                        }));
+                        toast.info('Destination reset', {
+                          description: 'The selected destination is only available for diving packages'
+                        });
+                      } else {
+                        setFormData(prev => ({
+                          ...prev,
+                          special_type: value || null
+                        }));
+                      }
                     }}
                     className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-[#B8860B] focus:border-[#B8860B] text-gray-900"
                   >
@@ -752,7 +783,7 @@ function NewPackageContent() {
                     <option value="diving">Diving</option>
                   </select>
                   <p className="mt-1 text-sm text-gray-500">
-                    Selecting a special type will show additional destination options specific to that activity.
+                    This is auto-set when you select a diving destination. Future special types will be added here.
                   </p>
                 </div>
 

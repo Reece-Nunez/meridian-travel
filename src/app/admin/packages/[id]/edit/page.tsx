@@ -660,18 +660,30 @@ export default function EditPackage() {
                   name="destination"
                   required
                   value={formData.destination}
-                  onChange={handleInputChange}
+                  onChange={(e) => {
+                    const newDestination = e.target.value;
+                    const isDivingDestination = DIVING_DESTINATIONS.some(d => d.value === newDestination);
+
+                    // Auto-set special_type to 'diving' if a diving destination is selected for a special package
+                    if (formData.type === 'special' && isDivingDestination) {
+                      setFormData(prev => ({
+                        ...prev,
+                        destination: newDestination,
+                        special_type: 'diving'
+                      }));
+                    } else {
+                      handleInputChange(e);
+                    }
+                  }}
                   className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-[#B8860B] focus:border-[#B8860B] text-gray-900"
                 >
                   <option value="">Select destination</option>
-                  {formData.type === 'special' && formData.special_type === 'diving' && (
-                    <optgroup label="Diving Destinations">
-                      {DIVING_DESTINATIONS.map(dest => (
-                        <option key={dest.value} value={dest.value}>{dest.label}</option>
-                      ))}
-                    </optgroup>
-                  )}
-                  <optgroup label={formData.type === 'special' && formData.special_type === 'diving' ? 'Standard Destinations' : 'Destinations'}>
+                  <optgroup label="Diving Destinations">
+                    {DIVING_DESTINATIONS.map(dest => (
+                      <option key={dest.value} value={dest.value}>{dest.label}</option>
+                    ))}
+                  </optgroup>
+                  <optgroup label="Standard Destinations">
                     {STANDARD_DESTINATIONS.map(dest => (
                       <option key={dest.value} value={dest.value}>{dest.label}</option>
                     ))}

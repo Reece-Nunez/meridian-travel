@@ -1,14 +1,15 @@
 'use client';
 
-import { useState, useEffect } from 'react';
+import { useState, useEffect, Suspense } from 'react';
 import { useSearchParams } from 'next/navigation';
 import { motion } from 'framer-motion';
 import Link from 'next/link';
 import { supabase } from '@/lib/supabase';
 import { TripPackage } from '@/types/database';
 import { usePercentageScrollRestoration } from '@/hooks/usePercentageScrollRestoration';
+import { useHeroSettings } from '@/hooks/useHeroSettings';
 
-export default function Packages() {
+function PackagesContent() {
   const searchParams = useSearchParams();
   const destinationParam = searchParams.get('destination');
 
@@ -16,6 +17,7 @@ export default function Packages() {
   const [loading, setLoading] = useState(true);
   const [selectedDestination, setSelectedDestination] = useState<string>(destinationParam || 'all');
   const [viewMode, setViewMode] = useState<'grid' | 'grouped'>('grouped');
+  const heroSettings = useHeroSettings('packages', 'https://meridian-travel.s3.us-east-1.amazonaws.com/travel.webp');
 
   // Scroll restoration for refresh and back button navigation
   usePercentageScrollRestoration('packages-list', !loading);
@@ -172,40 +174,43 @@ export default function Packages() {
   return (
     <div className="min-h-screen bg-gray-50">
       {/* Enhanced Header */}
-      <div className="relative py-32 overflow-hidden">
+      <div className="relative h-[70vh] overflow-hidden">
         <div className="absolute inset-0">
-          <img 
-            src="https://meridian-travel.s3.us-east-1.amazonaws.com/travel.webp" 
-            alt="Luxury travel experiences" 
+          <img
+            src={heroSettings.imageUrl}
+            alt="Luxury travel experiences"
             className="w-full h-full object-cover"
+            style={{ objectPosition: `${heroSettings.focalX}% ${heroSettings.focalY}%` }}
             onError={(e) => {
               console.error('Failed to load travel.jpg');
               e.currentTarget.style.display = 'none';
             }}
           />
-          <div className="absolute inset-0 bg-gradient-to-r from-[#8B4513] via-[#8B4513]/80 to-[#B8860B]/70"></div>
+          <div className="absolute inset-0 bg-gradient-to-r from-[#8B4513] via-[#8B4513]/80 to-[#B8860B]/70" style={{ opacity: heroSettings.overlayOpacity }}></div>
         </div>
-        <div className="relative z-10 max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 text-center text-white">
-          <motion.div
-            initial={{ opacity: 0, y: 30 }}
-            animate={{ opacity: 1, y: 0 }}
-            transition={{ duration: 0.8 }}
-          >
-            <h1 className="text-5xl md:text-6xl font-bold mb-6">
-              Trip Packages
-            </h1>
-            <p className="text-xl md:text-2xl text-[#F5F5DC] max-w-4xl mx-auto mb-8">
-              Expertly crafted luxury travel experiences across South America's most captivating destinations
-            </p>
-            <div className="flex justify-center">
-              <Link
-                href="/quote"
-                className="bg-[#B8860B] hover:bg-[#DAA520] text-white px-8 py-4 rounded-lg text-lg font-medium transition-all duration-200 transform hover:scale-105 shadow-xl"
-              >
-                Create Custom Journey
-              </Link>
-            </div>
-          </motion.div>
+        <div className="relative z-10 h-full flex items-center justify-center px-4 sm:px-6 lg:px-8">
+          <div className="text-center text-white max-w-4xl">
+            <motion.div
+              initial={{ opacity: 0, y: 30 }}
+              animate={{ opacity: 1, y: 0 }}
+              transition={{ duration: 0.8 }}
+            >
+              <h1 className="text-5xl md:text-6xl font-bold mb-6">
+                Trip Packages
+              </h1>
+              <p className="text-xl md:text-2xl text-[#F5F5DC] max-w-4xl mx-auto mb-8">
+                Expertly crafted luxury travel experiences across South America's most captivating destinations
+              </p>
+              <div className="flex justify-center">
+                <Link
+                  href="/quote"
+                  className="bg-[#B8860B] hover:bg-[#DAA520] text-white px-8 py-4 rounded-lg text-lg font-medium transition-all duration-200 transform hover:scale-105 shadow-xl"
+                >
+                  Create Custom Journey
+                </Link>
+              </div>
+            </motion.div>
+          </div>
         </div>
       </div>
 
@@ -372,5 +377,25 @@ export default function Packages() {
         )}
       </div>
     </div>
+  );
+}
+
+function PackagesLoading() {
+  return (
+    <div className="min-h-screen bg-white">
+      <div className="relative h-[400px] md:h-[500px] overflow-hidden bg-gray-200 animate-pulse" />
+      <div className="py-16 px-4 sm:px-6 lg:px-8 max-w-7xl mx-auto">
+        <div className="h-8 bg-gray-200 rounded w-64 mx-auto mb-4 animate-pulse" />
+        <div className="h-4 bg-gray-200 rounded w-96 mx-auto animate-pulse" />
+      </div>
+    </div>
+  );
+}
+
+export default function Packages() {
+  return (
+    <Suspense fallback={<PackagesLoading />}>
+      <PackagesContent />
+    </Suspense>
   );
 }

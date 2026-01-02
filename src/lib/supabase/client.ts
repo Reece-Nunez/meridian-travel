@@ -6,12 +6,15 @@
 import { createBrowserClient } from '@supabase/ssr';
 import type { SupabaseClient } from '@supabase/supabase-js';
 
-let browserClient: SupabaseClient | null = null;
+// Use global to persist singleton across hot module reloading in development
+const globalForSupabase = typeof globalThis !== 'undefined' ? globalThis as typeof globalThis & {
+  supabaseClient?: SupabaseClient;
+} : undefined;
 
 export function createClient() {
   // Return existing client if already created (singleton pattern)
-  if (browserClient) {
-    return browserClient;
+  if (globalForSupabase?.supabaseClient) {
+    return globalForSupabase.supabaseClient;
   }
 
   const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL;
@@ -21,6 +24,11 @@ export function createClient() {
     throw new Error('Missing Supabase environment variables');
   }
 
-  browserClient = createBrowserClient(supabaseUrl, supabaseAnonKey);
-  return browserClient;
+  const client = createBrowserClient(supabaseUrl, supabaseAnonKey);
+
+  if (globalForSupabase) {
+    globalForSupabase.supabaseClient = client;
+  }
+
+  return client;
 }

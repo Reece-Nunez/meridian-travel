@@ -4,6 +4,7 @@ import { useState, useEffect } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { supabase } from '@/lib/supabase';
 import { TripPackage } from '@/types/database';
+import { getHeroSettings, HeroSettings } from '@/lib/heroSettings';
 
 export default function QuoteRequest() {
   const [formData, setFormData] = useState({
@@ -34,6 +35,14 @@ export default function QuoteRequest() {
   const [packages, setPackages] = useState<TripPackage[]>([]);
   const [cruises, setCruises] = useState<TripPackage[]>([]);
   const [loading, setLoading] = useState(true);
+  const [heroSettings, setHeroSettings] = useState<HeroSettings>({
+    hero_image_url: 'https://meridian-travel.s3.us-east-1.amazonaws.com/quote.webp',
+    focal_point_x: 50,
+    focal_point_y: 40,
+    hero_height_mobile: '400px',
+    hero_height_desktop: '500px',
+    overlay_opacity: 0.5
+  });
 
   const initialFormState = {
     firstName: '',
@@ -160,6 +169,15 @@ export default function QuoteRequest() {
     fetchPackagesAndCruises();
   }, []);
 
+  // Load hero settings
+  useEffect(() => {
+    getHeroSettings('quote').then(settings => {
+      if (settings.hero_image_url) {
+        setHeroSettings(settings);
+      }
+    });
+  }, []);
+
   return (
     <div className="min-h-screen bg-white">
       {/* Success Toast */}
@@ -191,21 +209,21 @@ export default function QuoteRequest() {
         )}
       </AnimatePresence>
       {/* Header Section */}
-      <div className="relative py-24 overflow-hidden">
+      <div className="relative h-[400px] md:h-[500px] overflow-hidden">
         <div className="absolute inset-0">
-          <img 
-            src="https://meridian-travel.s3.us-east-1.amazonaws.com/quote.webp" 
+          <img
+            src={heroSettings.hero_image_url || 'https://meridian-travel.s3.us-east-1.amazonaws.com/quote.webp'}
             alt="Request custom travel quote"
             className="w-full h-full object-cover"
-            onError={(e) => {
-              console.error('Failed to load quote.jpg');
-              e.currentTarget.style.display = 'none';
-            }}
+            style={{ objectPosition: `${heroSettings.focal_point_x}% ${heroSettings.focal_point_y}%` }}
           />
-          <div className="absolute inset-0 bg-black opacity-50"></div>
+          <div
+            className="absolute inset-0 bg-black"
+            style={{ opacity: heroSettings.overlay_opacity }}
+          ></div>
         </div>
-        <div className="relative z-10 px-4 sm:px-6 lg:px-8 max-w-4xl mx-auto">
-          <div className="text-center text-white">
+        <div className="relative z-10 h-full flex items-center justify-center px-4 sm:px-6 lg:px-8">
+          <div className="text-center text-white max-w-4xl">
             <h1 className="text-4xl sm:text-5xl font-bold mb-4">
               Request Your Custom Quote
             </h1>

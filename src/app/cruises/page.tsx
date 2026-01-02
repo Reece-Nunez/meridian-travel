@@ -2,12 +2,13 @@
 
 import Link from 'next/link';
 import { motion } from 'framer-motion';
-import { useState, useEffect } from 'react';
+import { useState, useEffect, Suspense } from 'react';
 import { useSearchParams } from 'next/navigation';
 import { getContentByKey, getSettingByKey } from '@/lib/content';
 import { supabase } from '@/lib/supabase';
 import { TripPackage, Ship } from '@/types/database';
 import { usePercentageScrollRestoration } from '@/hooks/usePercentageScrollRestoration';
+import { useHeroSettings } from '@/hooks/useHeroSettings';
 
 // Helper function to extract numbers from pricing text
 const extractPriceFromText = (priceText: string): number | null => {
@@ -122,7 +123,7 @@ const locationDisplayInfo = [
   }
 ];
 
-export default function Cruises() {
+function CruisesContent() {
   const searchParams = useSearchParams();
   const locationParam = searchParams.get('location');
 
@@ -137,6 +138,7 @@ export default function Cruises() {
   const [processedBoats, setProcessedBoats] = useState<ProcessedBoat[]>([]);
   const [loading, setLoading] = useState(true);
   const [locations, setLocations] = useState<LocationInfo[]>([]);
+  const heroSettings = useHeroSettings('cruises', 'https://meridian-travel.s3.us-east-1.amazonaws.com/cruise-ship.webp');
 
   // Scroll restoration for refresh and back button navigation
   usePercentageScrollRestoration('cruises-list', !loading);
@@ -430,20 +432,20 @@ export default function Cruises() {
   return (
     <div className="min-h-screen bg-white">
       {/* Header Section */}
-      <div className="relative h-[500px] md:h-[700px] overflow-hidden bg-gray-900">
+      <div className="relative h-[70vh] overflow-hidden bg-gray-900">
         <div className="absolute inset-0">
           <img
-            src="https://meridian-travel.s3.us-east-1.amazonaws.com/cruise-ship.webp"
+            src={heroSettings.imageUrl}
             alt="Luxury cruise ship"
-            className="w-full h-full md:h-[120%] object-cover md:-translate-y-[20%]"
-            style={{ objectPosition: 'center 30%' }}
+            className="w-full h-full object-cover"
+            style={{ objectPosition: `${heroSettings.focalX}% ${heroSettings.focalY}%` }}
             onError={(e) => {
               console.error('Failed to load cruise-ship.jpg');
               e.currentTarget.style.display = 'none';
             }}
           />
         </div>
-        <div className="absolute inset-0 bg-black opacity-40"></div>
+        <div className="absolute inset-0 bg-black" style={{ opacity: heroSettings.overlayOpacity }}></div>
         <div className="absolute inset-0 flex items-center justify-center">
           <div className="text-center text-white px-4 sm:px-6 lg:px-8 max-w-4xl">
             <motion.h1
@@ -860,5 +862,25 @@ export default function Cruises() {
         </div>
       </div>
     </div>
+  );
+}
+
+function CruisesLoading() {
+  return (
+    <div className="min-h-screen bg-white">
+      <div className="relative h-[400px] md:h-[500px] overflow-hidden bg-gray-200 animate-pulse" />
+      <div className="py-16 px-4 sm:px-6 lg:px-8 max-w-7xl mx-auto">
+        <div className="h-8 bg-gray-200 rounded w-64 mx-auto mb-4 animate-pulse" />
+        <div className="h-4 bg-gray-200 rounded w-96 mx-auto animate-pulse" />
+      </div>
+    </div>
+  );
+}
+
+export default function Cruises() {
+  return (
+    <Suspense fallback={<CruisesLoading />}>
+      <CruisesContent />
+    </Suspense>
   );
 }

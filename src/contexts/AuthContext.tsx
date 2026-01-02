@@ -24,7 +24,16 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   const [user, setUser] = useState<User | null>(null);
   const [session, setSession] = useState<Session | null>(null);
   const [profile, setProfile] = useState<Profile | null>(null);
-  const [loading, setLoading] = useState(true);
+  const [loadingState, setLoadingState] = useState(true);
+
+  // Wrapper to log loading state changes
+  const setLoading = (value: boolean) => {
+    console.log('[AuthContext] setLoading called with:', value, '(was:', loadingState, ')');
+    setLoadingState(value);
+  };
+
+  // Expose loading as the state value
+  const loading = loadingState;
 
   // Create a stable Supabase client instance
   const supabase = useMemo(() => {
@@ -71,7 +80,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
 
   useEffect(() => {
     if (!supabase) {
-      console.warn('Supabase client not available - authentication disabled');
+      console.warn('[AuthContext] Supabase client not available - authentication disabled');
       setLoading(false);
       return;
     }
@@ -79,15 +88,22 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     let isMounted = true;
 
     const initializeAuth = async () => {
+      console.log('[AuthContext] initializeAuth starting...');
       try {
         // First try getSession() which reads from local storage/cookies
         // This is faster and works for client-side navigation
+        console.log('[AuthContext] Calling getSession()...');
         const { data: { session: existingSession } } = await supabase.auth.getSession();
+        console.log('[AuthContext] getSession result:', { hasSession: !!existingSession, hasUser: !!existingSession?.user });
 
-        if (!isMounted) return;
+        if (!isMounted) {
+          console.log('[AuthContext] Component unmounted, aborting');
+          return;
+        }
 
         if (existingSession?.user) {
           // We have a cached session, use it immediately
+          console.log('[AuthContext] Found existing session, setting user and loading=false');
           setSession(existingSession);
           setUser(existingSession.user);
           setLoading(false);
@@ -103,7 +119,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
           supabase.auth.getUser().then(({ error }) => {
             if (error && isMounted) {
               // Session was invalid, clear it
-              console.warn('Session validation failed, clearing auth state');
+              console.warn('[AuthContext] Session validation failed, clearing auth state');
               setSession(null);
               setUser(null);
               setProfile(null);
@@ -113,20 +129,23 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
         }
 
         // No cached session, try getUser() with timeout for server validation
+        console.log('[AuthContext] No cached session, calling getUser()...');
         const userPromise = supabase.auth.getUser();
         const timeoutPromise = new Promise<never>((_, reject) => {
           setTimeout(() => reject(new Error('Auth validation timeout')), 5000);
         });
 
         const { data: { user }, error } = await Promise.race([userPromise, timeoutPromise]);
+        console.log('[AuthContext] getUser result:', { hasUser: !!user, error: error?.message });
 
         if (!isMounted) return;
 
         if (error) {
           // Auth session missing is expected for logged out users, don't treat as error
           if (!error.message?.includes('Auth session missing')) {
-            console.error('Error validating user:', error);
+            console.error('[AuthContext] Error validating user:', error);
           }
+          console.log('[AuthContext] Setting loading=false after error');
           setLoading(false);
           return;
         }
@@ -149,10 +168,11 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
         }
 
         if (isMounted) {
+          console.log('[AuthContext] initializeAuth complete, setting loading=false');
           setLoading(false);
         }
       } catch (error) {
-        console.warn('Auth initialization error or timeout:', error);
+        console.warn('[AuthContext] Auth initialization error or timeout:', error);
         if (isMounted) {
           setLoading(false);
         }
@@ -162,12 +182,13 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     initializeAuth();
 
     // Safety timeout to ensure loading never stays true indefinitely
+    // Extended to 5 seconds to allow for slower auth state changes
     const safetyTimeout = setTimeout(() => {
       if (isMounted) {
         console.warn('Auth initialization timeout - forcing loading to false');
         setLoading(false);
       }
-    }, 3000); // 3 second timeout
+    }, 5000); // 5 second timeout
 
     // Listen for auth changes
     const { data: { subscription } } = supabase.auth.onAuthStateChange(

@@ -4,6 +4,7 @@ import { motion } from 'framer-motion';
 import Link from 'next/link';
 import { useState } from 'react';
 import { usePercentageScrollRestoration } from '@/hooks/usePercentageScrollRestoration';
+import { useHeroSettings } from '@/hooks/useHeroSettings';
 
 interface Destination {
   id: string;
@@ -166,6 +167,7 @@ const destinations: Destination[] = [
 
 export default function Destinations() {
   const [selectedDestination, setSelectedDestination] = useState<string | null>(null);
+  const heroSettings = useHeroSettings('destinations', 'https://meridian-travel.s3.us-east-1.amazonaws.com/destinations.webp');
 
   // Scroll restoration for refresh and back button navigation
   usePercentageScrollRestoration('destinations-list', true);
@@ -173,35 +175,38 @@ export default function Destinations() {
   return (
     <div className="min-h-screen bg-gray-50">
       {/* Hero Section */}
-      <div className="relative py-32 overflow-hidden">
+      <div className="relative h-[70vh] overflow-hidden">
         <div className="absolute inset-0">
-          <img 
-            src="https://meridian-travel.s3.us-east-1.amazonaws.com/destinations.webp" 
-            alt="South American destinations" 
+          <img
+            src={heroSettings.imageUrl}
+            alt="South American destinations"
             className="w-full h-full object-cover"
+            style={{ objectPosition: `${heroSettings.focalX}% ${heroSettings.focalY}%` }}
             onError={(e) => {
               e.currentTarget.style.display = 'none';
             }}
           />
-          <div className="absolute inset-0 bg-[#8B4513] opacity-70"></div>
+          <div className="absolute inset-0 bg-[#8B4513]" style={{ opacity: heroSettings.overlayOpacity }}></div>
         </div>
-        <div className="relative z-10 max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 text-center text-white">
-          <motion.h1 
-            className="text-4xl md:text-5xl font-bold mb-4"
-            initial={{ opacity: 0, y: 30 }}
-            animate={{ opacity: 1, y: 0 }}
-            transition={{ duration: 0.6 }}
-          >
-            Our Destinations
-          </motion.h1>
-          <motion.p 
-            className="text-xl text-[#F5F5DC] max-w-3xl mx-auto"
-            initial={{ opacity: 0, y: 20 }}
-            animate={{ opacity: 1, y: 0 }}
-            transition={{ duration: 0.6, delay: 0.2 }}
-          >
-            Explore the diverse landscapes and rich cultures of South America with our expert-guided luxury tours
-          </motion.p>
+        <div className="relative z-10 h-full flex items-center justify-center px-4 sm:px-6 lg:px-8">
+          <div className="text-center text-white max-w-4xl">
+            <motion.h1
+              className="text-4xl md:text-5xl font-bold mb-4"
+              initial={{ opacity: 0, y: 30 }}
+              animate={{ opacity: 1, y: 0 }}
+              transition={{ duration: 0.6 }}
+            >
+              Our Destinations
+            </motion.h1>
+            <motion.p
+              className="text-xl text-[#F5F5DC] max-w-3xl mx-auto"
+              initial={{ opacity: 0, y: 20 }}
+              animate={{ opacity: 1, y: 0 }}
+              transition={{ duration: 0.6, delay: 0.2 }}
+            >
+              Explore the diverse landscapes and rich cultures of South America with our expert-guided luxury tours
+            </motion.p>
+          </div>
         </div>
       </div>
 

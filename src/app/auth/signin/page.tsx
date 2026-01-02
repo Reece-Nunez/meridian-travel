@@ -130,11 +130,11 @@ function SignInForm() {
     <div className="min-h-screen flex items-center justify-center bg-[#F5F5DC] py-12 px-4 sm:px-6 lg:px-8">
       <div className="max-w-md w-full space-y-8">
         <div>
-          <div className="mx-auto h-12 w-auto flex justify-center">
+          <div className="mx-auto h-24 w-auto flex justify-center">
             <img 
-              src="/logo.png" 
+              src="https://meridian-travel.s3.us-east-1.amazonaws.com/logo.png" 
               alt="Meridian Luxury Travel" 
-              className="h-12 w-auto"
+              className="h-24 w-auto"
               onError={(e) => {
                 e.currentTarget.style.display = 'none';
               }}

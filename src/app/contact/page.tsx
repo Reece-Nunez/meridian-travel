@@ -4,8 +4,36 @@ import Link from 'next/link';
 import { motion } from 'framer-motion';
 import { useState, useEffect } from 'react';
 import { getContentByKey, getSettingByKey } from '@/lib/content';
+import { getHeroSettings, clearHeroSettingsCache } from '@/lib/heroSettings';
 
 export default function Contact() {
+  // Hero image settings from database
+  const [heroSettings, setHeroSettings] = useState({
+    imageUrl: 'https://meridian-travel.s3.us-east-1.amazonaws.com/contact.webp',
+    focalX: 50,
+    focalY: 50,
+    overlayOpacity: 0.5
+  });
+
+  // Fetch hero settings from database
+  useEffect(() => {
+    const fetchHeroSettings = async () => {
+      try {
+        clearHeroSettingsCache('contact');
+        const settings = await getHeroSettings('contact');
+        setHeroSettings({
+          imageUrl: settings.hero_image_url || 'https://meridian-travel.s3.us-east-1.amazonaws.com/contact.webp',
+          focalX: settings.focal_point_x,
+          focalY: settings.focal_point_y,
+          overlayOpacity: settings.overlay_opacity
+        });
+      } catch (error) {
+        console.log('Hero settings unavailable, using defaults');
+      }
+    };
+    fetchHeroSettings();
+  }, []);
+
   const [content, setContent] = useState({
     pageTitle: 'Contact Us',
     pageSubtitle: 'Ready to begin your Peru adventure? Our travel specialists are here to help you plan the perfect journey.',
@@ -153,25 +181,25 @@ export default function Contact() {
   return (
     <div className="min-h-screen bg-white">
       {/* Header Section */}
-      <div className="relative py-24 overflow-hidden">
+      <div className="relative h-[400px] md:h-[500px] overflow-hidden">
         <div className="absolute inset-0">
-          <img 
-            src="https://meridian-travel.s3.us-east-1.amazonaws.com/contact.webp" 
-            alt="Contact us for travel planning"
+          <img
+            src={heroSettings.imageUrl}
+            alt="Contact Meridian Luxury Travel"
             className="w-full h-full object-cover"
-            onError={(e) => {
-              console.error('Failed to load contact.jpg');
-              e.currentTarget.style.display = 'none';
-            }}
+            style={{ objectPosition: `${heroSettings.focalX}% ${heroSettings.focalY}%` }}
           />
-          <div className="absolute inset-0 bg-black opacity-50"></div>
+          <div
+            className="absolute inset-0 bg-black"
+            style={{ opacity: heroSettings.overlayOpacity }}
+          ></div>
         </div>
-        <div className="relative z-10 px-4 sm:px-6 lg:px-8 max-w-7xl mx-auto">
-          <div className="text-center text-white">
+        <div className="relative z-10 h-full flex items-center justify-center px-4 sm:px-6 lg:px-8">
+          <div className="text-center text-white max-w-4xl">
             <h1 className="text-4xl sm:text-5xl font-bold mb-4">
               {content.pageTitle}
             </h1>
-            <p className="text-xl sm:text-2xl mb-8 max-w-3xl mx-auto">
+            <p className="text-xl sm:text-2xl max-w-3xl mx-auto">
               {content.pageSubtitle}
             </p>
           </div>

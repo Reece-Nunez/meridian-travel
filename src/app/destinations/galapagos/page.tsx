@@ -6,6 +6,7 @@ import { useState, useEffect } from 'react';
 import { supabase } from '@/lib/supabase';
 import { Ship } from '@/types/database';
 import { usePercentageScrollRestoration } from '@/hooks/usePercentageScrollRestoration';
+import { useHeroSettings } from '@/hooks/useHeroSettings';
 
 interface ProcessedCruise {
   id: string;
@@ -22,6 +23,7 @@ interface ProcessedCruise {
 export default function GalapagosDestination() {
   const [cruises, setCruises] = useState<ProcessedCruise[]>([]);
   const [loading, setLoading] = useState(true);
+  const heroSettings = useHeroSettings('galapagos', 'https://meridian-travel.s3.us-east-1.amazonaws.com/galapagos-hero.webp');
 
   // Scroll restoration for refresh and back button navigation
   usePercentageScrollRestoration('destination-galapagos', !loading);
@@ -178,14 +180,15 @@ export default function GalapagosDestination() {
       <div className="relative h-screen overflow-hidden">
         <div className="absolute inset-0">
           <img
-            src="https://meridian-travel.s3.us-east-1.amazonaws.com/galapagos-hero.webp"
+            src={heroSettings.imageUrl}
             alt="Galapagos Islands landscape"
             className="w-full h-full object-cover"
+            style={{ objectPosition: `${heroSettings.focalX}% ${heroSettings.focalY}%` }}
             onError={(e) => {
               e.currentTarget.src = '/destinations/default.jpg';
             }}
           />
-          <div className="absolute inset-0 bg-gradient-to-t from-black via-black/30 to-transparent"></div>
+          <div className="absolute inset-0 bg-gradient-to-t from-black via-black/30 to-transparent" style={{ opacity: heroSettings.overlayOpacity }}></div>
         </div>
         <div className="relative z-10 h-full flex items-center justify-center px-4 sm:px-6 lg:px-8">
           <div className="text-center text-white max-w-4xl">

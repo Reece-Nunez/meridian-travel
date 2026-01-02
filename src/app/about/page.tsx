@@ -4,8 +4,12 @@ import Link from 'next/link';
 import { motion } from 'framer-motion';
 import { useState, useEffect } from 'react';
 import { getContentByKey, getSettingByKey, getContentByType, clearContentCache } from '@/lib/content';
+import { useHeroSettings } from '@/hooks/useHeroSettings';
 
 export default function About() {
+  // Hero image settings from database
+  const heroSettings = useHeroSettings('about', 'https://meridian-travel.s3.us-east-1.amazonaws.com/about-us.webp');
+
   const [content, setContent] = useState({
     aboutTitle: 'About Meridian Luxury Travel',
     aboutContent: 'At Meridian Luxury Travel, we specialize in crafting tailor-made journeys for discerning travelers who seek more than just a vacation—they seek an experience that resonates deeply. Our focus is on personalized, high-end itineraries that blend exclusivity, comfort, and cultural depth, creating moments that linger long after the journey ends.',
@@ -15,8 +19,6 @@ export default function About() {
     servicesTitle: 'Our Services',
     servicesContent: 'At every stage, our mission is to elevate travel into an art form—where every journey reflects your unique story, and every detail whispers luxury.'
   });
-
-  // Removed loading state - content shows immediately
 
   useEffect(() => {
     const fetchContent = async () => {
@@ -75,25 +77,24 @@ export default function About() {
   return (
     <div className="min-h-screen bg-white">
       {/* Header Section */}
-      <div className="relative py-24 overflow-hidden">
+      <div className="relative h-[400px] md:h-[500px] overflow-hidden">
         <div className="absolute inset-0">
           <img
-            src="https://meridian-travel.s3.us-east-1.amazonaws.com/about-us.webp"
-            alt="About us team and travel experiences"
-            className="w-full h-full object-cover"
-            onError={(e) => {
-              console.error('Failed to load about-us.jpg');
-              e.currentTarget.style.display = 'none';
-            }}
+            src={heroSettings.imageUrl}
+            alt="About Meridian Luxury Travel"
+            className="w-full h-full object-cover object-center"
           />
-          <div className="absolute inset-0 bg-black opacity-50"></div>
+          <div
+            className="absolute inset-0 bg-black"
+            style={{ opacity: heroSettings.overlayOpacity }}
+          ></div>
         </div>
-        <div className="relative z-10 px-4 sm:px-6 lg:px-8 max-w-7xl mx-auto">
-          <div className="text-center text-white">
+        <div className="relative z-10 h-full flex items-center justify-center px-4 sm:px-6 lg:px-8">
+          <div className="text-center text-white max-w-4xl">
             <h1 className="text-4xl sm:text-5xl font-bold mb-4">
               {content.aboutTitle}
             </h1>
-            <p className="text-xl sm:text-2xl mb-8 max-w-3xl mx-auto">
+            <p className="text-xl sm:text-2xl max-w-3xl mx-auto">
               {content.aboutContent}
             </p>
           </div>

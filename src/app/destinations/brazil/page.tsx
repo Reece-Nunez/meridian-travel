@@ -4,9 +4,11 @@ import Link from 'next/link';
 import { motion, AnimatePresence } from 'framer-motion';
 import { useState } from 'react';
 import { usePercentageScrollRestoration } from '@/hooks/usePercentageScrollRestoration';
+import { useHeroSettings } from '@/hooks/useHeroSettings';
 
 export default function BrazilDestination() {
   const [selectedRegion, setSelectedRegion] = useState<string | null>(null);
+  const heroSettings = useHeroSettings('brazil', 'https://meridian-travel.s3.us-east-1.amazonaws.com/brazil.webp');
 
   // Scroll restoration for refresh and back button navigation
   usePercentageScrollRestoration('destination-brazil', true);
@@ -114,14 +116,15 @@ export default function BrazilDestination() {
       <div className="relative h-screen overflow-hidden">
         <div className="absolute inset-0">
           <img
-            src="https://meridian-travel.s3.us-east-1.amazonaws.com/brazil.webp"
+            src={heroSettings.imageUrl}
             alt="Brazil landscape"
             className="w-full h-full object-cover"
+            style={{ objectPosition: `${heroSettings.focalX}% ${heroSettings.focalY}%` }}
             onError={(e) => {
               e.currentTarget.src = '/destinations/default.jpg';
             }}
           />
-          <div className="absolute inset-0 bg-gradient-to-t from-black via-black/30 to-transparent"></div>
+          <div className="absolute inset-0 bg-gradient-to-t from-black via-black/30 to-transparent" style={{ opacity: heroSettings.overlayOpacity }}></div>
         </div>
         <div className="relative z-10 h-full flex items-center justify-center px-4 sm:px-6 lg:px-8">
           <div className="text-center text-white max-w-4xl">

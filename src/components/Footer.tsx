@@ -115,8 +115,13 @@ export default function Footer() {
                 </Link>
               </li>
               <li>
-                <Link href="/destinations/galapagos-ecuador" className="text-[#F5F5DC] hover:text-[#B8860B] transition-colors duration-200">
-                  Galapagos/Ecuador
+                <Link href="/destinations/ecuador" className="text-[#F5F5DC] hover:text-[#B8860B] transition-colors duration-200">
+                  Ecuador
+                </Link>
+              </li>
+              <li>
+                <Link href="/destinations/galapagos" className="text-[#F5F5DC] hover:text-[#B8860B] transition-colors duration-200">
+                  Galapagos Islands
                 </Link>
               </li>
               <li>

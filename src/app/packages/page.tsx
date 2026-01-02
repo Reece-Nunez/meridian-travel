@@ -1,6 +1,7 @@
 'use client';
 
 import { useState, useEffect } from 'react';
+import { useSearchParams } from 'next/navigation';
 import { motion } from 'framer-motion';
 import Link from 'next/link';
 import { supabase } from '@/lib/supabase';
@@ -8,9 +9,12 @@ import { TripPackage } from '@/types/database';
 import { usePercentageScrollRestoration } from '@/hooks/usePercentageScrollRestoration';
 
 export default function Packages() {
+  const searchParams = useSearchParams();
+  const destinationParam = searchParams.get('destination');
+
   const [packages, setPackages] = useState<TripPackage[]>([]);
   const [loading, setLoading] = useState(true);
-  const [selectedDestination, setSelectedDestination] = useState<string>('all');
+  const [selectedDestination, setSelectedDestination] = useState<string>(destinationParam || 'all');
   const [viewMode, setViewMode] = useState<'grid' | 'grouped'>('grouped');
 
   // Scroll restoration for refresh and back button navigation
@@ -19,6 +23,13 @@ export default function Packages() {
   useEffect(() => {
     fetchPackages();
   }, []);
+
+  // Sync filter with URL parameter when it changes
+  useEffect(() => {
+    if (destinationParam) {
+      setSelectedDestination(destinationParam);
+    }
+  }, [destinationParam]);
 
   const fetchPackages = async () => {
     try {

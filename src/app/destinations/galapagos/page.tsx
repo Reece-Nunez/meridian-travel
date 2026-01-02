@@ -212,7 +212,7 @@ export default function GalapagosDestination() {
               transition={{ duration: 0.8, delay: 0.4 }}
             >
               <Link
-                href="/cruises"
+                href="/cruises?location=Galapagos"
                 className="bg-[#B8860B] hover:bg-[#DAA520] text-white px-8 py-4 rounded-md text-lg font-medium transition-colors duration-200"
               >
                 View All Cruises

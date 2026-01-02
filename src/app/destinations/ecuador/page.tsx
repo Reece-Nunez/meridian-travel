@@ -148,7 +148,7 @@ export default function EcuadorDestination() {
               transition={{ duration: 0.8, delay: 0.4 }}
             >
               <Link
-                href="/packages"
+                href="/packages?destination=Ecuador"
                 className="bg-[#B8860B] hover:bg-[#DAA520] text-white px-8 py-4 rounded-md text-lg font-medium transition-colors duration-200"
               >
                 View Trip Packages
@@ -392,7 +392,7 @@ export default function EcuadorDestination() {
           </p>
           <div className="flex flex-col sm:flex-row gap-4 justify-center">
             <Link
-              href="/packages"
+              href="/packages?destination=Ecuador"
               className="bg-[#B8860B] hover:bg-[#DAA520] text-white px-8 py-4 rounded-md text-lg font-medium transition-colors duration-200"
             >
               Browse Ecuador Packages

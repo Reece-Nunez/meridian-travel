@@ -3,6 +3,7 @@
 import Link from 'next/link';
 import { motion } from 'framer-motion';
 import { useState, useEffect } from 'react';
+import { useSearchParams } from 'next/navigation';
 import { getContentByKey, getSettingByKey } from '@/lib/content';
 import { supabase } from '@/lib/supabase';
 import { TripPackage, Ship } from '@/types/database';
@@ -122,13 +123,16 @@ const locationDisplayInfo = [
 ];
 
 export default function Cruises() {
+  const searchParams = useSearchParams();
+  const locationParam = searchParams.get('location');
+
   const [content, setContent] = useState({
     cruisesTitle: 'Luxury South American Cruises',
     cruisesContent: 'Discover the pristine wilderness of Antarctica, the dramatic fjords of Patagonia, the unique wildlife of the Galapagos, and the incredible biodiversity of the Amazon aboard our carefully selected fleet of luxury expedition vessels.',
     companyName: 'Meridian Luxury Travel'
   });
 
-  const [selectedLocation, setSelectedLocation] = useState<string | null>(null);
+  const [selectedLocation, setSelectedLocation] = useState<string | null>(locationParam);
   const [cruisePackages, setCruisePackages] = useState<TripPackage[]>([]);
   const [processedBoats, setProcessedBoats] = useState<ProcessedBoat[]>([]);
   const [loading, setLoading] = useState(true);
@@ -136,6 +140,13 @@ export default function Cruises() {
 
   // Scroll restoration for refresh and back button navigation
   usePercentageScrollRestoration('cruises-list', !loading);
+
+  // Sync filter with URL parameter when it changes
+  useEffect(() => {
+    if (locationParam) {
+      setSelectedLocation(locationParam);
+    }
+  }, [locationParam]);
 
   const filteredBoats = selectedLocation
     ? processedBoats.filter(boat => boat.location === selectedLocation)

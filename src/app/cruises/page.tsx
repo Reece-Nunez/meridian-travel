@@ -29,6 +29,7 @@ const mapDestinationToLocation = (destination: string): string => {
   if (dest.includes('galapagos')) return 'Galapagos';
   if (dest.includes('amazon')) return 'Amazon';
   if (dest.includes('antarctica') || dest.includes('antarctic')) return 'Antarctica';
+  if (dest.includes('arctic')) return 'Arctic';
   if (dest.includes('chile') || dest.includes('patagonia') || dest.includes('fjord')) return 'Chile';
   return dest; // fallback to original destination
 };
@@ -108,10 +109,17 @@ const locationDisplayInfo = [
     features: ["Emperor penguins", "Massive icebergs", "Zodiac landings", "Expert guides"]
   },
   {
-    name: "Chile",
-    title: "Arctic Voyages",
-    description: "Navigate the dramatic fjords and channels of Chilean Patagonia, discovering glaciers, wildlife, and remote landscapes.",
+    name: "Arctic",
+    title: "Arctic Expeditions",
+    description: "Venture to the top of the world to witness polar bears, arctic foxes, and dramatic ice landscapes in the far north.",
     image: "https://meridian-travel.s3.us-east-1.amazonaws.com/arctic.webp",
+    features: ["Polar wildlife", "Arctic landscapes", "Midnight sun", "Zodiac excursions"]
+  },
+  {
+    name: "Chile",
+    title: "Patagonian Fjords",
+    description: "Navigate the dramatic fjords and channels of Chilean Patagonia, discovering glaciers, wildlife, and remote landscapes.",
+    image: "https://meridian-travel.s3.us-east-1.amazonaws.com/patagonia-fjords.webp",
     features: ["Glacier viewing", "Fjord navigation", "Wildlife watching", "Hiking excursions"]
   },
   {

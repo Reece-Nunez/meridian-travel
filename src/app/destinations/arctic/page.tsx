@@ -95,9 +95,10 @@ export default function ArcticDestination() {
         }
       });
 
-      // Filter ships that operate in Chile/Patagonia (Arctic Voyages section)
+      // Filter ships that operate in Arctic regions (including Chilean Patagonia/Fjords)
       const arcticShips = ships?.filter((ship: any) =>
         ship.operating_regions?.some((region: string) =>
+          region.toLowerCase().includes('arctic') ||
           region.toLowerCase().includes('chile') ||
           region.toLowerCase().includes('patagonia') ||
           region.toLowerCase().includes('fjord')

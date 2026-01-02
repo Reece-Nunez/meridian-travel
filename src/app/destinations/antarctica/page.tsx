@@ -316,6 +316,19 @@ export default function AntarcticaDestination() {
                       <div className="absolute top-4 right-4 bg-blue-100 text-blue-800 px-3 py-1 rounded-full text-xs font-medium">
                         {cruise.boatType}
                       </div>
+                      {/* Operating Regions Tags on Image */}
+                      {cruise.ship.operating_regions && cruise.ship.operating_regions.length > 0 && (
+                        <div className="absolute bottom-4 left-4 flex flex-wrap gap-1">
+                          {cruise.ship.operating_regions.map((region: string, rIndex: number) => (
+                            <span
+                              key={rIndex}
+                              className="bg-black bg-opacity-75 text-white px-2 py-1 rounded-full text-xs font-medium"
+                            >
+                              {region}
+                            </span>
+                          ))}
+                        </div>
+                      )}
                       {cruise.itineraryCount > 0 && (
                         <div className="absolute bottom-4 right-4 bg-green-100 text-green-800 px-3 py-1 rounded-full text-xs font-medium">
                           {cruise.itineraryCount} {cruise.itineraryCount > 1 ? 'itineraries' : 'itinerary'}
@@ -326,6 +339,21 @@ export default function AntarcticaDestination() {
 
                   <div className="p-6">
                     <h3 className="text-xl font-bold text-[#8B4513] mb-2">{cruise.name}</h3>
+
+                    {/* Operating Regions Tags */}
+                    {cruise.ship.operating_regions && cruise.ship.operating_regions.length > 0 && (
+                      <div className="flex flex-wrap gap-1 mb-3">
+                        {cruise.ship.operating_regions.map((region: string, rIndex: number) => (
+                          <span
+                            key={rIndex}
+                            className="bg-gray-100 text-gray-700 px-2 py-0.5 rounded text-xs font-medium"
+                          >
+                            {region}
+                          </span>
+                        ))}
+                      </div>
+                    )}
+
                     <p className="text-2xl font-bold text-[#B8860B] mb-4">
                       {cruise.lowestCabinPrice ? `Starting from: $${cruise.lowestCabinPrice.toLocaleString()}` : 'Price on Request'}
                     </p>

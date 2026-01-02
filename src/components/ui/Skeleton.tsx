@@ -1,6 +1,7 @@
 'use client';
 
 import { motion } from 'framer-motion';
+import { useState, useEffect } from 'react';
 
 interface SkeletonProps {
   className?: string;
@@ -110,7 +111,14 @@ interface ContentLoaderProps {
 }
 
 export function ContentLoader({ isLoading, skeleton, children, className = '' }: ContentLoaderProps) {
-  if (isLoading) {
+  const [hasMounted, setHasMounted] = useState(false);
+
+  useEffect(() => {
+    setHasMounted(true);
+  }, []);
+
+  // During SSR and initial hydration, always show skeleton to avoid mismatch
+  if (!hasMounted || isLoading) {
     return <div className={className}>{skeleton}</div>;
   }
 
@@ -144,7 +152,14 @@ export function TextLoader({
   skeletonClassName = '',
   lines = 1
 }: TextLoaderProps) {
-  if (isLoading) {
+  const [hasMounted, setHasMounted] = useState(false);
+
+  useEffect(() => {
+    setHasMounted(true);
+  }, []);
+
+  // During SSR and initial hydration, always show skeleton
+  if (!hasMounted || isLoading) {
     const variant = ['h1', 'h2', 'h3'].includes(Component) ? 'title' : 'paragraph';
     return <Skeleton variant={variant} lines={lines} className={skeletonClassName} />;
   }

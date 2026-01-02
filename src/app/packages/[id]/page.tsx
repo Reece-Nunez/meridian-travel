@@ -6,9 +6,12 @@ import Link from 'next/link';
 import { motion } from 'framer-motion';
 import { supabase } from '@/lib/supabase';
 import { TripPackage } from '@/types/database';
-import { getSettingByKey } from '@/lib/content';
+import { useSettings } from '@/hooks/useContent';
 import { useAuth } from '@/contexts/AuthContext';
 import { usePercentageScrollRestoration } from '@/hooks/usePercentageScrollRestoration';
+
+// Settings keys for contact info
+const CONTACT_SETTING_KEYS = ['contact_phone', 'contact_email'];
 
 interface PackageActivity {
   name: string;
@@ -30,37 +33,20 @@ export default function PackageDetail() {
   const [pkg, setPkg] = useState<TripPackage | null>(null);
   const [loading, setLoading] = useState(true);
   const [selectedImageIndex, setSelectedImageIndex] = useState(0);
-  const [contactInfo, setContactInfo] = useState({
-    phone: '+1 (555) 012-3456',
-    email: 'info@meridianluxurytravel.com'
-  });
-  const [contactLoading, setContactLoading] = useState(true);
+
+  // Use the new useSettings hook for contact info
+  const { settings: contactSettings, isLoading: contactLoading } = useSettings(CONTACT_SETTING_KEYS);
+  const contactInfo = {
+    phone: contactSettings['contact_phone'] || '+1 (555) 012-3456',
+    email: contactSettings['contact_email'] || 'info@meridianluxurytravel.com'
+  };
 
   // Restore scroll position on refresh/back button
   usePercentageScrollRestoration(`package-${params.id}`, !loading);
 
   useEffect(() => {
     fetchPackage();
-    fetchContactInfo();
   }, [params.id]);
-
-  const fetchContactInfo = async () => {
-    try {
-      const [phone, email] = await Promise.all([
-        getSettingByKey('contact_phone'),
-        getSettingByKey('contact_email')
-      ]);
-
-      setContactInfo({
-        phone: phone || '+1 (555) 012-3456',
-        email: email || 'info@meridianluxurytravel.com'
-      });
-    } catch (error) {
-      console.error('Error fetching contact info:', error);
-    } finally {
-      setContactLoading(false);
-    }
-  };
 
   const fetchPackage = async () => {
     try {

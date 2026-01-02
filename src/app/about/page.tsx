@@ -2,87 +2,44 @@
 
 import Link from 'next/link';
 import { motion } from 'framer-motion';
-import { useState, useEffect } from 'react';
-import { getContentByKey, getSettingByKey, getContentByType, clearContentCache } from '@/lib/content';
+import { useCMSData } from '@/hooks/useContent';
 import { useHeroSettings } from '@/hooks/useHeroSettings';
+import { Skeleton, ContentLoader } from '@/components/ui/Skeleton';
+import { HeroImage } from '@/components/ui/HeroImage';
+
+// Content keys we need from the CMS
+const CONTENT_KEYS = [
+  'about_page_title',
+  'about_content',
+  'about_story_title',
+  'about_story_content',
+  'about_services_title',
+  'about_services_content'
+];
+
+const SETTING_KEYS = ['company_name'];
 
 export default function About() {
   // Hero image settings from database
   const heroSettings = useHeroSettings('about', 'https://meridian-travel.s3.us-east-1.amazonaws.com/about-us.webp');
 
-  const [content, setContent] = useState({
-    aboutTitle: 'About Meridian Luxury Travel',
-    aboutContent: 'At Meridian Luxury Travel, we specialize in crafting tailor-made journeys for discerning travelers who seek more than just a vacation—they seek an experience that resonates deeply. Our focus is on personalized, high-end itineraries that blend exclusivity, comfort, and cultural depth, creating moments that linger long after the journey ends.',
-    storyTitle: 'Our Story',
-    storyContent: 'Whether it\'s embarking on a private yacht excursion in the Galápagos, watching the sunrise over Machu Picchu, traveling aboard the legendary Hiram Bingham train, or enjoying exclusive access to historic landmarks closed to the public, each journey is designed with meticulous attention to detail. We believe true luxury lies in the combination of iconic destinations and insider access. That means staying in hand-selected accommodations that reflect both elegance and authenticity, traveling with expert local guides who open doors few others can, and enjoying seamless logistics that ensure every step feels effortless. Our mission is simple: to transform travel into curated experiences that elevate exploration into something truly extraordinary. With Meridian Luxury Travel, you don\'t just see the world; you live its most unforgettable stories.',
-    companyName: 'Meridian Luxury Travel',
-    servicesTitle: 'Our Services',
-    servicesContent: 'At every stage, our mission is to elevate travel into an art form—where every journey reflects your unique story, and every detail whispers luxury.'
-  });
+  const { content, settings, isLoading } = useCMSData(CONTENT_KEYS, SETTING_KEYS);
 
-  useEffect(() => {
-    const fetchContent = async () => {
-      try {
-        // Clear cache to get latest content
-        clearContentCache();
-
-        // Use the new CMS structure with section_key based content
-        const [
-          aboutPageTitle,
-          aboutContent,
-          aboutStoryTitle,
-          aboutStoryContent,
-          aboutServicesTitle,
-          aboutServicesContent,
-          companyName
-        ] = await Promise.all([
-          getContentByKey('about_page_title'),
-          getContentByKey('about_content'),
-          getContentByKey('about_story_title'),
-          getContentByKey('about_story_content'),
-          getContentByKey('about_services_title'),
-          getContentByKey('about_services_content'),
-          getSettingByKey('company_name')
-        ]);
-
-        console.log('About page content loaded:', {
-          aboutPageTitle,
-          aboutContent: aboutContent?.substring(0, 50) + '...',
-          aboutStoryTitle,
-          aboutStoryContent: aboutStoryContent?.substring(0, 50) + '...',
-          aboutServicesTitle,
-          aboutServicesContent: aboutServicesContent?.substring(0, 50) + '...',
-          companyName
-        });
-
-        setContent({
-          aboutTitle: aboutPageTitle || content.aboutTitle,
-          aboutContent: aboutContent || content.aboutContent,
-          storyTitle: aboutStoryTitle || content.storyTitle,
-          storyContent: aboutStoryContent || content.storyContent,
-          companyName: companyName || content.companyName,
-          servicesTitle: aboutServicesTitle || content.servicesTitle,
-          servicesContent: aboutServicesContent || content.servicesContent
-        });
-      } catch (error) {
-        console.log('CMS content unavailable for about page, using default content', error);
-      }
-    };
-
-    fetchContent();
-  }, []);
-
-  // No loading check - content shows immediately
+  // Helper to get content
+  const getContent = (key: string) => content[key] || '';
+  const getSetting = (key: string) => settings[key] || '';
 
   return (
     <div className="min-h-screen bg-white">
       {/* Header Section */}
       <div className="relative h-[400px] md:h-[500px] overflow-hidden">
         <div className="absolute inset-0">
-          <img
-            src={heroSettings.imageUrl}
+          <HeroImage
+            desktopSrc={heroSettings.imageUrl}
+            mobileSrc={heroSettings.originalImageUrl}
             alt="About Meridian Luxury Travel"
-            className="w-full h-full object-cover object-center"
+            focalX={heroSettings.focalX}
+            focalY={heroSettings.focalY}
           />
           <div
             className="absolute inset-0 bg-black"
@@ -91,12 +48,22 @@ export default function About() {
         </div>
         <div className="relative z-10 h-full flex items-center justify-center px-4 sm:px-6 lg:px-8">
           <div className="text-center text-white max-w-4xl">
-            <h1 className="text-4xl sm:text-5xl font-bold mb-4">
-              {content.aboutTitle}
-            </h1>
-            <p className="text-xl sm:text-2xl max-w-3xl mx-auto">
-              {content.aboutContent}
-            </p>
+            <ContentLoader
+              isLoading={isLoading}
+              skeleton={<Skeleton variant="title" className="h-12 w-2/3 mx-auto mb-4 bg-white/20" />}
+            >
+              <h1 className="text-4xl sm:text-5xl font-bold mb-4">
+                {getContent('about_page_title') || 'About Us'}
+              </h1>
+            </ContentLoader>
+            <ContentLoader
+              isLoading={isLoading}
+              skeleton={<Skeleton variant="paragraph" lines={3} className="max-w-3xl mx-auto [&>div]:bg-white/20" />}
+            >
+              <p className="text-xl sm:text-2xl max-w-3xl mx-auto">
+                {getContent('about_content')}
+              </p>
+            </ContentLoader>
           </div>
         </div>
       </div>
@@ -105,12 +72,22 @@ export default function About() {
       <div className="py-16 px-4 sm:px-6 lg:px-8 max-w-7xl mx-auto">
         <div className="max-w-4xl mx-auto">
           <div className="text-center mb-16">
-            <h2 className="text-3xl sm:text-4xl font-bold text-[#8B4513] mb-6">
-              {content.storyTitle}
-            </h2>
-            <p className="text-lg text-gray-600 leading-relaxed">
-              {content.storyContent}
-            </p>
+            <ContentLoader
+              isLoading={isLoading}
+              skeleton={<Skeleton variant="title" className="h-10 w-1/3 mx-auto mb-6" />}
+            >
+              <h2 className="text-3xl sm:text-4xl font-bold text-[#8B4513] mb-6">
+                {getContent('about_story_title') || 'Our Story'}
+              </h2>
+            </ContentLoader>
+            <ContentLoader
+              isLoading={isLoading}
+              skeleton={<Skeleton variant="paragraph" lines={5} className="mx-auto" />}
+            >
+              <p className="text-lg text-gray-600 leading-relaxed">
+                {getContent('about_story_content')}
+              </p>
+            </ContentLoader>
           </div>
 
           <div className="grid grid-cols-1 lg:grid-cols-2 gap-12 items-center mb-16">
@@ -143,12 +120,22 @@ export default function About() {
       <div className="py-16 bg-[#F5F5DC]">
         <div className="px-4 sm:px-6 lg:px-8 max-w-7xl mx-auto">
           <div className="text-center mb-16">
-            <h2 className="text-3xl sm:text-4xl font-bold text-[#8B4513] mb-4">
-              Why Choose {content.companyName}?
-            </h2>
-            <p className="text-xl text-gray-600 max-w-2xl mx-auto">
-              {content.servicesContent}
-            </p>
+            <ContentLoader
+              isLoading={isLoading}
+              skeleton={<Skeleton variant="title" className="h-10 w-1/2 mx-auto mb-4" />}
+            >
+              <h2 className="text-3xl sm:text-4xl font-bold text-[#8B4513] mb-4">
+                Why Choose {getSetting('company_name') || 'Us'}?
+              </h2>
+            </ContentLoader>
+            <ContentLoader
+              isLoading={isLoading}
+              skeleton={<Skeleton variant="paragraph" lines={2} className="max-w-2xl mx-auto" />}
+            >
+              <p className="text-xl text-gray-600 max-w-2xl mx-auto">
+                {getContent('about_services_content')}
+              </p>
+            </ContentLoader>
           </div>
 
           <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
@@ -247,7 +234,6 @@ export default function About() {
           </h2>
           <p className="text-lg text-gray-600 mb-8 leading-relaxed">
             At every stage, our mission is to elevate travel into an art form—where every journey reflects your unique story, and every detail whispers luxury.
-
           </p>
           <p className="text-lg text-gray-600 mb-12 leading-relaxed">
             Your dreams become our mission. Your adventure becomes our passion. Let us show you

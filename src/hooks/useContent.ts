@@ -36,24 +36,26 @@ interface UseSettingsResult {
  * @returns Object with content values, loading state, and refresh function
  */
 export function useContent(keys: string[]): UseContentResult {
-  // Initialize with cached values if available (instant, no flash)
-  const getInitialContent = useCallback((): Record<string, string> => {
+  // Always start with loading=true to avoid hydration mismatch
+  // (localStorage is only available on client)
+  const [content, setContent] = useState<Record<string, string>>({});
+  const [isLoading, setIsLoading] = useState(true);
+  const [hasLoaded, setHasLoaded] = useState(false);
+  const [error, setError] = useState<Error | null>(null);
+  const [hasMounted, setHasMounted] = useState(false);
+
+  // After mount, check cache and update state
+  useEffect(() => {
+    setHasMounted(true);
     const initial: Record<string, string> = {};
     keys.forEach(key => {
       const cached = getCachedContentByKey(key);
       if (cached) initial[key] = cached;
     });
-    return initial;
-  }, [keys.join(',')]);
-
-  const [content, setContent] = useState<Record<string, string>>(getInitialContent);
-  const [isLoading, setIsLoading] = useState(() => {
-    // Only show loading if we have NO cached content
-    const cached = getCachedContent();
-    return !cached || cached.length === 0;
-  });
-  const [hasLoaded, setHasLoaded] = useState(false);
-  const [error, setError] = useState<Error | null>(null);
+    if (Object.keys(initial).length > 0) {
+      setContent(initial);
+    }
+  }, []);
 
   const fetchContent = useCallback(async () => {
     try {
@@ -141,22 +143,23 @@ export function useSingleContent(key: string): {
  * @returns Object with settings values, loading state, and refresh function
  */
 export function useSettings(keys: string[]): UseSettingsResult {
-  const getInitialSettings = useCallback((): Record<string, string> => {
+  // Always start with loading=true to avoid hydration mismatch
+  const [settings, setSettings] = useState<Record<string, string>>({});
+  const [isLoading, setIsLoading] = useState(true);
+  const [hasLoaded, setHasLoaded] = useState(false);
+  const [error, setError] = useState<Error | null>(null);
+
+  // After mount, check cache and update state
+  useEffect(() => {
     const initial: Record<string, string> = {};
     keys.forEach(key => {
       const cached = getCachedSettingByKey(key);
       if (cached) initial[key] = cached;
     });
-    return initial;
-  }, [keys.join(',')]);
-
-  const [settings, setSettings] = useState<Record<string, string>>(getInitialSettings);
-  const [isLoading, setIsLoading] = useState(() => {
-    const cached = getCachedSettings();
-    return !cached || cached.length === 0;
-  });
-  const [hasLoaded, setHasLoaded] = useState(false);
-  const [error, setError] = useState<Error | null>(null);
+    if (Object.keys(initial).length > 0) {
+      setSettings(initial);
+    }
+  }, []);
 
   const fetchSettings = useCallback(async () => {
     try {

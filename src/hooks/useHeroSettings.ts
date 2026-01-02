@@ -4,7 +4,8 @@ import { useState, useEffect } from 'react';
 import { getHeroSettings, clearHeroSettingsCache } from '@/lib/heroSettings';
 
 interface HeroSettingsState {
-  imageUrl: string;
+  imageUrl: string;           // Cropped image for desktop
+  originalImageUrl: string;   // Original image for mobile (falls back to imageUrl)
   focalX: number;
   focalY: number;
   overlayOpacity: number;
@@ -18,6 +19,7 @@ interface HeroSettingsState {
 export function useHeroSettings(pageSlug: string, defaultImageUrl: string) {
   const [heroSettings, setHeroSettings] = useState<HeroSettingsState>({
     imageUrl: defaultImageUrl,
+    originalImageUrl: defaultImageUrl,
     focalX: 50,
     focalY: 50,
     overlayOpacity: 0.5
@@ -28,8 +30,13 @@ export function useHeroSettings(pageSlug: string, defaultImageUrl: string) {
       try {
         clearHeroSettingsCache(pageSlug);
         const settings = await getHeroSettings(pageSlug);
-        setHeroSettings({
-          imageUrl: settings.hero_image_url || defaultImageUrl,
+        const croppedUrl = settings.hero_image_url || defaultImageUrl;
+        // Use original if available, otherwise fall back to cropped/default
+        const originalUrl = settings.original_image_url || croppedUrl;
+
+      setHeroSettings({
+          imageUrl: croppedUrl,
+          originalImageUrl: originalUrl,
           focalX: settings.focal_point_x,
           focalY: settings.focal_point_y,
           overlayOpacity: settings.overlay_opacity

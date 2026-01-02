@@ -8,6 +8,7 @@ import { supabase } from '@/lib/supabase';
 import { TripPackage } from '@/types/database';
 import { usePercentageScrollRestoration } from '@/hooks/usePercentageScrollRestoration';
 import { useHeroSettings } from '@/hooks/useHeroSettings';
+import { HeroImage } from '@/components/ui/HeroImage';
 
 function PackagesContent() {
   const searchParams = useSearchParams();
@@ -176,15 +177,12 @@ function PackagesContent() {
       {/* Enhanced Header */}
       <div className="relative h-[70vh] overflow-hidden">
         <div className="absolute inset-0">
-          <img
-            src={heroSettings.imageUrl}
+          <HeroImage
+            desktopSrc={heroSettings.imageUrl}
+            mobileSrc={heroSettings.originalImageUrl}
             alt="Luxury travel experiences"
-            className="w-full h-full object-cover"
-            style={{ objectPosition: `${heroSettings.focalX}% ${heroSettings.focalY}%` }}
-            onError={(e) => {
-              console.error('Failed to load travel.jpg');
-              e.currentTarget.style.display = 'none';
-            }}
+            focalX={heroSettings.focalX}
+            focalY={heroSettings.focalY}
           />
           <div className="absolute inset-0 bg-gradient-to-r from-[#8B4513] via-[#8B4513]/80 to-[#B8860B]/70" style={{ opacity: heroSettings.overlayOpacity }}></div>
         </div>

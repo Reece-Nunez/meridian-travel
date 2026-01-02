@@ -2,192 +2,79 @@
 
 import Link from 'next/link';
 import { motion } from 'framer-motion';
-import { useState, useEffect } from 'react';
-import { getContentByKey, getSettingByKey } from '@/lib/content';
-import { getHeroSettings, clearHeroSettingsCache } from '@/lib/heroSettings';
+import { useCMSData } from '@/hooks/useContent';
+import { useHeroSettings } from '@/hooks/useHeroSettings';
+import { Skeleton, ContentLoader } from '@/components/ui/Skeleton';
+import { HeroImage } from '@/components/ui/HeroImage';
+
+// Content keys we need from the CMS
+const CONTENT_KEYS = [
+  'contact_page_title',
+  'contact_page_subtitle',
+  'contact_section_title',
+  'contact_email_response',
+  'contact_emergency_text',
+  'contact_quick_action_title',
+  'contact_quick_action_content',
+  'contact_quick_action_button',
+  'contact_faq_title',
+  'contact_faq_1_question',
+  'contact_faq_1_answer',
+  'contact_faq_2_question',
+  'contact_faq_2_answer',
+  'contact_faq_3_question',
+  'contact_faq_3_answer',
+  'contact_faq_4_question',
+  'contact_faq_4_answer',
+  'contact_faq_5_question',
+  'contact_faq_5_answer',
+  'contact_faq_6_question',
+  'contact_faq_6_answer',
+  'contact_cta_title',
+  'contact_cta_subtitle',
+  'contact_cta_button_1',
+  'contact_cta_button_2'
+];
+
+const SETTING_KEYS = [
+  'contact_phone',
+  'business_hours',
+  'contact_email',
+  'company_address',
+  'emergency_contact'
+];
 
 export default function Contact() {
   // Hero image settings from database
-  const [heroSettings, setHeroSettings] = useState({
-    imageUrl: 'https://meridian-travel.s3.us-east-1.amazonaws.com/contact.webp',
-    focalX: 50,
-    focalY: 50,
-    overlayOpacity: 0.5
-  });
+  const heroSettings = useHeroSettings('contact', 'https://meridian-travel.s3.us-east-1.amazonaws.com/contact.webp');
 
-  // Fetch hero settings from database
-  useEffect(() => {
-    const fetchHeroSettings = async () => {
-      try {
-        clearHeroSettingsCache('contact');
-        const settings = await getHeroSettings('contact');
-        setHeroSettings({
-          imageUrl: settings.hero_image_url || 'https://meridian-travel.s3.us-east-1.amazonaws.com/contact.webp',
-          focalX: settings.focal_point_x,
-          focalY: settings.focal_point_y,
-          overlayOpacity: settings.overlay_opacity
-        });
-      } catch (error) {
-        console.log('Hero settings unavailable, using defaults');
-      }
-    };
-    fetchHeroSettings();
-  }, []);
+  const { content, settings, isLoading } = useCMSData(CONTENT_KEYS, SETTING_KEYS);
 
-  const [content, setContent] = useState({
-    pageTitle: 'Contact Us',
-    pageSubtitle: 'Ready to begin your Peru adventure? Our travel specialists are here to help you plan the perfect journey.',
-    sectionTitle: 'Get in Touch',
-    phone: '+1 (555) 012-3456',
-    phoneHours: 'Monday - Friday: 9:00 AM - 6:00 PM EST\nSaturday: 10:00 AM - 4:00 PM EST',
-    email: 'info@meridiantravel.com',
-    emailResponse: 'We respond to all inquiries within 24 hours',
-    address: '123 Travel Avenue\nAdventure City, AC 12345\nUnited States',
-    emergencyPhone: '+1 (555) 019-9999',
-    emergencyText: '24/7 emergency support for travelers',
-    quickActionTitle: 'Ready to Start Planning?',
-    quickActionContent: 'The fastest way to get your custom Peru itinerary is to request a quote online. Our specialists will contact you within 24 hours.',
-    quickActionButton: 'Request Your Quote',
-    faqTitle: 'Frequently Asked Questions',
-    faq1Question: 'How far in advance should I book my Peru trip?',
-    faq1Answer: 'We recommend booking at least 3-6 months in advance, especially for travel during peak season (May-September). Popular experiences like the Inca Trail require permits that sell out quickly, so earlier booking ensures better availability.',
-    faq2Question: "What's included in your Peru travel packages?",
-    faq2Answer: "Our packages typically include accommodations, transportation, guided tours, entrance fees, and most meals. Each itinerary is custom-built, so inclusions vary based on your preferences and budget. We'll provide a detailed breakdown when we send your quote.",
-    faq3Question: 'Do you provide travel insurance recommendations?',
-    faq3Answer: 'Yes, we strongly recommend travel insurance for all Peru trips. We can provide recommendations for reputable insurance providers that offer coverage for adventure activities and high-altitude destinations.',
-    faq4Question: 'What if I need to change my travel dates?',
-    faq4Answer: "We understand that plans can change. Depending on how far in advance you notify us and the specific services booked, we'll work with our partners to minimize any change fees. Our team will guide you through the process.",
-    faq5Question: 'Do you offer group discounts?',
-    faq5Answer: 'Yes! We offer competitive pricing for groups of 8 or more travelers. Group travel also allows for more customization options and can include private guides and exclusive experiences.',
-    faq6Question: 'What support do you provide during my trip?',
-    faq6Answer: "You'll have access to our 24/7 emergency support line throughout your journey. We also provide detailed pre-departure information and can assist with any issues that arise during your trip.",
-    ctaTitle: 'Still Have Questions?',
-    ctaSubtitle: "Our Peru travel specialists are here to help. Don't hesitate to reach out—we love talking about Peru adventures!",
-    ctaButton1: 'Call Us Now',
-    ctaButton2: 'Send an Email'
-  });
+  // Helper to get content
+  const getContent = (key: string) => content[key] || '';
+  const getSetting = (key: string) => settings[key] || '';
 
-  // Removed loading state - content shows immediately
-
-  useEffect(() => {
-    const fetchContent = async () => {
-      try {
-        const [
-          pageTitle,
-          pageSubtitle,
-          sectionTitle,
-          phone,
-          phoneHours,
-          email,
-          emailResponse,
-          address,
-          emergencyPhone,
-          emergencyText,
-          quickActionTitle,
-          quickActionContent,
-          quickActionButton,
-          faqTitle,
-          faq1Question,
-          faq1Answer,
-          faq2Question,
-          faq2Answer,
-          faq3Question,
-          faq3Answer,
-          faq4Question,
-          faq4Answer,
-          faq5Question,
-          faq5Answer,
-          faq6Question,
-          faq6Answer,
-          ctaTitle,
-          ctaSubtitle,
-          ctaButton1,
-          ctaButton2
-        ] = await Promise.all([
-          getContentByKey('contact_page_title'),
-          getContentByKey('contact_page_subtitle'),
-          getContentByKey('contact_section_title'),
-          getSettingByKey('contact_phone'),
-          getSettingByKey('business_hours'),
-          getSettingByKey('contact_email'),
-          getContentByKey('contact_email_response'),
-          getSettingByKey('company_address'),
-          getSettingByKey('emergency_contact'),
-          getContentByKey('contact_emergency_text'),
-          getContentByKey('contact_quick_action_title'),
-          getContentByKey('contact_quick_action_content'),
-          getContentByKey('contact_quick_action_button'),
-          getContentByKey('contact_faq_title'),
-          getContentByKey('contact_faq_1_question'),
-          getContentByKey('contact_faq_1_answer'),
-          getContentByKey('contact_faq_2_question'),
-          getContentByKey('contact_faq_2_answer'),
-          getContentByKey('contact_faq_3_question'),
-          getContentByKey('contact_faq_3_answer'),
-          getContentByKey('contact_faq_4_question'),
-          getContentByKey('contact_faq_4_answer'),
-          getContentByKey('contact_faq_5_question'),
-          getContentByKey('contact_faq_5_answer'),
-          getContentByKey('contact_faq_6_question'),
-          getContentByKey('contact_faq_6_answer'),
-          getContentByKey('contact_cta_title'),
-          getContentByKey('contact_cta_subtitle'),
-          getContentByKey('contact_cta_button_1'),
-          getContentByKey('contact_cta_button_2')
-        ]);
-
-        setContent({
-          pageTitle: pageTitle || content.pageTitle,
-          pageSubtitle: pageSubtitle || content.pageSubtitle,
-          sectionTitle: sectionTitle || content.sectionTitle,
-          phone: phone || content.phone,
-          phoneHours: phoneHours || content.phoneHours,
-          email: email || content.email,
-          emailResponse: emailResponse || content.emailResponse,
-          address: address || content.address,
-          emergencyPhone: emergencyPhone || content.emergencyPhone,
-          emergencyText: emergencyText || content.emergencyText,
-          quickActionTitle: quickActionTitle || content.quickActionTitle,
-          quickActionContent: quickActionContent || content.quickActionContent,
-          quickActionButton: quickActionButton || content.quickActionButton,
-          faqTitle: faqTitle || content.faqTitle,
-          faq1Question: faq1Question || content.faq1Question,
-          faq1Answer: faq1Answer || content.faq1Answer,
-          faq2Question: faq2Question || content.faq2Question,
-          faq2Answer: faq2Answer || content.faq2Answer,
-          faq3Question: faq3Question || content.faq3Question,
-          faq3Answer: faq3Answer || content.faq3Answer,
-          faq4Question: faq4Question || content.faq4Question,
-          faq4Answer: faq4Answer || content.faq4Answer,
-          faq5Question: faq5Question || content.faq5Question,
-          faq5Answer: faq5Answer || content.faq5Answer,
-          faq6Question: faq6Question || content.faq6Question,
-          faq6Answer: faq6Answer || content.faq6Answer,
-          ctaTitle: ctaTitle || content.ctaTitle,
-          ctaSubtitle: ctaSubtitle || content.ctaSubtitle,
-          ctaButton1: ctaButton1 || content.ctaButton1,
-          ctaButton2: ctaButton2 || content.ctaButton2
-        });
-      } catch (error) {
-        console.log('CMS content unavailable for contact page, using default content');
-      }
-    };
-
-    fetchContent();
-  }, []);
-
-  // No loading check - content shows immediately
+  // Formatted values
+  const phone = getSetting('contact_phone');
+  const phoneHref = phone ? `tel:${phone.replace(/[^+\d]/g, '')}` : '#';
+  const email = getSetting('contact_email');
+  const emailHref = email ? `mailto:${email}` : '#';
+  const businessHours = getSetting('business_hours');
+  const address = getSetting('company_address');
+  const emergencyPhone = getSetting('emergency_contact');
+  const emergencyPhoneHref = emergencyPhone ? `tel:${emergencyPhone.replace(/[^+\d]/g, '')}` : '#';
 
   return (
     <div className="min-h-screen bg-white">
       {/* Header Section */}
       <div className="relative h-[400px] md:h-[500px] overflow-hidden">
         <div className="absolute inset-0">
-          <img
-            src={heroSettings.imageUrl}
+          <HeroImage
+            desktopSrc={heroSettings.imageUrl}
+            mobileSrc={heroSettings.originalImageUrl}
             alt="Contact Meridian Luxury Travel"
-            className="w-full h-full object-cover"
-            style={{ objectPosition: `${heroSettings.focalX}% ${heroSettings.focalY}%` }}
+            focalX={heroSettings.focalX}
+            focalY={heroSettings.focalY}
           />
           <div
             className="absolute inset-0 bg-black"
@@ -196,12 +83,22 @@ export default function Contact() {
         </div>
         <div className="relative z-10 h-full flex items-center justify-center px-4 sm:px-6 lg:px-8">
           <div className="text-center text-white max-w-4xl">
-            <h1 className="text-4xl sm:text-5xl font-bold mb-4">
-              {content.pageTitle}
-            </h1>
-            <p className="text-xl sm:text-2xl max-w-3xl mx-auto">
-              {content.pageSubtitle}
-            </p>
+            <ContentLoader
+              isLoading={isLoading}
+              skeleton={<Skeleton variant="title" className="h-12 w-2/3 mx-auto mb-4 bg-white/20" />}
+            >
+              <h1 className="text-4xl sm:text-5xl font-bold mb-4">
+                {getContent('contact_page_title') || 'Contact Us'}
+              </h1>
+            </ContentLoader>
+            <ContentLoader
+              isLoading={isLoading}
+              skeleton={<Skeleton variant="paragraph" lines={2} className="max-w-3xl mx-auto [&>div]:bg-white/20" />}
+            >
+              <p className="text-xl sm:text-2xl max-w-3xl mx-auto">
+                {getContent('contact_page_subtitle')}
+              </p>
+            </ContentLoader>
           </div>
         </div>
       </div>
@@ -215,11 +112,17 @@ export default function Contact() {
             animate={{ opacity: 1, x: 0 }}
             transition={{ duration: 0.6, delay: 0.2 }}
           >
-            <h2 className="text-3xl font-bold text-[#8B4513] mb-8">
-              {content.sectionTitle}
-            </h2>
-            
+            <ContentLoader
+              isLoading={isLoading}
+              skeleton={<Skeleton variant="title" className="h-9 w-1/2 mb-8" />}
+            >
+              <h2 className="text-3xl font-bold text-[#8B4513] mb-8">
+                {getContent('contact_section_title') || 'Get in Touch'}
+              </h2>
+            </ContentLoader>
+
             <div className="space-y-8">
+              {/* Phone */}
               <div className="flex items-start">
                 <div className="w-12 h-12 bg-[#B8860B] rounded-lg flex items-center justify-center mr-4 flex-shrink-0">
                   <svg className="w-6 h-6 text-[#F5F5DC]" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -230,22 +133,34 @@ export default function Contact() {
                   <h3 className="text-lg font-semibold text-[#8B4513] mb-2">
                     Phone
                   </h3>
-                  <p className="text-gray-600 mb-2">
-                    <a href={`tel:${content.phone.replace(/[^+\d]/g, '')}`} className="hover:text-[#B8860B] transition-colors">
-                      {content.phone}
-                    </a>
-                  </p>
-                  <p className="text-sm text-gray-500">
-                    {content.phoneHours.split('\n').map((line, idx) => (
-                      <span key={idx}>
-                        {line}
-                        {idx < content.phoneHours.split('\n').length - 1 && <br />}
-                      </span>
-                    ))}
-                  </p>
+                  <ContentLoader
+                    isLoading={isLoading}
+                    skeleton={
+                      <div className="space-y-2">
+                        <Skeleton variant="text" className="h-5 w-36" />
+                        <Skeleton variant="text" className="h-4 w-48" />
+                        <Skeleton variant="text" className="h-4 w-44" />
+                      </div>
+                    }
+                  >
+                    <p className="text-gray-600 mb-2">
+                      <a href={phoneHref} className="hover:text-[#B8860B] transition-colors">
+                        {phone}
+                      </a>
+                    </p>
+                    <p className="text-sm text-gray-500">
+                      {businessHours?.split('\n').map((line: string, idx: number) => (
+                        <span key={idx}>
+                          {line}
+                          {idx < (businessHours?.split('\n').length || 1) - 1 && <br />}
+                        </span>
+                      ))}
+                    </p>
+                  </ContentLoader>
                 </div>
               </div>
 
+              {/* Email */}
               <div className="flex items-start">
                 <div className="w-12 h-12 bg-[#B8860B] rounded-lg flex items-center justify-center mr-4 flex-shrink-0">
                   <svg className="w-6 h-6 text-[#F5F5DC]" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -256,17 +171,28 @@ export default function Contact() {
                   <h3 className="text-lg font-semibold text-[#8B4513] mb-2">
                     Email
                   </h3>
-                  <p className="text-gray-600 mb-2">
-                    <a href={`mailto:${content.email}`} className="hover:text-[#B8860B] transition-colors">
-                      {content.email}
-                    </a>
-                  </p>
-                  <p className="text-sm text-gray-500">
-                    {content.emailResponse}
-                  </p>
+                  <ContentLoader
+                    isLoading={isLoading}
+                    skeleton={
+                      <div className="space-y-2">
+                        <Skeleton variant="text" className="h-5 w-48" />
+                        <Skeleton variant="text" className="h-4 w-56" />
+                      </div>
+                    }
+                  >
+                    <p className="text-gray-600 mb-2">
+                      <a href={emailHref} className="hover:text-[#B8860B] transition-colors">
+                        {email}
+                      </a>
+                    </p>
+                    <p className="text-sm text-gray-500">
+                      {getContent('contact_email_response')}
+                    </p>
+                  </ContentLoader>
                 </div>
               </div>
 
+              {/* Office */}
               <div className="flex items-start">
                 <div className="w-12 h-12 bg-[#B8860B] rounded-lg flex items-center justify-center mr-4 flex-shrink-0">
                   <svg className="w-6 h-6 text-[#F5F5DC]" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -278,17 +204,29 @@ export default function Contact() {
                   <h3 className="text-lg font-semibold text-[#8B4513] mb-2">
                     Office
                   </h3>
-                  <p className="text-gray-600">
-                    {content.address.split('\n').map((line, idx) => (
-                      <span key={idx}>
-                        {line}
-                        {idx < content.address.split('\n').length - 1 && <br />}
-                      </span>
-                    ))}
-                  </p>
+                  <ContentLoader
+                    isLoading={isLoading}
+                    skeleton={
+                      <div className="space-y-2">
+                        <Skeleton variant="text" className="h-5 w-36" />
+                        <Skeleton variant="text" className="h-5 w-44" />
+                        <Skeleton variant="text" className="h-5 w-32" />
+                      </div>
+                    }
+                  >
+                    <p className="text-gray-600">
+                      {address?.split('\n').map((line: string, idx: number) => (
+                        <span key={idx}>
+                          {line}
+                          {idx < (address?.split('\n').length || 1) - 1 && <br />}
+                        </span>
+                      ))}
+                    </p>
+                  </ContentLoader>
                 </div>
               </div>
 
+              {/* Emergency Support */}
               <div className="flex items-start">
                 <div className="w-12 h-12 bg-[#B8860B] rounded-lg flex items-center justify-center mr-4 flex-shrink-0">
                   <svg className="w-6 h-6 text-[#F5F5DC]" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -299,32 +237,53 @@ export default function Contact() {
                   <h3 className="text-lg font-semibold text-[#8B4513] mb-2">
                     Emergency Support
                   </h3>
-                  <p className="text-gray-600 mb-2">
-                    <a href={`tel:${content.emergencyPhone.replace(/[^+\d]/g, '')}`} className="hover:text-[#B8860B] transition-colors">
-                      {content.emergencyPhone}
-                    </a>
-                  </p>
-                  <p className="text-sm text-gray-500">
-                    {content.emergencyText}
-                  </p>
+                  <ContentLoader
+                    isLoading={isLoading}
+                    skeleton={
+                      <div className="space-y-2">
+                        <Skeleton variant="text" className="h-5 w-36" />
+                        <Skeleton variant="text" className="h-4 w-52" />
+                      </div>
+                    }
+                  >
+                    <p className="text-gray-600 mb-2">
+                      <a href={emergencyPhoneHref} className="hover:text-[#B8860B] transition-colors">
+                        {emergencyPhone}
+                      </a>
+                    </p>
+                    <p className="text-sm text-gray-500">
+                      {getContent('contact_emergency_text')}
+                    </p>
+                  </ContentLoader>
                 </div>
               </div>
             </div>
 
             {/* Quick Actions */}
             <div className="mt-12 p-6 bg-[#F5F5DC] rounded-lg">
-              <h3 className="text-lg font-semibold text-[#8B4513] mb-4">
-                {content.quickActionTitle}
-              </h3>
-              <p className="text-gray-600 mb-6">
-                {content.quickActionContent}
-              </p>
-              <Link
-                href="/quote"
-                className="bg-[#B8860B] hover:bg-[#DAA520] text-[#F5F5DC] px-6 py-3 rounded-md font-medium transition-colors duration-200"
+              <ContentLoader
+                isLoading={isLoading}
+                skeleton={
+                  <div className="space-y-4">
+                    <Skeleton variant="title" className="h-6 w-2/3" />
+                    <Skeleton variant="paragraph" lines={2} />
+                    <Skeleton variant="text" className="h-12 w-40" />
+                  </div>
+                }
               >
-                {content.quickActionButton}
-              </Link>
+                <h3 className="text-lg font-semibold text-[#8B4513] mb-4">
+                  {getContent('contact_quick_action_title') || 'Ready to Start Planning?'}
+                </h3>
+                <p className="text-gray-600 mb-6">
+                  {getContent('contact_quick_action_content')}
+                </p>
+                <Link
+                  href="/quote"
+                  className="bg-[#B8860B] hover:bg-[#DAA520] text-[#F5F5DC] px-6 py-3 rounded-md font-medium transition-colors duration-200"
+                >
+                  {getContent('contact_quick_action_button') || 'Request Your Quote'}
+                </Link>
+              </ContentLoader>
             </div>
           </motion.div>
 
@@ -334,63 +293,134 @@ export default function Contact() {
             animate={{ opacity: 1, x: 0 }}
             transition={{ duration: 0.6, delay: 0.4 }}
           >
-            <h2 className="text-3xl font-bold text-[#8B4513] mb-8">
-              {content.faqTitle}
-            </h2>
-            
+            <ContentLoader
+              isLoading={isLoading}
+              skeleton={<Skeleton variant="title" className="h-9 w-3/4 mb-8" />}
+            >
+              <h2 className="text-3xl font-bold text-[#8B4513] mb-8">
+                {getContent('contact_faq_title') || 'Frequently Asked Questions'}
+              </h2>
+            </ContentLoader>
+
             <div className="space-y-6">
+              {/* FAQ 1 */}
               <div className="border-b border-gray-200 pb-6">
-                <h3 className="text-lg font-semibold text-[#8B4513] mb-2">
-                  {content.faq1Question}
-                </h3>
-                <p className="text-gray-600">
-                  {content.faq1Answer}
-                </p>
+                <ContentLoader
+                  isLoading={isLoading}
+                  skeleton={
+                    <div className="space-y-3">
+                      <Skeleton variant="text" className="h-6 w-5/6" />
+                      <Skeleton variant="paragraph" lines={3} />
+                    </div>
+                  }
+                >
+                  <h3 className="text-lg font-semibold text-[#8B4513] mb-2">
+                    {getContent('contact_faq_1_question')}
+                  </h3>
+                  <p className="text-gray-600">
+                    {getContent('contact_faq_1_answer')}
+                  </p>
+                </ContentLoader>
               </div>
 
+              {/* FAQ 2 */}
               <div className="border-b border-gray-200 pb-6">
-                <h3 className="text-lg font-semibold text-[#8B4513] mb-2">
-                  {content.faq2Question}
-                </h3>
-                <p className="text-gray-600">
-                  {content.faq2Answer}
-                </p>
+                <ContentLoader
+                  isLoading={isLoading}
+                  skeleton={
+                    <div className="space-y-3">
+                      <Skeleton variant="text" className="h-6 w-4/5" />
+                      <Skeleton variant="paragraph" lines={3} />
+                    </div>
+                  }
+                >
+                  <h3 className="text-lg font-semibold text-[#8B4513] mb-2">
+                    {getContent('contact_faq_2_question')}
+                  </h3>
+                  <p className="text-gray-600">
+                    {getContent('contact_faq_2_answer')}
+                  </p>
+                </ContentLoader>
               </div>
 
+              {/* FAQ 3 */}
               <div className="border-b border-gray-200 pb-6">
-                <h3 className="text-lg font-semibold text-[#8B4513] mb-2">
-                  {content.faq3Question}
-                </h3>
-                <p className="text-gray-600">
-                  {content.faq3Answer}
-                </p>
+                <ContentLoader
+                  isLoading={isLoading}
+                  skeleton={
+                    <div className="space-y-3">
+                      <Skeleton variant="text" className="h-6 w-3/4" />
+                      <Skeleton variant="paragraph" lines={2} />
+                    </div>
+                  }
+                >
+                  <h3 className="text-lg font-semibold text-[#8B4513] mb-2">
+                    {getContent('contact_faq_3_question')}
+                  </h3>
+                  <p className="text-gray-600">
+                    {getContent('contact_faq_3_answer')}
+                  </p>
+                </ContentLoader>
               </div>
 
+              {/* FAQ 4 */}
               <div className="border-b border-gray-200 pb-6">
-                <h3 className="text-lg font-semibold text-[#8B4513] mb-2">
-                  {content.faq4Question}
-                </h3>
-                <p className="text-gray-600">
-                  {content.faq4Answer}
-                </p>
+                <ContentLoader
+                  isLoading={isLoading}
+                  skeleton={
+                    <div className="space-y-3">
+                      <Skeleton variant="text" className="h-6 w-2/3" />
+                      <Skeleton variant="paragraph" lines={2} />
+                    </div>
+                  }
+                >
+                  <h3 className="text-lg font-semibold text-[#8B4513] mb-2">
+                    {getContent('contact_faq_4_question')}
+                  </h3>
+                  <p className="text-gray-600">
+                    {getContent('contact_faq_4_answer')}
+                  </p>
+                </ContentLoader>
               </div>
 
+              {/* FAQ 5 */}
               <div className="border-b border-gray-200 pb-6">
-                <h3 className="text-lg font-semibold text-[#8B4513] mb-2">
-                  {content.faq5Question}
-                </h3>
-                <p className="text-gray-600">
-                  {content.faq5Answer}
-                </p>
+                <ContentLoader
+                  isLoading={isLoading}
+                  skeleton={
+                    <div className="space-y-3">
+                      <Skeleton variant="text" className="h-6 w-1/2" />
+                      <Skeleton variant="paragraph" lines={2} />
+                    </div>
+                  }
+                >
+                  <h3 className="text-lg font-semibold text-[#8B4513] mb-2">
+                    {getContent('contact_faq_5_question')}
+                  </h3>
+                  <p className="text-gray-600">
+                    {getContent('contact_faq_5_answer')}
+                  </p>
+                </ContentLoader>
               </div>
 
+              {/* FAQ 6 */}
               <div className="pb-6">
-                <h3 className="text-lg font-semibold text-[#8B4513] mb-2">
-                  {content.faq6Question}
-                </h3>
-                <p className="text-gray-600">
-                  {content.faq6Answer}
-                </p>
+                <ContentLoader
+                  isLoading={isLoading}
+                  skeleton={
+                    <div className="space-y-3">
+                      <Skeleton variant="text" className="h-6 w-3/5" />
+                      <Skeleton variant="paragraph" lines={2} />
+                    </div>
+                  }
+                >
+                  <h3 className="text-lg font-semibold text-[#8B4513] mb-2">
+                    {getContent('contact_faq_6_question')}
+                  </h3>
+                  <p className="text-gray-600">
+                    {getContent('contact_faq_6_answer')}
+                  </p>
+                </ContentLoader>
               </div>
             </div>
           </motion.div>
@@ -400,26 +430,46 @@ export default function Contact() {
       {/* Call to Action */}
       <div className="bg-[#F5F5DC] py-16">
         <div className="px-4 sm:px-6 lg:px-8 max-w-4xl mx-auto text-center">
-          <h2 className="text-3xl font-bold text-[#8B4513] mb-4">
-            {content.ctaTitle}
-          </h2>
-          <p className="text-xl text-gray-600 mb-8">
-            {content.ctaSubtitle}
-          </p>
-          <div className="flex flex-col sm:flex-row gap-4 justify-center">
-            <a
-              href={`tel:${content.phone.replace(/[^+\d]/g, '')}`}
-              className="bg-[#B8860B] hover:bg-[#DAA520] text-[#F5F5DC] px-8 py-4 rounded-md text-lg font-medium transition-colors duration-200"
-            >
-              {content.ctaButton1}
-            </a>
-            <a
-              href={`mailto:${content.email}`}
-              className="border-2 border-[#8B4513] text-[#8B4513] hover:bg-white px-8 py-4 rounded-md text-lg font-medium transition-colors duration-200"
-            >
-              {content.ctaButton2}
-            </a>
-          </div>
+          <ContentLoader
+            isLoading={isLoading}
+            skeleton={
+              <div className="space-y-4">
+                <Skeleton variant="title" className="h-9 w-1/2 mx-auto" />
+                <Skeleton variant="paragraph" lines={2} className="max-w-2xl mx-auto" />
+              </div>
+            }
+          >
+            <h2 className="text-3xl font-bold text-[#8B4513] mb-4">
+              {getContent('contact_cta_title') || 'Still Have Questions?'}
+            </h2>
+            <p className="text-xl text-gray-600 mb-8">
+              {getContent('contact_cta_subtitle')}
+            </p>
+          </ContentLoader>
+          <ContentLoader
+            isLoading={isLoading}
+            skeleton={
+              <div className="flex flex-col sm:flex-row gap-4 justify-center">
+                <Skeleton variant="text" className="h-14 w-40" />
+                <Skeleton variant="text" className="h-14 w-40" />
+              </div>
+            }
+          >
+            <div className="flex flex-col sm:flex-row gap-4 justify-center">
+              <a
+                href={phoneHref}
+                className="bg-[#B8860B] hover:bg-[#DAA520] text-[#F5F5DC] px-8 py-4 rounded-md text-lg font-medium transition-colors duration-200"
+              >
+                {getContent('contact_cta_button_1') || 'Call Us Now'}
+              </a>
+              <a
+                href={emailHref}
+                className="border-2 border-[#8B4513] text-[#8B4513] hover:bg-white px-8 py-4 rounded-md text-lg font-medium transition-colors duration-200"
+              >
+                {getContent('contact_cta_button_2') || 'Send an Email'}
+              </a>
+            </div>
+          </ContentLoader>
         </div>
       </div>
     </div>

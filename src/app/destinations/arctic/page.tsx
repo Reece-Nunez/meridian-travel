@@ -7,6 +7,7 @@ import { supabase } from '@/lib/supabase';
 import { Ship } from '@/types/database';
 import { usePercentageScrollRestoration } from '@/hooks/usePercentageScrollRestoration';
 import { useHeroSettings } from '@/hooks/useHeroSettings';
+import { HeroImage } from '@/components/ui/HeroImage';
 
 interface ProcessedCruise {
   id: string;
@@ -178,14 +179,12 @@ export default function ArcticDestination() {
       {/* Hero Section */}
       <div className="relative h-screen overflow-hidden">
         <div className="absolute inset-0">
-          <img
-            src={heroSettings.imageUrl}
+          <HeroImage
+            desktopSrc={heroSettings.imageUrl}
+            mobileSrc={heroSettings.originalImageUrl}
             alt="Arctic fjords landscape"
-            className="w-full h-full object-cover"
-            style={{ objectPosition: `${heroSettings.focalX}% ${heroSettings.focalY}%` }}
-            onError={(e) => {
-              e.currentTarget.src = '/destinations/default.jpg';
-            }}
+            focalX={heroSettings.focalX}
+            focalY={heroSettings.focalY}
           />
           <div className="absolute inset-0 bg-gradient-to-t from-black via-black/30 to-transparent" style={{ opacity: heroSettings.overlayOpacity }}></div>
         </div>

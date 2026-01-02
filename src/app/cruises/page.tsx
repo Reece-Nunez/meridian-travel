@@ -4,11 +4,24 @@ import Link from 'next/link';
 import { motion } from 'framer-motion';
 import { useState, useEffect, Suspense } from 'react';
 import { useSearchParams } from 'next/navigation';
-import { getContentByKey, getSettingByKey } from '@/lib/content';
+import { useCMSData } from '@/hooks/useContent';
+import { Skeleton, ContentLoader } from '@/components/ui/Skeleton';
 import { supabase } from '@/lib/supabase';
 import { TripPackage, Ship } from '@/types/database';
 import { usePercentageScrollRestoration } from '@/hooks/usePercentageScrollRestoration';
 import { useHeroSettings } from '@/hooks/useHeroSettings';
+import { HeroImage } from '@/components/ui/HeroImage';
+
+// Content keys we need from the CMS
+const CONTENT_KEYS = [
+  'cruises_page_title',
+  'cruises_page_content',
+  'cruises_cta_title',
+  'cruises_cta_content',
+  'cruises_cta_button'
+];
+
+const SETTING_KEYS = ['company_name'];
 
 // Helper function to extract numbers from pricing text
 const extractPriceFromText = (priceText: string): number | null => {
@@ -128,11 +141,10 @@ function CruisesContent() {
   const searchParams = useSearchParams();
   const locationParam = searchParams.get('location');
 
-  const [content, setContent] = useState({
-    cruisesTitle: 'Luxury South American Cruises',
-    cruisesContent: 'Discover the pristine wilderness of Antarctica, the dramatic fjords of Patagonia, the unique wildlife of the Galapagos, and the incredible biodiversity of the Amazon aboard our carefully selected fleet of luxury expedition vessels.',
-    companyName: 'Meridian Luxury Travel'
-  });
+  // CMS content
+  const { content, settings, isLoading: cmsLoading } = useCMSData(CONTENT_KEYS, SETTING_KEYS);
+  const getContent = (key: string) => content[key] || '';
+  const getSetting = (key: string) => settings[key] || '';
 
   const [selectedLocation, setSelectedLocation] = useState<string | null>(locationParam);
   const [cruisePackages, setCruisePackages] = useState<TripPackage[]>([]);
@@ -408,25 +420,6 @@ function CruisesContent() {
   };
 
   useEffect(() => {
-    const fetchContent = async () => {
-      try {
-        const [cruisesTitle, cruisesContent, companyName] = await Promise.all([
-          getContentByKey('cruises_page_title'),
-          getContentByKey('cruises_page_content'),
-          getSettingByKey('company_name')
-        ]);
-
-        setContent({
-          cruisesTitle: cruisesTitle || 'Luxury South American Cruises',
-          cruisesContent: cruisesContent || 'Discover the pristine wilderness of Antarctica, the dramatic fjords of Patagonia, the unique wildlife of the Galapagos, and the incredible biodiversity of the Amazon aboard our carefully selected fleet of luxury expedition vessels.',
-          companyName: companyName || 'Meridian Luxury Travel'
-        });
-      } catch (error) {
-        console.log('CMS content unavailable for cruises page, using fallback content');
-      }
-    };
-
-    fetchContent();
     fetchCruiseData(); // Fetch cruise data from database
   }, []);
 
@@ -435,36 +428,43 @@ function CruisesContent() {
       {/* Header Section */}
       <div className="relative h-[70vh] overflow-hidden bg-gray-900">
         <div className="absolute inset-0">
-          <img
-            src={heroSettings.imageUrl}
+          <HeroImage
+            desktopSrc={heroSettings.imageUrl}
+            mobileSrc={heroSettings.originalImageUrl}
             alt="Luxury cruise ship"
-            className="w-full h-full object-cover"
-            style={{ objectPosition: `${heroSettings.focalX}% ${heroSettings.focalY}%` }}
-            onError={(e) => {
-              console.error('Failed to load cruise-ship.jpg');
-              e.currentTarget.style.display = 'none';
-            }}
+            focalX={heroSettings.focalX}
+            focalY={heroSettings.focalY}
           />
         </div>
         <div className="absolute inset-0 bg-black" style={{ opacity: heroSettings.overlayOpacity }}></div>
         <div className="absolute inset-0 flex items-center justify-center">
           <div className="text-center text-white px-4 sm:px-6 lg:px-8 max-w-4xl">
-            <motion.h1
-              className="text-2xl sm:text-3xl md:text-4xl lg:text-5xl xl:text-6xl font-bold mb-4 sm:mb-6"
-              initial={{ opacity: 0, y: 30 }}
-              animate={{ opacity: 1, y: 0 }}
-              transition={{ duration: 0.8, delay: 0.2 }}
+            <ContentLoader
+              isLoading={cmsLoading}
+              skeleton={<Skeleton variant="title" className="h-14 w-3/4 mx-auto mb-6 bg-white/20" />}
             >
-              {content.cruisesTitle}
-            </motion.h1>
-            <motion.p
-              className="text-base sm:text-lg md:text-xl lg:text-2xl mb-6 sm:mb-8"
-              initial={{ opacity: 0, y: 30 }}
-              animate={{ opacity: 1, y: 0 }}
-              transition={{ duration: 0.8, delay: 0.4 }}
+              <motion.h1
+                className="text-2xl sm:text-3xl md:text-4xl lg:text-5xl xl:text-6xl font-bold mb-4 sm:mb-6"
+                initial={{ opacity: 0, y: 30 }}
+                animate={{ opacity: 1, y: 0 }}
+                transition={{ duration: 0.8, delay: 0.2 }}
+              >
+                {getContent('cruises_page_title') || 'Luxury South American Cruises'}
+              </motion.h1>
+            </ContentLoader>
+            <ContentLoader
+              isLoading={cmsLoading}
+              skeleton={<Skeleton variant="paragraph" lines={3} className="max-w-3xl mx-auto [&>div]:bg-white/20" />}
             >
-              {content.cruisesContent}
-            </motion.p>
+              <motion.p
+                className="text-base sm:text-lg md:text-xl lg:text-2xl mb-6 sm:mb-8"
+                initial={{ opacity: 0, y: 30 }}
+                animate={{ opacity: 1, y: 0 }}
+                transition={{ duration: 0.8, delay: 0.4 }}
+              >
+                {getContent('cruises_page_content')}
+              </motion.p>
+            </ContentLoader>
           </div>
         </div>
       </div>
@@ -901,17 +901,27 @@ function CruisesContent() {
       {/* CTA Section */}
       <div className="py-16 bg-[#2D5016]">
         <div className="px-4 sm:px-6 lg:px-8 max-w-4xl mx-auto text-center">
-          <h3 className="text-3xl sm:text-4xl font-bold text-white mb-4">
-            Ready to Plan Your Cruise Adventure?
-          </h3>
-          <p className="text-xl text-[#F5F5DC] mb-8">
-            Let our experts help you choose the perfect vessel and itinerary for your South American cruise experience.
-          </p>
+          <ContentLoader
+            isLoading={cmsLoading}
+            skeleton={
+              <div className="space-y-4">
+                <Skeleton variant="title" className="h-10 w-3/4 mx-auto bg-white/20" />
+                <Skeleton variant="paragraph" lines={2} className="max-w-2xl mx-auto [&>div]:bg-white/20" />
+              </div>
+            }
+          >
+            <h3 className="text-3xl sm:text-4xl font-bold text-white mb-4">
+              {getContent('cruises_cta_title') || 'Ready to Plan Your Cruise Adventure?'}
+            </h3>
+            <p className="text-xl text-[#F5F5DC] mb-8">
+              {getContent('cruises_cta_content') || 'Let our experts help you choose the perfect vessel and itinerary for your South American cruise experience.'}
+            </p>
+          </ContentLoader>
           <Link
             href="/quote"
             className="bg-[#B8860B] text-[#F5F5DC] px-8 py-4 rounded-md text-lg font-medium hover:bg-[#DAA520] transition-colors duration-200"
           >
-            Get Your Custom Quote
+            {getContent('cruises_cta_button') || 'Get Your Custom Quote'}
           </Link>
         </div>
       </div>

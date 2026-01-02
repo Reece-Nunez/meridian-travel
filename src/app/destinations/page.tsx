@@ -5,6 +5,7 @@ import Link from 'next/link';
 import { useState } from 'react';
 import { usePercentageScrollRestoration } from '@/hooks/usePercentageScrollRestoration';
 import { useHeroSettings } from '@/hooks/useHeroSettings';
+import { HeroImage } from '@/components/ui/HeroImage';
 
 interface Destination {
   id: string;
@@ -167,7 +168,7 @@ const destinations: Destination[] = [
 
 export default function Destinations() {
   const [selectedDestination, setSelectedDestination] = useState<string | null>(null);
-  const heroSettings = useHeroSettings('destinations', 'https://meridian-travel.s3.us-east-1.amazonaws.com/destinations.webp');
+  const heroSettings = useHeroSettings('/destinations', 'https://meridian-travel.s3.us-east-1.amazonaws.com/destinations.webp');
 
   // Scroll restoration for refresh and back button navigation
   usePercentageScrollRestoration('destinations-list', true);
@@ -177,14 +178,12 @@ export default function Destinations() {
       {/* Hero Section */}
       <div className="relative h-[70vh] overflow-hidden">
         <div className="absolute inset-0">
-          <img
-            src={heroSettings.imageUrl}
+          <HeroImage
+            desktopSrc={heroSettings.imageUrl}
+            mobileSrc={heroSettings.originalImageUrl}
             alt="South American destinations"
-            className="w-full h-full object-cover"
-            style={{ objectPosition: `${heroSettings.focalX}% ${heroSettings.focalY}%` }}
-            onError={(e) => {
-              e.currentTarget.style.display = 'none';
-            }}
+            focalX={heroSettings.focalX}
+            focalY={heroSettings.focalY}
           />
           <div className="absolute inset-0 bg-[#8B4513]" style={{ opacity: heroSettings.overlayOpacity }}></div>
         </div>
@@ -239,7 +238,6 @@ export default function Destinations() {
                         className="absolute inset-0 w-full h-full object-cover"
                         onError={(e) => {
                           const target = e.currentTarget as HTMLImageElement;
-                          target.src = '/destinations/default.jpg';
                         }}
                       />
                       <div className="absolute top-4 left-4">
@@ -290,87 +288,6 @@ export default function Destinations() {
                         </Link>
                       </div>
                     </div>
-                  </div>
-                </motion.div>
-              ))}
-          </div>
-        </div>
-
-        {/* Coming Soon Section */}
-        <div>
-          <div className="text-center mb-12">
-            <h2 className="text-3xl font-bold text-[#8B4513] mb-4">Coming Soon</h2>
-            <p className="text-lg text-gray-600 max-w-2xl mx-auto">
-              We're expanding our destinations to bring you even more incredible South American experiences
-            </p>
-          </div>
-
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
-            {destinations
-              .filter(dest => !dest.available)
-              .map((destination, index) => (
-                <motion.div
-                  key={destination.id}
-                  className="bg-white rounded-lg shadow-lg overflow-hidden relative opacity-90 hover:opacity-100 transition-opacity duration-300"
-                  initial={{ opacity: 0, y: 30 }}
-                  animate={{ opacity: 1, y: 0 }}
-                  transition={{ duration: 0.6, delay: (index + 1) * 0.1 }}
-                >
-                  <div className="h-48 relative">
-                    <img
-                      src={destination.image}
-                      alt={destination.name}
-                      className="absolute inset-0 w-full h-full object-cover filter grayscale"
-                      onError={(e) => {
-                        const target = e.currentTarget as HTMLImageElement;
-                        target.src = '/destinations/default.jpg';
-                      }}
-                    />
-                    <div className="absolute inset-0 bg-black opacity-30"></div>
-                    <div className="absolute top-4 right-4">
-                      <span className="bg-yellow-500 text-white px-3 py-1 text-sm font-medium rounded-full">
-                        Coming Soon
-                      </span>
-                    </div>
-                  </div>
-                  
-                  <div className="p-6">
-                    <h3 className="text-xl font-bold text-[#8B4513] mb-2">{destination.name}</h3>
-                    <p className="text-gray-600 text-sm mb-4 line-clamp-3">{destination.description}</p>
-                    
-                    <div className="mb-4">
-                      <h4 className="font-semibold text-gray-700 text-sm mb-2">Coming Highlights:</h4>
-                      <div className="space-y-1">
-                        {destination.highlights.slice(0, 3).map((highlight, idx) => (
-                          <div key={idx} className="flex items-start text-xs text-gray-600">
-                            <span className="text-[#B8860B] mr-2">•</span>
-                            {highlight}
-                          </div>
-                        ))}
-                        {destination.highlights.length > 3 && (
-                          <div className="text-xs text-gray-500">
-                            +{destination.highlights.length - 3} more experiences
-                          </div>
-                        )}
-                      </div>
-                    </div>
-                    
-                    <div className="text-xs text-gray-500 mb-4">
-                      <div className="mb-1">
-                        <strong>Best Time:</strong> {destination.bestTime}
-                      </div>
-                      <div>
-                        <strong>Duration:</strong> {destination.duration}
-                      </div>
-                    </div>
-                    
-                    <button
-                      onClick={() => setSelectedDestination(destination.id)}
-                      className="w-full bg-gray-300 text-gray-600 px-4 py-2 rounded-md font-medium cursor-not-allowed"
-                      disabled
-                    >
-                      Launching 2025
-                    </button>
                   </div>
                 </motion.div>
               ))}

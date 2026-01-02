@@ -2,6 +2,7 @@ import { supabase } from '@/lib/supabase';
 
 export interface HeroSettings {
   hero_image_url: string | null;
+  original_image_url: string | null; // Original uncropped image for mobile
   focal_point_x: number;
   focal_point_y: number;
   hero_height_mobile: string;
@@ -11,6 +12,7 @@ export interface HeroSettings {
 
 const defaultSettings: HeroSettings = {
   hero_image_url: null,
+  original_image_url: null,
   focal_point_x: 50,
   focal_point_y: 50,
   hero_height_mobile: '400px',
@@ -32,7 +34,7 @@ export async function getHeroSettings(pageSlug: string): Promise<HeroSettings> {
   try {
     const { data, error } = await supabase
       .from('page_hero_settings')
-      .select('hero_image_url, focal_point_x, focal_point_y, hero_height_mobile, hero_height_desktop, overlay_opacity')
+      .select('hero_image_url, original_image_url, focal_point_x, focal_point_y, hero_height_mobile, hero_height_desktop, overlay_opacity')
       .eq('page_slug', pageSlug)
       .single();
 
@@ -42,6 +44,7 @@ export async function getHeroSettings(pageSlug: string): Promise<HeroSettings> {
 
     const settings: HeroSettings = {
       hero_image_url: data.hero_image_url,
+      original_image_url: data.original_image_url ?? null,
       focal_point_x: data.focal_point_x ?? 50,
       focal_point_y: data.focal_point_y ?? 50,
       hero_height_mobile: data.hero_height_mobile ?? '400px',

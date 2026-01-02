@@ -5,7 +5,10 @@ import { useParams, useRouter } from 'next/navigation';
 import Link from 'next/link';
 import { supabase } from '@/lib/supabase';
 import { useAuth } from '@/contexts/AuthContext';
-import { getSettingByKey } from '@/lib/content';
+import { useSettings } from '@/hooks/useContent';
+
+// Settings keys for contact info
+const CONTACT_SETTING_KEYS = ['contact_phone', 'contact_email'];
 
 interface BookingDetails {
   id: string;
@@ -34,39 +37,22 @@ export default function BookingConfirmation() {
   
   const [booking, setBooking] = useState<BookingDetails | null>(null);
   const [loading, setLoading] = useState(true);
-  const [contactInfo, setContactInfo] = useState({
-    phone: '+1 (555) 012-3456',
-    email: 'info@meridianluxurytravel.com'
-  });
-  const [contactLoading, setContactLoading] = useState(true);
+
+  // Use the new useSettings hook for contact info
+  const { settings: contactSettings, isLoading: contactLoading } = useSettings(CONTACT_SETTING_KEYS);
+  const contactInfo = {
+    phone: contactSettings['contact_phone'] || '+1 (555) 012-3456',
+    email: contactSettings['contact_email'] || 'info@meridianluxurytravel.com'
+  };
 
   useEffect(() => {
     if (!user) {
       router.push('/auth/signin');
       return;
     }
-    
+
     fetchBooking();
-    fetchContactInfo();
   }, [params.id, user]);
-
-  const fetchContactInfo = async () => {
-    try {
-      const [phone, email] = await Promise.all([
-        getSettingByKey('contact_phone'),
-        getSettingByKey('contact_email')
-      ]);
-
-      setContactInfo({
-        phone: phone || '+1 (555) 012-3456',
-        email: email || 'info@meridianluxurytravel.com'
-      });
-    } catch (error) {
-      console.error('Error fetching contact info:', error);
-    } finally {
-      setContactLoading(false);
-    }
-  };
 
   const fetchBooking = async () => {
     try {

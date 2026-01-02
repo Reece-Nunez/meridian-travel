@@ -70,3 +70,14 @@ img {
   max-width: 100%;
   height: auto;
 }
+
+/* Hero images - use custom focal point on desktop, center on mobile */
+.hero-image-responsive {
+  object-fit: cover;
+}
+
+@media (max-width: 768px) {
+  .hero-image-responsive {
+    object-position: center center !important;
+  }
+}

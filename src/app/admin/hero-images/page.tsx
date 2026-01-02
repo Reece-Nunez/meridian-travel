@@ -12,6 +12,7 @@ interface PageHeroSetting {
   page_slug: string;
   page_name: string;
   hero_image_url: string | null;
+  original_image_url: string | null;
   focal_point_x: number;
   focal_point_y: number;
   hero_height_mobile: string;
@@ -24,9 +25,12 @@ interface PageHeroSetting {
 
 interface ImageToCrop {
   file: File;
+  originalFile: File; // Store original file for uploading
   previewUrl: string;
   pageSlug: string;
   settingId: string;
+  cropStep: 'desktop' | 'mobile'; // Track which crop we're doing
+  desktopCroppedFile?: File; // Store desktop crop while doing mobile crop
 }
 
 // Helper to fetch an image from URL and convert to File for cropping
@@ -64,22 +68,34 @@ export default function AdminHeroImages() {
   }, [isAuthenticated]);
 
   const fetchHeroSettings = async () => {
+    console.log('[HeroImages] Fetching hero settings...');
+
+    // Add timeout to prevent hanging forever
+    const timeoutPromise = new Promise<{ data: null; error: Error }>((resolve) =>
+      setTimeout(() => resolve({ data: null, error: new Error('Fetch timed out after 10 seconds') }), 10000)
+    );
+
     try {
       setLoading(true);
-      const { data, error } = await supabase
+
+      const fetchPromise = supabase
         .from('page_hero_settings')
         .select('*')
         .order('page_name');
 
+      const { data, error } = await Promise.race([fetchPromise, timeoutPromise]);
+
       if (error) {
-        console.error('Error fetching hero settings:', error);
-        // Table might not exist yet
+        console.error('[HeroImages] Error fetching hero settings:', error);
+        toast.error('Failed to load hero settings', { description: error.message });
         return;
       }
 
+      console.log('[HeroImages] Fetched', data?.length || 0, 'settings');
       setHeroSettings(data || []);
     } catch (err) {
-      console.error('Error:', err);
+      console.error('[HeroImages] Error:', err);
+      toast.error('Failed to load hero settings');
     } finally {
       setLoading(false);
     }
@@ -92,21 +108,29 @@ export default function AdminHeroImages() {
     });
 
     try {
-      const { error } = await supabase
-        .from('page_hero_settings')
-        .update({
+      console.log('[HeroImages] Saving settings for:', setting.page_slug);
+
+      // Use API route to bypass RLS
+      const response = await fetch('/api/admin/hero-settings', {
+        method: 'PUT',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          id: setting.id,
           hero_image_url: setting.hero_image_url,
           focal_point_x: setting.focal_point_x,
           focal_point_y: setting.focal_point_y,
           hero_height_mobile: setting.hero_height_mobile,
           hero_height_desktop: setting.hero_height_desktop,
-          overlay_opacity: setting.overlay_opacity,
-          updated_at: new Date().toISOString()
+          overlay_opacity: setting.overlay_opacity
         })
-        .eq('id', setting.id);
+      });
 
-      if (error) throw error;
+      if (!response.ok) {
+        const errorData = await response.json();
+        throw new Error(errorData.error || 'Failed to save');
+      }
 
+      console.log('[HeroImages] Save successful');
       setHeroSettings(prev =>
         prev.map(s => s.id === setting.id ? setting : s)
       );
@@ -115,10 +139,10 @@ export default function AdminHeroImages() {
         description: `${setting.page_name} updated successfully`
       });
     } catch (error) {
-      console.error('Error saving:', error);
+      console.error('[HeroImages] Error saving:', error);
       toast.error('Failed to save settings', {
         id: toastId,
-        description: 'Please try again'
+        description: error instanceof Error ? error.message : 'Please try again'
       });
     } finally {
       setSaving(false);
@@ -180,13 +204,15 @@ export default function AdminHeroImages() {
       return;
     }
 
-    // Create preview URL and open cropper
+    // Create preview URL and open cropper - start with DESKTOP crop
     const previewUrl = URL.createObjectURL(file);
     setImageToCrop({
       file,
+      originalFile: file, // Store original for both crops
       previewUrl,
       pageSlug: setting.page_slug,
-      settingId: setting.id
+      settingId: setting.id,
+      cropStep: 'desktop' // Start with desktop crop
     });
 
     // Clear the input
@@ -195,66 +221,118 @@ export default function AdminHeroImages() {
     }
   };
 
-  // Handle crop completion - upload and save
+  // Handle crop completion - two-step process: desktop first, then mobile
   const handleCropComplete = async (croppedFile: File) => {
     if (!imageToCrop) return;
 
-    const { pageSlug, settingId } = imageToCrop;
+    const { pageSlug, settingId, originalFile, cropStep, desktopCroppedFile } = imageToCrop;
+
+    if (cropStep === 'desktop') {
+      // Desktop crop done - now open mobile crop
+      // Don't clean up preview URL yet, we need it for mobile crop
+
+      // Create a new preview URL from the original file for mobile crop
+      const mobilePreviewUrl = URL.createObjectURL(originalFile);
+
+      // Clean up the old preview URL
+      URL.revokeObjectURL(imageToCrop.previewUrl);
+
+      setImageToCrop({
+        file: originalFile,
+        originalFile: originalFile,
+        previewUrl: mobilePreviewUrl,
+        pageSlug,
+        settingId,
+        cropStep: 'mobile',
+        desktopCroppedFile: croppedFile // Store desktop crop for later upload
+      });
+
+      toast.info('Now crop for mobile view', {
+        description: 'Select the portrait area for mobile devices'
+      });
+      return;
+    }
+
+    // Mobile crop done - upload both images
+    const mobileCroppedFile = croppedFile;
+    const desktopFile = desktopCroppedFile!;
 
     // Clean up preview URL
     URL.revokeObjectURL(imageToCrop.previewUrl);
     setImageToCrop(null);
     setUploading(settingId);
 
-    const toastId = toast.loading('Uploading cropped image...', {
-      description: 'This may take a moment'
+    const toastId = toast.loading('Uploading images...', {
+      description: 'Uploading desktop and mobile versions'
     });
 
     try {
-      // Upload the cropped image
-      const formData = new FormData();
-      formData.append('file', croppedFile);
-      formData.append('pageSlug', pageSlug);
+      // Upload the desktop cropped image
+      const desktopFormData = new FormData();
+      desktopFormData.append('file', desktopFile);
+      desktopFormData.append('pageSlug', pageSlug);
 
-      const response = await fetch('/api/admin/upload-hero-image', {
+      const desktopResponse = await fetch('/api/admin/upload-hero-image', {
         method: 'POST',
-        body: formData
+        body: desktopFormData
       });
 
-      if (!response.ok) {
-        const error = await response.json();
-        throw new Error(error.error || 'Upload failed');
+      if (!desktopResponse.ok) {
+        const error = await desktopResponse.json();
+        throw new Error(error.error || 'Desktop upload failed');
       }
 
-      const { url } = await response.json();
+      const { url: desktopUrl } = await desktopResponse.json();
 
-      // Update the database with new URL
-      const { error: updateError } = await supabase
-        .from('page_hero_settings')
-        .update({
-          hero_image_url: url,
-          focal_point_x: 50, // Reset to center since image is now cropped
-          focal_point_y: 50,
-          updated_at: new Date().toISOString()
+      // Upload the mobile cropped image
+      const mobileFormData = new FormData();
+      mobileFormData.append('file', mobileCroppedFile);
+      mobileFormData.append('pageSlug', `${pageSlug}-mobile`);
+
+      const mobileResponse = await fetch('/api/admin/upload-hero-image', {
+        method: 'POST',
+        body: mobileFormData
+      });
+
+      if (!mobileResponse.ok) {
+        const error = await mobileResponse.json();
+        throw new Error(error.error || 'Mobile upload failed');
+      }
+
+      const { url: mobileUrl } = await mobileResponse.json();
+
+      // Update the database with both URLs using API route
+      const updateResponse = await fetch('/api/admin/hero-settings', {
+        method: 'PUT',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          id: settingId,
+          hero_image_url: desktopUrl,
+          original_image_url: mobileUrl, // Now stores mobile crop, not original
+          focal_point_x: 50,
+          focal_point_y: 50
         })
-        .eq('id', settingId);
+      });
 
-      if (updateError) throw updateError;
+      if (!updateResponse.ok) {
+        const error = await updateResponse.json();
+        throw new Error(error.error || 'Failed to save settings');
+      }
 
       // Update local state
       setHeroSettings(prev =>
         prev.map(s => s.id === settingId
-          ? { ...s, hero_image_url: url, focal_point_x: 50, focal_point_y: 50 }
+          ? { ...s, hero_image_url: desktopUrl, original_image_url: mobileUrl, focal_point_x: 50, focal_point_y: 50 }
           : s
         )
       );
 
-      toast.success('Image uploaded!', {
+      toast.success('Images uploaded!', {
         id: toastId,
-        description: 'Hero image has been updated'
+        description: 'Desktop and mobile versions saved'
       });
     } catch (error) {
-      console.error('Error uploading image:', error);
+      console.error('Error uploading images:', error);
       toast.error('Upload failed', {
         id: toastId,
         description: error instanceof Error ? error.message : 'Please try again'
@@ -288,9 +366,11 @@ export default function AdminHeroImages() {
 
       setImageToCrop({
         file,
+        originalFile: file, // Store original for both crops
         previewUrl,
         pageSlug: setting.page_slug,
-        settingId: setting.id
+        settingId: setting.id,
+        cropStep: 'desktop' // Start with desktop crop
       });
 
       toast.dismiss(toastId);
@@ -320,8 +400,13 @@ export default function AdminHeroImages() {
     return null;
   }
 
-  // Calculate aspect ratio for banner (wide aspect ratio for hero banners)
-  const bannerAspectRatio = 21 / 9; // Wide banner ratio
+  // Calculate aspect ratios
+  const desktopAspectRatio = 21 / 9; // Wide banner ratio for desktop
+  const mobileAspectRatio = 9 / 16; // Portrait ratio for mobile
+
+  // Get current aspect ratio based on crop step
+  const currentAspectRatio = imageToCrop?.cropStep === 'mobile' ? mobileAspectRatio : desktopAspectRatio;
+  const cropTitle = imageToCrop?.cropStep === 'mobile' ? 'Crop for Mobile (Portrait)' : 'Crop for Desktop (Wide)';
 
   return (
     <div className="min-h-screen bg-gray-50">
@@ -332,7 +417,9 @@ export default function AdminHeroImages() {
           fileName={imageToCrop.file.name}
           onCropComplete={handleCropComplete}
           onCancel={handleCropCancel}
-          aspectRatio={bannerAspectRatio}
+          aspectRatio={currentAspectRatio}
+          title={cropTitle}
+          lockAspectRatio={true}
         />
       )}
 

@@ -37,6 +37,7 @@ export default function QuoteRequest() {
   const [loading, setLoading] = useState(true);
   const [heroSettings, setHeroSettings] = useState<HeroSettings>({
     hero_image_url: 'https://meridian-travel.s3.us-east-1.amazonaws.com/quote.webp',
+    original_image_url: 'https://meridian-travel.s3.us-east-1.amazonaws.com/quote.webp',
     focal_point_x: 50,
     focal_point_y: 40,
     hero_height_mobile: '400px',

@@ -5,6 +5,7 @@ import { motion, AnimatePresence } from 'framer-motion';
 import { useState } from 'react';
 import { usePercentageScrollRestoration } from '@/hooks/usePercentageScrollRestoration';
 import { useHeroSettings } from '@/hooks/useHeroSettings';
+import { HeroImage } from '@/components/ui/HeroImage';
 
 export default function PeruDestination() {
   const [selectedRegion, setSelectedRegion] = useState<string | null>(null);
@@ -119,11 +120,12 @@ export default function PeruDestination() {
       {/* Hero Section */}
       <div className="relative h-screen overflow-hidden">
         <div className="absolute inset-0">
-          <img
-            src={heroSettings.imageUrl}
+          <HeroImage
+            desktopSrc={heroSettings.imageUrl}
+            mobileSrc={heroSettings.originalImageUrl}
             alt="Peru landscape"
-            className="w-full h-full object-cover"
-            style={{ objectPosition: `${heroSettings.focalX}% ${heroSettings.focalY}%` }}
+            focalX={heroSettings.focalX}
+            focalY={heroSettings.focalY}
           />
           <div className="absolute inset-0 bg-gradient-to-t from-black via-black/30 to-transparent" style={{ opacity: heroSettings.overlayOpacity }}></div>
         </div>

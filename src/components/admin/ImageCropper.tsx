@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useCallback } from 'react';
+import { useState, useCallback, useEffect } from 'react';
 import Cropper, { Area } from 'react-easy-crop';
 
 interface ImageCropperProps {
@@ -9,6 +9,8 @@ interface ImageCropperProps {
   onCropComplete: (croppedFile: File) => void;
   onCancel: () => void;
   aspectRatio?: number;
+  title?: string;
+  lockAspectRatio?: boolean; // If true, hide aspect ratio selector
 }
 
 // Helper function to create a cropped image
@@ -75,11 +77,21 @@ export default function ImageCropper({
   onCropComplete,
   onCancel,
   aspectRatio = 16 / 9,
+  title = 'Crop Image',
+  lockAspectRatio = false,
 }: ImageCropperProps) {
   const [crop, setCrop] = useState({ x: 0, y: 0 });
   const [zoom, setZoom] = useState(1);
   const [croppedAreaPixels, setCroppedAreaPixels] = useState<Area | null>(null);
   const [selectedAspectRatio, setSelectedAspectRatio] = useState(aspectRatio);
+
+  // Update aspect ratio when prop changes (e.g., switching from desktop to mobile crop)
+  useEffect(() => {
+    setSelectedAspectRatio(aspectRatio);
+    // Reset crop position and zoom when aspect ratio changes
+    setCrop({ x: 0, y: 0 });
+    setZoom(1);
+  }, [aspectRatio]);
   const [isProcessing, setIsProcessing] = useState(false);
 
   const aspectRatioOptions = [
@@ -137,32 +149,34 @@ export default function ImageCropper({
       <div className="bg-white rounded-lg max-w-4xl w-full max-h-[90vh] overflow-hidden flex flex-col">
         {/* Header */}
         <div className="px-6 py-4 border-b border-gray-200">
-          <h3 className="text-lg font-semibold text-gray-900">Crop Image</h3>
+          <h3 className="text-lg font-semibold text-gray-900">{title}</h3>
           <p className="text-sm text-gray-500 mt-1">
-            Adjust the crop area to select the best part of your image for the banner.
+            Adjust the crop area to select the best part of your image.
           </p>
         </div>
 
-        {/* Aspect Ratio Selector */}
-        <div className="px-6 py-3 border-b border-gray-100 bg-gray-50">
-          <div className="flex items-center gap-2 flex-wrap">
-            <span className="text-sm font-medium text-gray-700">Aspect Ratio:</span>
-            {aspectRatioOptions.map((option) => (
-              <button
-                key={option.label}
-                type="button"
-                onClick={() => setSelectedAspectRatio(option.value)}
-                className={`px-3 py-1.5 text-sm rounded-md transition-colors ${
-                  selectedAspectRatio === option.value
-                    ? 'bg-[#B8860B] text-white'
-                    : 'bg-white border border-gray-300 text-gray-700 hover:bg-gray-50'
-                }`}
-              >
-                {option.label}
-              </button>
-            ))}
+        {/* Aspect Ratio Selector - only show if not locked */}
+        {!lockAspectRatio && (
+          <div className="px-6 py-3 border-b border-gray-100 bg-gray-50">
+            <div className="flex items-center gap-2 flex-wrap">
+              <span className="text-sm font-medium text-gray-700">Aspect Ratio:</span>
+              {aspectRatioOptions.map((option) => (
+                <button
+                  key={option.label}
+                  type="button"
+                  onClick={() => setSelectedAspectRatio(option.value)}
+                  className={`px-3 py-1.5 text-sm rounded-md transition-colors ${
+                    selectedAspectRatio === option.value
+                      ? 'bg-[#B8860B] text-white'
+                      : 'bg-white border border-gray-300 text-gray-700 hover:bg-gray-50'
+                  }`}
+                >
+                  {option.label}
+                </button>
+              ))}
+            </div>
           </div>
-        </div>
+        )}
 
         {/* Cropper Area */}
         <div className="relative flex-1 min-h-[400px] bg-gray-900">

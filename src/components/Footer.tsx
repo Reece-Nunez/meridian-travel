@@ -1,63 +1,30 @@
 'use client';
 
 import Link from 'next/link';
-import { useState, useEffect } from 'react';
-import { getSettingByKey } from '@/lib/content';
+import { useSettings } from '@/hooks/useContent';
+
+// Settings keys we need from the CMS
+const SETTING_KEYS = [
+  'contact_phone',
+  'contact_email',
+  'company_address',
+  'business_hours',
+  'company_name'
+];
 
 export default function Footer() {
-  const [contactInfo, setContactInfo] = useState({
-    phone: '+1 (555) 012-3456',
-    email: 'info@meridianluxury.travel',
-    address: '123 Travel Avenue\nAdventure City, AC 12345\nUnited States',
-    businessHours: 'Mon-Fri: 9AM-6PM EST',
-    companyName: 'Meridian Luxury Travel'
-  });
-  const [isLoading, setIsLoading] = useState(true);
+  const { settings, isLoading } = useSettings(SETTING_KEYS);
 
-  const fetchContactInfo = async () => {
-    try {
-      console.log('🏢 Footer: Fetching contact info from admin settings...');
-      const [phone, email, address, businessHours, companyName] = await Promise.all([
-        getSettingByKey('contact_phone'),
-        getSettingByKey('contact_email'),
-        getSettingByKey('company_address'),
-        getSettingByKey('business_hours'),
-        getSettingByKey('company_name')
-      ]);
+  // Helper to get settings with fallback
+  const getSetting = (key: string, fallback: string) => settings[key] || fallback;
 
-      const newContactInfo = {
-        phone: phone || '+1 (555) 012-3456',
-        email: email || 'info@meridianluxury.travel',
-        address: address || '123 Travel Avenue\nAdventure City, AC 12345\nUnited States',
-        businessHours: businessHours || 'Mon-Fri: 9AM-6PM EST',
-        companyName: companyName || 'Meridian Luxury Travel'
-      };
-      
-      console.log('🏢 Footer: Updated contact info:', newContactInfo);
-      setContactInfo(newContactInfo);
-    } catch (error) {
-      console.error('Error fetching contact info:', error);
-    } finally {
-      setIsLoading(false);
-    }
+  const contactInfo = {
+    phone: getSetting('contact_phone', '+1 (555) 012-3456'),
+    email: getSetting('contact_email', 'info@meridianluxury.travel'),
+    address: getSetting('company_address', '123 Travel Avenue\nAdventure City, AC 12345\nUnited States'),
+    businessHours: getSetting('business_hours', 'Mon-Fri: 9AM-6PM EST'),
+    companyName: getSetting('company_name', 'Meridian Luxury Travel')
   };
-
-  useEffect(() => {
-    fetchContactInfo();
-    
-    // Listen for settings updates from admin panel
-    const handleSettingsUpdate = () => {
-      console.log('📡 Footer: Settings update detected, re-fetching...');
-      setIsLoading(true);
-      fetchContactInfo();
-    };
-    
-    window.addEventListener('settingsUpdated', handleSettingsUpdate);
-    
-    return () => {
-      window.removeEventListener('settingsUpdated', handleSettingsUpdate);
-    };
-  }, []);
 
   return (
     <footer className="bg-[#2D5016] text-white">
@@ -72,12 +39,11 @@ export default function Footer() {
                 alt={contactInfo.companyName}
                 className="h-24 w-24 mb-4"
                 onError={(e) => {
-                  console.error('Failed to load logo.png');
                   e.currentTarget.style.display = 'none';
                 }}
               />
               <p className="text-[#F5F5DC] text-sm leading-relaxed">
-                Your trusted South American travel specialists, dedicated to creating extraordinary 
+                Your trusted South American travel specialists, dedicated to creating extraordinary
                 luxury adventures that connect you with the heart of this remarkable continent.
               </p>
             </div>
@@ -271,7 +237,7 @@ export default function Footer() {
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-6">
           <div className="flex flex-col md:flex-row justify-between items-center">
             <div className="text-[#F5F5DC] text-sm mb-4 md:mb-0">
-              © {new Date().getFullYear()} {isLoading ? (
+              {new Date().getFullYear()} {isLoading ? (
                 <span className="inline-block h-4 bg-gray-600 rounded w-32 animate-pulse"></span>
               ) : (
                 contactInfo.companyName

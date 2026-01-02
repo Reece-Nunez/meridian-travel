@@ -116,13 +116,6 @@ const locationDisplayInfo = [
     features: ["Polar wildlife", "Arctic landscapes", "Midnight sun", "Zodiac excursions"]
   },
   {
-    name: "Chile",
-    title: "Patagonian Fjords",
-    description: "Navigate the dramatic fjords and channels of Chilean Patagonia, discovering glaciers, wildlife, and remote landscapes.",
-    image: "https://meridian-travel.s3.us-east-1.amazonaws.com/patagonia-fjords.webp",
-    features: ["Glacier viewing", "Fjord navigation", "Wildlife watching", "Hiking excursions"]
-  },
-  {
     name: "Diving",
     title: "Diving Cruises",
     description: "Explore the world's most spectacular dive sites aboard specialized diving vessels with expert crews and top-notch equipment.",

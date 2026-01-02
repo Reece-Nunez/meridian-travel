@@ -529,12 +529,15 @@ function NewPackageContent() {
                   className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-[#B8860B] focus:border-[#B8860B] text-gray-900"
                 >
                   <option value="">Select destination</option>
-                  <optgroup label="Diving Destinations">
-                    {DIVING_DESTINATIONS.map(dest => (
-                      <option key={dest.value} value={dest.value}>{dest.label}</option>
-                    ))}
-                  </optgroup>
-                  <optgroup label="Standard Destinations">
+                  {/* Only show diving destinations for special packages */}
+                  {packageType === 'special' && (
+                    <optgroup label="Diving Destinations">
+                      {DIVING_DESTINATIONS.map(dest => (
+                        <option key={dest.value} value={dest.value}>{dest.label}</option>
+                      ))}
+                    </optgroup>
+                  )}
+                  <optgroup label={packageType === 'special' ? 'Standard Destinations' : 'Destinations'}>
                     {STANDARD_DESTINATIONS.map(dest => (
                       <option key={dest.value} value={dest.value}>{dest.label}</option>
                     ))}

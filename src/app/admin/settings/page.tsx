@@ -5,7 +5,7 @@ import { motion } from 'framer-motion';
 import Link from 'next/link';
 import { createClient } from '@/lib/supabase/client';
 import { useSimpleAdminAuth } from '@/hooks/useSimpleAdminAuth';
-import { clearContentCache } from '@/lib/content';
+import { clearContentCache, broadcastCacheInvalidation } from '@/lib/content';
 import { SiteSetting } from '@/types/database';
 
 export default function AdminSettings() {
@@ -190,7 +190,8 @@ export default function AdminSettings() {
       // Clear cache so changes appear immediately on the website
       console.log('💾 Settings saved to database, clearing cache...');
       clearContentCache();
-      console.log('✅ Cache cleared, settings should update across the site');
+      broadcastCacheInvalidation(); // Notify other tabs to refresh
+      console.log('✅ Cache cleared and broadcasted, settings should update across the site');
       alert(`${settingsType} updated successfully!`);
     } catch (error) {
       console.error('Error saving settings:', error);

@@ -4,7 +4,7 @@ import { useState, useEffect, useMemo, useCallback, useRef } from 'react';
 import Link from 'next/link';
 import { createClient } from '@/lib/supabase/client';
 import { useSimpleAdminAuth } from '@/hooks/useSimpleAdminAuth';
-import { clearContentCache } from '@/lib/content';
+import { clearContentCache, broadcastCacheInvalidation, refreshContent } from '@/lib/content';
 import RichTextEditor from '@/components/RichTextEditor';
 
 interface ContentSection {
@@ -578,9 +578,10 @@ export default function AdminContent() {
         if (error) throw error;
       }
 
-      // Clear cache and refresh
+      // Clear cache and broadcast to all browser tabs
       try {
-        await Promise.resolve(clearContentCache());
+        clearContentCache();
+        broadcastCacheInvalidation(); // Notify other tabs to refresh
       } catch {
         // non-fatal
       }

@@ -68,9 +68,9 @@ export default function Footer() {
           <div className="lg:col-span-1">
             <div className="mb-6">
               <img
-                src="/logo.png"
+                src="https://meridian-travel.s3.us-east-1.amazonaws.com/logo.png"
                 alt={contactInfo.companyName}
-                className="h-20 w-20 mb-4"
+                className="h-24 w-24 mb-4"
                 onError={(e) => {
                   console.error('Failed to load logo.png');
                   e.currentTarget.style.display = 'none';

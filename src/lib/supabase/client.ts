@@ -1,9 +1,8 @@
 /**
  * Browser-side Supabase client (Singleton)
- * Uses cookies for session storage (industry standard for SSR apps)
  * This client should be used in Client Components
  */
-import { createBrowserClient } from '@supabase/ssr';
+import { createClient as createSupabaseJs } from '@supabase/supabase-js';
 import type { SupabaseClient } from '@supabase/supabase-js';
 
 // Use global to persist singleton across hot module reloading in development
@@ -11,7 +10,7 @@ const globalForSupabase = typeof globalThis !== 'undefined' ? globalThis as type
   supabaseClient?: SupabaseClient;
 } : undefined;
 
-export function createClient() {
+export function createClient(): SupabaseClient {
   // Return existing client if already created (singleton pattern)
   if (globalForSupabase?.supabaseClient) {
     return globalForSupabase.supabaseClient;
@@ -24,7 +23,15 @@ export function createClient() {
     throw new Error('Missing Supabase environment variables');
   }
 
-  const client = createBrowserClient(supabaseUrl, supabaseAnonKey);
+  // Use the standard createClient to ensure consistent auth behavior
+  // across all client-side imports
+  const client = createSupabaseJs(supabaseUrl, supabaseAnonKey, {
+    auth: {
+      autoRefreshToken: true,
+      persistSession: true,
+      detectSessionInUrl: true,
+    }
+  });
 
   if (globalForSupabase) {
     globalForSupabase.supabaseClient = client;

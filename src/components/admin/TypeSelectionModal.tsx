@@ -11,9 +11,9 @@ interface TypeSelectionModalProps {
 
 export default function TypeSelectionModal({ isOpen, onClose }: TypeSelectionModalProps) {
   const router = useRouter();
-  const [selectedType, setSelectedType] = useState<'package' | 'cruise' | null>(null);
+  const [selectedType, setSelectedType] = useState<'package' | 'cruise' | 'special' | null>(null);
 
-  const handleTypeSelect = (type: 'package' | 'cruise') => {
+  const handleTypeSelect = (type: 'package' | 'cruise' | 'special') => {
     setSelectedType(type);
     // Navigate to the new page with the type parameter
     router.push(`/admin/packages/new?type=${type}`);
@@ -104,6 +104,28 @@ export default function TypeSelectionModal({ isOpen, onClose }: TypeSelectionMod
                       <h4 className="font-medium text-gray-900 mb-1">Cruise Package</h4>
                       <p className="text-sm text-gray-600">
                         Create a cruise-based package with ship details, cruise line, cabin categories, and ports
+                      </p>
+                    </div>
+                  </div>
+                </motion.button>
+
+                {/* Special Package Option */}
+                <motion.button
+                  whileHover={{ scale: 1.02 }}
+                  whileTap={{ scale: 0.98 }}
+                  onClick={() => handleTypeSelect('special')}
+                  className="w-full p-4 text-left border-2 border-gray-200 rounded-lg hover:border-[#B8860B] hover:bg-[#B8860B]/5 transition-all duration-200"
+                >
+                  <div className="flex items-start space-x-3">
+                    <div className="flex-shrink-0 w-8 h-8 bg-[#B8860B] rounded-full flex items-center justify-center mt-1">
+                      <svg className="w-4 h-4 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 3v4M3 5h4M6 17v4m-2-2h4m5-16l2.286 6.857L21 12l-5.714 2.143L13 21l-2.286-6.857L5 12l5.714-2.143L13 3z" />
+                      </svg>
+                    </div>
+                    <div className="flex-1">
+                      <h4 className="font-medium text-gray-900 mb-1">Special Package</h4>
+                      <p className="text-sm text-gray-600">
+                        Create a specialized experience like diving expeditions, adventure tours, or unique activities
                       </p>
                     </div>
                   </div>

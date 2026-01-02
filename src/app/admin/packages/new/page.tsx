@@ -32,12 +32,31 @@ interface PackageItineraryDay {
   imagesToDelete?: string[];
 }
 
+// Destination options by category
+const STANDARD_DESTINATIONS = [
+  { value: 'Peru', label: 'Peru' },
+  { value: 'Ecuador', label: 'Ecuador' },
+  { value: 'Brazil', label: 'Brazil' },
+  { value: 'Argentina', label: 'Argentina' },
+  { value: 'Chile', label: 'Chile' },
+  { value: 'Galapagos', label: 'Galapagos Islands' },
+  { value: 'Antarctica', label: 'Antarctica' },
+  { value: 'Arctic', label: 'Arctic' },
+];
+
+const DIVING_DESTINATIONS = [
+  { value: 'Red Sea', label: 'Red Sea' },
+  { value: 'Philippines', label: 'Philippines' },
+  { value: 'Indonesia', label: 'Indonesia' },
+  { value: 'Micronesia', label: 'Micronesia' },
+];
+
 function NewPackageContent() {
   const { loading: authLoading, isAuthenticated, refreshSession } = useSimpleAdminAuth();
   const router = useRouter();
   const searchParams = useSearchParams();
   const [loading, setLoading] = useState(false);
-  const [packageType, setPackageType] = useState<'package' | 'cruise'>('package');
+  const [packageType, setPackageType] = useState<'package' | 'cruise' | 'special'>('package');
   const [ships, setShips] = useState<Ship[]>([]);
   const [shipsLoading, setShipsLoading] = useState(false);
 
@@ -55,7 +74,9 @@ function NewPackageContent() {
     excludes: [''],
     luxury_highlights: [''],
     images: [] as string[],
-    type: 'package' as 'package' | 'cruise',
+    type: 'package' as 'package' | 'cruise' | 'special',
+    // Special package fields
+    special_type: null as 'diving' | null,
     // Cruise-specific fields
     ship_id: '',
     ship_name: '',
@@ -76,12 +97,21 @@ function NewPackageContent() {
 
   // Set the package type from URL params
   useEffect(() => {
-    const type = searchParams.get('type') as 'package' | 'cruise' | null;
-    if (type && (type === 'package' || type === 'cruise')) {
+    const type = searchParams.get('type') as 'package' | 'cruise' | 'special' | null;
+    if (type && (type === 'package' || type === 'cruise' || type === 'special')) {
       setPackageType(type);
       setFormData(prev => ({ ...prev, type }));
     }
   }, [searchParams]);
+
+  // Get available destinations based on special_type
+  const getAvailableDestinations = () => {
+    if (packageType === 'special' && formData.special_type === 'diving') {
+      // For diving, show both diving-specific and standard destinations
+      return [...DIVING_DESTINATIONS, ...STANDARD_DESTINATIONS];
+    }
+    return STANDARD_DESTINATIONS;
+  };
 
   // Fetch ships when package type is cruise
   useEffect(() => {
@@ -304,6 +334,13 @@ function NewPackageContent() {
       return;
     }
 
+    // Validate special packages require a special_type
+    if (formData.type === 'special' && !formData.special_type) {
+      toast.error('Please select a special package type (e.g., Diving).');
+      setLoading(false);
+      return;
+    }
+
     const toastId = toast.loading('Preparing to create package...', {
       description: 'Validating your session',
     });
@@ -347,6 +384,8 @@ function NewPackageContent() {
         price_usd: formData.price_usd || null,
         price_eur: formData.price_eur || null,
         price_gbp: formData.price_gbp || null,
+        // Special package type
+        special_type: formData.special_type || null,
         // Convert empty ship_id to null for land packages
         ship_id: formData.ship_id || null,
         ship_name: formData.ship_name || null,
@@ -475,14 +514,18 @@ function NewPackageContent() {
                   className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-[#B8860B] focus:border-[#B8860B] text-gray-900"
                 >
                   <option value="">Select destination</option>
-                  <option value="Peru">Peru</option>
-                  <option value="Ecuador">Ecuador</option>
-                  <option value="Brazil">Brazil</option>
-                  <option value="Argentina">Argentina</option>
-                  <option value="Chile">Chile</option>
-                  <option value="Galapagos">Galapagos Islands</option>
-                  <option value="Antarctica">Antarctica</option>
-                  <option value="Arctic">Arctic</option>
+                  {packageType === 'special' && formData.special_type === 'diving' && (
+                    <optgroup label="Diving Destinations">
+                      {DIVING_DESTINATIONS.map(dest => (
+                        <option key={dest.value} value={dest.value}>{dest.label}</option>
+                      ))}
+                    </optgroup>
+                  )}
+                  <optgroup label={packageType === 'special' && formData.special_type === 'diving' ? 'Standard Destinations' : 'Destinations'}>
+                    {STANDARD_DESTINATIONS.map(dest => (
+                      <option key={dest.value} value={dest.value}>{dest.label}</option>
+                    ))}
+                  </optgroup>
                 </select>
               </div>
 
@@ -671,6 +714,62 @@ function NewPackageContent() {
                   />
                 </div>
 
+              </div>
+            </motion.div>
+          )}
+
+          {/* Special Package fields */}
+          {packageType === 'special' && (
+            <motion.div
+              className="bg-white rounded-lg shadow-sm p-6"
+              initial={{ opacity: 0, y: 20 }}
+              animate={{ opacity: 1, y: 0 }}
+              transition={{ duration: 0.5, delay: 0.1 }}
+            >
+              <h3 className="text-lg font-medium text-gray-900 mb-6">Special Package Type</h3>
+
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                <div>
+                  <label htmlFor="special_type" className="block text-sm font-medium text-gray-700 mb-2">
+                    Special Package Type *
+                  </label>
+                  <select
+                    id="special_type"
+                    name="special_type"
+                    required
+                    value={formData.special_type || ''}
+                    onChange={(e) => {
+                      const value = e.target.value as 'diving' | '';
+                      setFormData(prev => ({
+                        ...prev,
+                        special_type: value || null,
+                        destination: '' // Reset destination when type changes
+                      }));
+                    }}
+                    className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-[#B8860B] focus:border-[#B8860B] text-gray-900"
+                  >
+                    <option value="">Select special type...</option>
+                    <option value="diving">Diving</option>
+                  </select>
+                  <p className="mt-1 text-sm text-gray-500">
+                    Selecting a special type will show additional destination options specific to that activity.
+                  </p>
+                </div>
+
+                {formData.special_type === 'diving' && (
+                  <div className="p-4 bg-blue-50 rounded-md flex items-start space-x-3">
+                    <svg className="w-5 h-5 text-blue-500 mt-0.5 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
+                    </svg>
+                    <div className="text-sm text-blue-800">
+                      <strong>Diving Package</strong>
+                      <p className="mt-1">
+                        Diving packages include additional destinations: Red Sea, Philippines, Indonesia, and Micronesia.
+                        Standard destinations are also available.
+                      </p>
+                    </div>
+                  </div>
+                )}
               </div>
             </motion.div>
           )}

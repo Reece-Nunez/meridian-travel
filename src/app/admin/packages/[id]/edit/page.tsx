@@ -32,6 +32,25 @@ interface PackageItineraryDay {
   imagesToDelete?: string[];
 }
 
+// Destination options by category
+const STANDARD_DESTINATIONS = [
+  { value: 'Peru', label: 'Peru' },
+  { value: 'Ecuador', label: 'Ecuador' },
+  { value: 'Brazil', label: 'Brazil' },
+  { value: 'Argentina', label: 'Argentina' },
+  { value: 'Chile', label: 'Chile' },
+  { value: 'Galapagos', label: 'Galapagos Islands' },
+  { value: 'Antarctica', label: 'Antarctica' },
+  { value: 'Arctic', label: 'Arctic' },
+];
+
+const DIVING_DESTINATIONS = [
+  { value: 'Red Sea', label: 'Red Sea' },
+  { value: 'Philippines', label: 'Philippines' },
+  { value: 'Indonesia', label: 'Indonesia' },
+  { value: 'Micronesia', label: 'Micronesia' },
+];
+
 export default function EditPackage() {
   const { loading: authLoading, isAuthenticated, refreshSession } = useSimpleAdminAuth();
   const router = useRouter();
@@ -56,6 +75,8 @@ export default function EditPackage() {
     excludes: [''],
     luxury_highlights: [''],
     images: [] as string[],
+    type: 'package' as 'package' | 'cruise' | 'special',
+    special_type: null as 'diving' | null,
     price_usd: null as string | null,
     price_eur: null as string | null,
     price_gbp: null as string | null
@@ -112,6 +133,8 @@ export default function EditPackage() {
           excludes: data.excludes && data.excludes.length > 0 ? data.excludes : [''],
           luxury_highlights: data.luxury_highlights && data.luxury_highlights.length > 0 ? data.luxury_highlights : [''],
           images: data.images || [],
+          type: data.type || 'package',
+          special_type: data.special_type || null,
           price_usd: data.price_usd || null,
           price_eur: data.price_eur || null,
           price_gbp: data.price_gbp || null
@@ -467,6 +490,7 @@ export default function EditPackage() {
         excludes: packageData.excludes,
         images: packageData.images,
         luxury_highlights: packageData.luxury_highlights,
+        special_type: formData.special_type || null,
         price_usd: formData.price_usd,
         price_eur: formData.price_eur,
         price_gbp: formData.price_gbp,
@@ -640,14 +664,18 @@ export default function EditPackage() {
                   className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-[#B8860B] focus:border-[#B8860B] text-gray-900"
                 >
                   <option value="">Select destination</option>
-                  <option value="Peru">Peru</option>
-                  <option value="Ecuador">Ecuador</option>
-                  <option value="Brazil">Brazil</option>
-                  <option value="Argentina">Argentina</option>
-                  <option value="Chile">Chile</option>
-                  <option value="Galapagos">Galapagos Islands</option>
-                  <option value="Antarctica">Antarctica</option>
-                  <option value="Arctic">Arctic</option>
+                  {formData.type === 'special' && formData.special_type === 'diving' && (
+                    <optgroup label="Diving Destinations">
+                      {DIVING_DESTINATIONS.map(dest => (
+                        <option key={dest.value} value={dest.value}>{dest.label}</option>
+                      ))}
+                    </optgroup>
+                  )}
+                  <optgroup label={formData.type === 'special' && formData.special_type === 'diving' ? 'Standard Destinations' : 'Destinations'}>
+                    {STANDARD_DESTINATIONS.map(dest => (
+                      <option key={dest.value} value={dest.value}>{dest.label}</option>
+                    ))}
+                  </optgroup>
                 </select>
               </div>
 
@@ -755,6 +783,61 @@ export default function EditPackage() {
               </div>
             </div>
           </motion.div>
+
+          {/* Special Package fields - only show for special packages */}
+          {formData.type === 'special' && (
+            <motion.div
+              className="bg-white rounded-lg shadow-sm p-6"
+              initial={{ opacity: 0, y: 20 }}
+              animate={{ opacity: 1, y: 0 }}
+              transition={{ duration: 0.5, delay: 0.1 }}
+            >
+              <h3 className="text-lg font-medium text-gray-900 mb-6">Special Package Type</h3>
+
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                <div>
+                  <label htmlFor="special_type" className="block text-sm font-medium text-gray-700 mb-2">
+                    Special Package Type *
+                  </label>
+                  <select
+                    id="special_type"
+                    name="special_type"
+                    required
+                    value={formData.special_type || ''}
+                    onChange={(e) => {
+                      const value = e.target.value as 'diving' | '';
+                      setFormData(prev => ({
+                        ...prev,
+                        special_type: value || null
+                      }));
+                    }}
+                    className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-[#B8860B] focus:border-[#B8860B] text-gray-900"
+                  >
+                    <option value="">Select special type...</option>
+                    <option value="diving">Diving</option>
+                  </select>
+                  <p className="mt-1 text-sm text-gray-500">
+                    Selecting a special type will show additional destination options specific to that activity.
+                  </p>
+                </div>
+
+                {formData.special_type === 'diving' && (
+                  <div className="p-4 bg-blue-50 rounded-md flex items-start space-x-3">
+                    <svg className="w-5 h-5 text-blue-500 mt-0.5 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
+                    </svg>
+                    <div className="text-sm text-blue-800">
+                      <strong>Diving Package</strong>
+                      <p className="mt-1">
+                        Diving packages include additional destinations: Red Sea, Philippines, Indonesia, and Micronesia.
+                        Standard destinations are also available.
+                      </p>
+                    </div>
+                  </div>
+                )}
+              </div>
+            </motion.div>
+          )}
 
           {/* Package Images */}
           <motion.div

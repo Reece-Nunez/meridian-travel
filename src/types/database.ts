@@ -55,7 +55,8 @@ export interface Database {
           excludes: string[] | null
           luxury_highlights: string[] | null
           is_active: boolean | null
-          type: 'package' | 'cruise' | null
+          type: 'package' | 'cruise' | 'special' | null
+          special_type: 'diving' | null
           ship_id: string | null
           ship_name: string | null
           cruise_line: string | null
@@ -79,7 +80,8 @@ export interface Database {
           excludes?: string[] | null
           luxury_highlights?: string[] | null
           is_active?: boolean | null
-          type?: 'package' | 'cruise' | null
+          type?: 'package' | 'cruise' | 'special' | null
+          special_type?: 'diving' | null
           ship_id?: string | null
           ship_name?: string | null
           cruise_line?: string | null
@@ -103,7 +105,8 @@ export interface Database {
           excludes?: string[] | null
           luxury_highlights?: string[] | null
           is_active?: boolean | null
-          type?: 'package' | 'cruise' | null
+          type?: 'package' | 'cruise' | 'special' | null
+          special_type?: 'diving' | null
           ship_id?: string | null
           ship_name?: string | null
           cruise_line?: string | null

@@ -14,7 +14,8 @@ const CONTENT_KEYS = [
   'about_story_title',
   'about_story_content',
   'about_services_title',
-  'about_services_content'
+  'about_services_content',
+  'about_commitment_cta'
 ];
 
 const SETTING_KEYS = ['company_name'];
@@ -243,7 +244,7 @@ export default function About() {
             href="/quote"
             className="bg-[#B8860B] hover:bg-[#DAA520] text-[#F5F5DC] px-8 py-4 rounded-md text-lg font-medium transition-colors duration-200"
           >
-            Start Planning Your Peru Adventure
+            {getContent('about_commitment_cta') || 'Start Planning Your Peru Adventure'}
           </Link>
         </div>
       </div>

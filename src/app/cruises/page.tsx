@@ -2,7 +2,7 @@
 
 import Link from 'next/link';
 import { motion } from 'framer-motion';
-import { useState, useEffect, Suspense } from 'react';
+import { useState, useEffect, useRef, Suspense } from 'react';
 import { useSearchParams } from 'next/navigation';
 import { useCMSData } from '@/hooks/useContent';
 import { Skeleton, ContentLoader } from '@/components/ui/Skeleton';
@@ -162,6 +162,16 @@ function CruisesContent() {
       setSelectedLocation(locationParam);
     }
   }, [locationParam]);
+
+  // Scroll to top when a location is selected (not on initial load)
+  const isInitialMount = useRef(true);
+  useEffect(() => {
+    if (isInitialMount.current) {
+      isInitialMount.current = false;
+      return;
+    }
+    window.scrollTo({ top: 0, behavior: 'smooth' });
+  }, [selectedLocation]);
 
   const filteredBoats = selectedLocation
     ? processedBoats.filter(boat => boat.location === selectedLocation)

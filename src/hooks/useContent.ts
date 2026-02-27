@@ -2,17 +2,12 @@
 
 import { useState, useEffect, useCallback } from 'react';
 import {
-  getCachedContent,
-  getCachedSettings,
   getCachedContentByKey,
   getCachedSettingByKey,
-  getAllContent,
-  getAllSettings,
   getContentByKey,
   getSettingByKey,
   setupCacheInvalidationListener
 } from '@/lib/content';
-import { ContentSection, SiteSetting } from '@/types/database';
 
 interface UseContentResult {
   content: Record<string, string>;
@@ -30,21 +25,13 @@ interface UseSettingsResult {
   refresh: () => Promise<void>;
 }
 
-/**
- * Hook to fetch and manage CMS content with skeleton loading support
- * @param keys - Array of content section keys to fetch
- * @returns Object with content values, loading state, and refresh function
- */
 export function useContent(keys: string[]): UseContentResult {
-  // Always start with loading=true to avoid hydration mismatch
-  // (localStorage is only available on client)
   const [content, setContent] = useState<Record<string, string>>({});
   const [isLoading, setIsLoading] = useState(true);
   const [hasLoaded, setHasLoaded] = useState(false);
   const [error, setError] = useState<Error | null>(null);
   const [hasMounted, setHasMounted] = useState(false);
 
-  // After mount, check cache and update state
   useEffect(() => {
     setHasMounted(true);
     const initial: Record<string, string> = {};
@@ -59,7 +46,6 @@ export function useContent(keys: string[]): UseContentResult {
 
   const fetchContent = useCallback(async () => {
     try {
-      // Fetch all requested keys in parallel
       const results = await Promise.all(
         keys.map(async (key) => {
           const value = await getContentByKey(key);
@@ -90,21 +76,12 @@ export function useContent(keys: string[]): UseContentResult {
   useEffect(() => {
     fetchContent();
 
-    // Listen for cache invalidation events
-    const handleCacheCleared = () => {
-      console.log('🔄 Content cache cleared, refreshing...');
-      fetchContent();
-    };
-
-    const handleContentRefreshed = () => {
-      console.log('🔄 Content refreshed, updating...');
-      fetchContent();
-    };
+    const handleCacheCleared = () => fetchContent();
+    const handleContentRefreshed = () => fetchContent();
 
     window.addEventListener('contentCacheCleared', handleCacheCleared);
     window.addEventListener('contentRefreshed', handleContentRefreshed);
 
-    // Setup cross-tab cache invalidation
     const cleanup = setupCacheInvalidationListener();
 
     return () => {
@@ -117,17 +94,7 @@ export function useContent(keys: string[]): UseContentResult {
   return { content, isLoading, hasLoaded, error, refresh };
 }
 
-/**
- * Hook to fetch a single content key
- * @param key - Content section key
- * @returns Object with value, loading state, and refresh function
- */
-export function useSingleContent(key: string): {
-  value: string | null;
-  isLoading: boolean;
-  hasLoaded: boolean;
-  refresh: () => Promise<void>;
-} {
+export function useSingleContent(key: string) {
   const { content, isLoading, hasLoaded, refresh } = useContent([key]);
   return {
     value: content[key] || null,
@@ -137,19 +104,12 @@ export function useSingleContent(key: string): {
   };
 }
 
-/**
- * Hook to fetch and manage site settings with skeleton loading support
- * @param keys - Array of setting keys to fetch
- * @returns Object with settings values, loading state, and refresh function
- */
 export function useSettings(keys: string[]): UseSettingsResult {
-  // Always start with loading=true to avoid hydration mismatch
   const [settings, setSettings] = useState<Record<string, string>>({});
   const [isLoading, setIsLoading] = useState(true);
   const [hasLoaded, setHasLoaded] = useState(false);
   const [error, setError] = useState<Error | null>(null);
 
-  // After mount, check cache and update state
   useEffect(() => {
     const initial: Record<string, string> = {};
     keys.forEach(key => {
@@ -193,32 +153,16 @@ export function useSettings(keys: string[]): UseSettingsResult {
   useEffect(() => {
     fetchSettings();
 
-    const handleSettingsUpdated = () => {
-      console.log('🔄 Settings updated, refreshing...');
-      fetchSettings();
-    };
+    const handleSettingsUpdated = () => fetchSettings();
 
     window.addEventListener('settingsUpdated', handleSettingsUpdated);
-
-    return () => {
-      window.removeEventListener('settingsUpdated', handleSettingsUpdated);
-    };
+    return () => window.removeEventListener('settingsUpdated', handleSettingsUpdated);
   }, [fetchSettings]);
 
   return { settings, isLoading, hasLoaded, error, refresh };
 }
 
-/**
- * Hook to fetch a single setting
- * @param key - Setting key
- * @returns Object with value, loading state, and refresh function
- */
-export function useSingleSetting(key: string): {
-  value: string | null;
-  isLoading: boolean;
-  hasLoaded: boolean;
-  refresh: () => Promise<void>;
-} {
+export function useSingleSetting(key: string) {
   const { settings, isLoading, hasLoaded, refresh } = useSettings([key]);
   return {
     value: settings[key] || null,
@@ -228,10 +172,6 @@ export function useSingleSetting(key: string): {
   };
 }
 
-/**
- * Combined hook for fetching both content and settings
- * Useful for pages that need multiple types of data
- */
 export function useCMSData(contentKeys: string[], settingKeys: string[]) {
   const contentResult = useContent(contentKeys);
   const settingsResult = useSettings(settingKeys);

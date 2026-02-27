@@ -1,9 +1,27 @@
 'use client';
 
 import Link from 'next/link';
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useCallback } from 'react';
 import { useAuth } from '@/contexts/AuthContext';
 import { isAdmin, isUserAdmin } from '@/lib/adminUtils';
+
+const DESTINATIONS = [
+  { name: 'Peru', href: '/destinations/peru' },
+  { name: 'Ecuador', href: '/destinations/ecuador' },
+  { name: 'Brazil', href: '/destinations/brazil' },
+  { name: 'Argentina', href: '/destinations/argentina' },
+  { name: 'Chile', href: '/destinations/chile' },
+  { name: 'Galapagos Islands', href: '/destinations/galapagos' },
+  { name: 'Antarctica', href: '/destinations/antarctica' },
+  { name: 'Arctic', href: '/destinations/arctic' },
+];
+
+const NAV_LINKS = [
+  { name: 'Cruises', href: '/cruises' },
+  { name: 'Packages', href: '/packages' },
+  { name: 'About', href: '/about' },
+  { name: 'Contact', href: '/contact' },
+];
 
 export default function Navigation() {
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
@@ -13,7 +31,6 @@ export default function Navigation() {
   const [userIsAdmin, setUserIsAdmin] = useState(false);
   const { user, profile, signOut, loading } = useAuth();
 
-  // Close dropdown menus when tab visibility changes to prevent state issues
   useEffect(() => {
     const handleVisibilityChange = () => {
       if (document.hidden) {
@@ -27,10 +44,7 @@ export default function Navigation() {
   }, []);
 
   useEffect(() => {
-    const handleScroll = () => {
-      const scrollTop = window.scrollY;
-      setIsScrolled(scrollTop > 50);
-    };
+    const handleScroll = () => setIsScrolled(window.scrollY > 50);
 
     if (typeof window !== 'undefined') {
       window.addEventListener('scroll', handleScroll);
@@ -38,14 +52,10 @@ export default function Navigation() {
     }
   }, []);
 
-  // Check if user is admin whenever user or auth state changes
   useEffect(() => {
     const checkAdminStatus = () => {
       if (user?.email) {
-        // Check both admin session and email
-        const isAdminSession = isAdmin();
-        const isAdminEmail = isUserAdmin(user.email);
-        setUserIsAdmin(isAdminSession || isAdminEmail);
+        setUserIsAdmin(isAdmin() || isUserAdmin(user.email));
       } else {
         setUserIsAdmin(false);
       }
@@ -53,34 +63,41 @@ export default function Navigation() {
 
     checkAdminStatus();
 
-    // Also check on localStorage changes (in case admin session is set/removed)
-    const handleStorageChange = () => {
-      checkAdminStatus();
-    };
-
-    window.addEventListener('storage', handleStorageChange);
-
-    return () => {
-      window.removeEventListener('storage', handleStorageChange);
-    };
+    window.addEventListener('storage', checkAdminStatus);
+    return () => window.removeEventListener('storage', checkAdminStatus);
   }, [user, loading]);
+
+  const handleSignOut = useCallback(async () => {
+    setIsAccountMenuOpen(false);
+    setIsMobileMenuOpen(false);
+    try {
+      const { error } = await signOut();
+      if (error) {
+        alert('Sign out failed. Please try again.');
+      } else {
+        localStorage.clear();
+        sessionStorage.clear();
+        window.location.href = '/auth/signin';
+      }
+    } catch {
+      alert('Sign out failed. Please try again.');
+    }
+  }, [signOut]);
+
+  const dashboardHref = userIsAdmin ? '/admin' : '/dashboard';
+  const dashboardLabel = userIsAdmin ? 'Admin Dashboard' : 'Dashboard';
 
   return (
     <nav className={`${isScrolled ? 'bg-[#F5F5DC]/80 backdrop-blur-md' : 'bg-[#F5F5DC]'} shadow-sm border-b border-gray-200 sticky top-0 z-50 transition-all duration-300`}>
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-        {/* Main navbar with logo and account */}
         <div className="flex justify-between items-center h-22">
-          {/* Left side - Logo and brand */}
           <div className="flex items-center space-x-2 sm:space-x-4">
             <Link href="/" className="flex-shrink-0">
               <img
                 src="https://meridian-travel.s3.us-east-1.amazonaws.com/logo.png"
                 alt="Meridian Luxury Travel"
                 className="h-14 w-14 sm:h-16 sm:w-16 md:h-20 md:w-20"
-                onError={(e) => {
-                  console.error('Failed to load logo.png');
-                  e.currentTarget.style.display = 'none';
-                }}
+                onError={(e) => { e.currentTarget.style.display = 'none'; }}
               />
             </Link>
             <Link href="/" className="flex-shrink-0 hidden sm:block">
@@ -95,12 +112,10 @@ export default function Navigation() {
             </Link>
           </div>
 
-          {/* Right side - Account and mobile menu button */}
           <div className="flex items-center space-x-2 sm:space-x-4">
-            {/* Account Menu - Desktop */}
             <div className="hidden md:block">
               {user ? (
-                <div 
+                <div
                   className="relative"
                   onMouseEnter={() => setIsAccountMenuOpen(true)}
                   onMouseLeave={() => setIsAccountMenuOpen(false)}
@@ -124,14 +139,14 @@ export default function Navigation() {
                             {user.email}
                           </div>
                           <Link
-                            href={userIsAdmin ? "/admin" : "/dashboard"}
+                            href={dashboardHref}
                             onClick={() => setIsAccountMenuOpen(false)}
                             className="flex items-center px-4 py-2 text-sm text-[#8B4513] hover:bg-gray-50 hover:text-[#B8860B]"
                           >
                             <svg className="w-4 h-4 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                               <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M3 7v10a2 2 0 002 2h14a2 2 0 002-2V9a2 2 0 00-2-2H5a2 2 0 00-2-2z" />
                             </svg>
-                            {userIsAdmin ? "Admin Dashboard" : "Dashboard"}
+                            {dashboardLabel}
                           </Link>
                           <Link
                             href="/profile"
@@ -144,26 +159,7 @@ export default function Navigation() {
                             Profile
                           </Link>
                           <button
-                            onClick={async () => {
-                              setIsAccountMenuOpen(false);
-                              console.log('Navigation desktop: Starting logout process...');
-                              try {
-                                const { error } = await signOut();
-                                if (error) {
-                                  console.error('Navigation desktop: Sign out failed:', error);
-                                  alert('Sign out failed. Please try again.');
-                                } else {
-                                  console.log('Navigation desktop: Sign out successful, redirecting...');
-                                  // Force clear any cached auth state and redirect
-                                  localStorage.clear();
-                                  sessionStorage.clear();
-                                  window.location.href = '/auth/signin';
-                                }
-                              } catch (e) {
-                                console.error('Navigation desktop: Sign out exception:', e);
-                                alert('Sign out failed. Please try again.');
-                              }
-                            }}
+                            onClick={handleSignOut}
                             className="flex items-center w-full text-left px-4 py-2 text-sm text-[#8B4513] hover:bg-gray-50 hover:text-[#B8860B] cursor-pointer"
                           >
                             <svg className="w-4 h-4 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -198,7 +194,6 @@ export default function Navigation() {
               )}
             </div>
 
-            {/* Mobile menu button */}
             <div className="md:hidden">
               <button
                 onClick={() => setIsMobileMenuOpen(!isMobileMenuOpen)}
@@ -219,10 +214,9 @@ export default function Navigation() {
           </div>
         </div>
 
-        {/* Secondary Navigation - Desktop Only */}
         <div className="hidden md:block border-t border-gray-300/50">
           <div className="flex items-center justify-center space-x-8 py-3">
-            <div 
+            <div
               className="relative"
               onMouseEnter={() => setIsDestinationsOpen(true)}
               onMouseLeave={() => setIsDestinationsOpen(false)}
@@ -252,87 +246,32 @@ export default function Navigation() {
                       >
                         View All Destinations
                       </Link>
-                      <Link
-                        href="/destinations/peru"
-                        className="block px-4 py-2 text-sm text-[#8B4513] hover:bg-gray-50 hover:text-[#B8860B]"
-                      >
-                        Peru
-                      </Link>
-                      <Link
-                        href="/destinations/ecuador"
-                        className="block px-4 py-2 text-sm text-[#8B4513] hover:bg-gray-50 hover:text-[#B8860B]"
-                      >
-                        Ecuador
-                      </Link>
-                      <Link
-                        href="/destinations/brazil"
-                        className="block px-4 py-2 text-sm text-[#8B4513] hover:bg-gray-50 hover:text-[#B8860B]"
-                      >
-                        Brazil
-                      </Link>
-                      <Link
-                        href="/destinations/argentina"
-                        className="block px-4 py-2 text-sm text-[#8B4513] hover:bg-gray-50 hover:text-[#B8860B]"
-                      >
-                        Argentina
-                      </Link>
-                      <Link
-                        href="/destinations/chile"
-                        className="block px-4 py-2 text-sm text-[#8B4513] hover:bg-gray-50 hover:text-[#B8860B]"
-                      >
-                        Chile
-                      </Link>
-                      <Link
-                        href="/destinations/galapagos"
-                        className="block px-4 py-2 text-sm text-[#8B4513] hover:bg-gray-50 hover:text-[#B8860B]"
-                      >
-                        Galapagos Islands
-                      </Link>
-                      <Link
-                        href="/destinations/antarctica"
-                        className="block px-4 py-2 text-sm text-[#8B4513] hover:bg-gray-50 hover:text-[#B8860B]"
-                      >
-                        Antarctica
-                      </Link>
-                      <Link
-                        href="/destinations/arctic"
-                        className="block px-4 py-2 text-sm text-[#8B4513] hover:bg-gray-50 hover:text-[#B8860B]"
-                      >
-                        Arctic
-                      </Link>
+                      {DESTINATIONS.map((dest) => (
+                        <Link
+                          key={dest.href}
+                          href={dest.href}
+                          className="block px-4 py-2 text-sm text-[#8B4513] hover:bg-gray-50 hover:text-[#B8860B]"
+                        >
+                          {dest.name}
+                        </Link>
+                      ))}
                     </div>
                   </div>
                 )}
             </div>
-            <Link
-              href="/cruises"
-              className="text-[#8B4513] hover:text-[#B8860B] px-3 py-2 text-sm font-medium transition-colors duration-200"
-            >
-              Cruises
-            </Link>
-            <Link
-              href="/packages"
-              className="text-[#8B4513] hover:text-[#B8860B] px-3 py-2 text-sm font-medium transition-colors duration-200"
-            >
-              Packages
-            </Link>
-            <Link
-              href="/about"
-              className="text-[#8B4513] hover:text-[#B8860B] px-3 py-2 text-sm font-medium transition-colors duration-200"
-            >
-              About
-            </Link>
-            <Link
-              href="/contact"
-              className="text-[#8B4513] hover:text-[#B8860B] px-3 py-2 text-sm font-medium transition-colors duration-200"
-            >
-              Contact
-            </Link>
+            {NAV_LINKS.map((link) => (
+              <Link
+                key={link.href}
+                href={link.href}
+                className="text-[#8B4513] hover:text-[#B8860B] px-3 py-2 text-sm font-medium transition-colors duration-200"
+              >
+                {link.name}
+              </Link>
+            ))}
           </div>
         </div>
       </div>
 
-      {/* Mobile Menu */}
       {isMobileMenuOpen && (
         <div className="md:hidden">
             <div className="px-2 pt-2 pb-3 space-y-1 sm:px-3 bg-[#F5F5DC] border-t border-gray-200">
@@ -364,62 +303,16 @@ export default function Navigation() {
                         >
                           View All Destinations
                         </Link>
-                        <Link
-                          href="/destinations/peru"
-                          className="text-[#8B4513] hover:text-[#B8860B] block px-3 py-2 text-sm"
-                          onClick={() => setIsMobileMenuOpen(false)}
-                        >
-                          Peru
-                        </Link>
-                        <Link
-                          href="/destinations/ecuador"
-                          className="text-[#8B4513] hover:text-[#B8860B] block px-3 py-2 text-sm"
-                          onClick={() => setIsMobileMenuOpen(false)}
-                        >
-                          Ecuador
-                        </Link>
-                        <Link
-                          href="/destinations/brazil"
-                          className="text-[#8B4513] hover:text-[#B8860B] block px-3 py-2 text-sm"
-                          onClick={() => setIsMobileMenuOpen(false)}
-                        >
-                          Brazil
-                        </Link>
-                        <Link
-                          href="/destinations/argentina"
-                          className="text-[#8B4513] hover:text-[#B8860B] block px-3 py-2 text-sm"
-                          onClick={() => setIsMobileMenuOpen(false)}
-                        >
-                          Argentina
-                        </Link>
-                        <Link
-                          href="/destinations/chile"
-                          className="text-[#8B4513] hover:text-[#B8860B] block px-3 py-2 text-sm"
-                          onClick={() => setIsMobileMenuOpen(false)}
-                        >
-                          Chile
-                        </Link>
-                        <Link
-                          href="/destinations/galapagos"
-                          className="text-[#8B4513] hover:text-[#B8860B] block px-3 py-2 text-sm"
-                          onClick={() => setIsMobileMenuOpen(false)}
-                        >
-                          Galapagos Islands
-                        </Link>
-                        <Link
-                          href="/destinations/antarctica"
-                          className="text-[#8B4513] hover:text-[#B8860B] block px-3 py-2 text-sm"
-                          onClick={() => setIsMobileMenuOpen(false)}
-                        >
-                          Antarctica
-                        </Link>
-                        <Link
-                          href="/destinations/arctic"
-                          className="text-[#8B4513] hover:text-[#B8860B] block px-3 py-2 text-sm"
-                          onClick={() => setIsMobileMenuOpen(false)}
-                        >
-                          Arctic
-                        </Link>
+                        {DESTINATIONS.map((dest) => (
+                          <Link
+                            key={dest.href}
+                            href={dest.href}
+                            className="text-[#8B4513] hover:text-[#B8860B] block px-3 py-2 text-sm"
+                            onClick={() => setIsMobileMenuOpen(false)}
+                          >
+                            {dest.name}
+                          </Link>
+                        ))}
                       </div>
                     </div>
                   )}
@@ -459,8 +352,7 @@ export default function Navigation() {
               >
                 Request Quote
               </Link>
-              
-              {/* Mobile Account Section */}
+
               {loading ? (
                 <div className="flex items-center px-3 py-2 mt-4">
                   <div className="w-6 h-6 animate-pulse bg-gray-200 rounded-full"></div>
@@ -472,11 +364,11 @@ export default function Navigation() {
                     {profile?.first_name ? `Hello, ${profile.first_name}` : 'Welcome!'}
                   </div>
                   <Link
-                    href={userIsAdmin ? "/admin" : "/dashboard"}
+                    href={dashboardHref}
                     className="text-[#8B4513] hover:text-[#B8860B] block px-3 py-2 text-base font-medium"
                     onClick={() => setIsMobileMenuOpen(false)}
                   >
-                    {userIsAdmin ? "Admin Dashboard" : "Dashboard"}
+                    {dashboardLabel}
                   </Link>
                   <Link
                     href="/profile"
@@ -493,26 +385,7 @@ export default function Navigation() {
                     Browse Packages
                   </Link>
                   <button
-                    onClick={async () => {
-                      setIsMobileMenuOpen(false);
-                      console.log('Navigation mobile: Starting logout process...');
-                      try {
-                        const { error } = await signOut();
-                        if (error) {
-                          console.error('Navigation mobile: Sign out failed:', error);
-                          alert('Sign out failed. Please try again.');
-                        } else {
-                          console.log('Navigation mobile: Sign out successful, redirecting...');
-                          // Force clear any cached auth state and redirect
-                          localStorage.clear();
-                          sessionStorage.clear();
-                          window.location.href = '/auth/signin';
-                        }
-                      } catch (e) {
-                        console.error('Navigation mobile: Sign out exception:', e);
-                        alert('Sign out failed. Please try again.');
-                      }
-                    }}
+                    onClick={handleSignOut}
                     className="w-full text-left text-[#8B4513] hover:text-[#B8860B] px-3 py-2 text-base font-medium cursor-pointer"
                   >
                     Sign Out

@@ -3,10 +3,7 @@ import { createSupabaseAdmin } from '@/lib/supabase';
 
 async function sendAdminNotification(quote: any) {
   const resendApiKey = process.env.RESEND_API_KEY;
-  if (!resendApiKey) {
-    console.warn('RESEND_API_KEY not configured, skipping admin notification');
-    return;
-  }
+  if (!resendApiKey) return;
 
   const adminEmail = 'chris@meridianluxury.travel';
   const baseUrl = process.env.NEXT_PUBLIC_SITE_URL || 'http://localhost:3000';
@@ -15,14 +12,11 @@ async function sendAdminNotification(quote: any) {
     <html>
       <body style="font-family: 'Segoe UI', Arial, sans-serif; margin: 0; padding: 20px; background-color: #F5F5DC;">
         <div style="max-width: 600px; margin: 0 auto; background-color: white; border-radius: 15px; overflow: hidden; box-shadow: 0 10px 30px rgba(0,0,0,0.1);">
-
-          <!-- Header -->
           <div style="background: linear-gradient(135deg, #8B4513, #DAA520); padding: 40px 30px; text-align: center; color: white;">
-            <h1 style="margin: 0; font-size: 32px; font-weight: 700;">🔔 New Quote Request</h1>
+            <h1 style="margin: 0; font-size: 32px; font-weight: 700;">New Quote Request</h1>
             <p style="margin: 15px 0 0 0; font-size: 20px; opacity: 0.95;">A new quote request has been submitted</p>
           </div>
 
-          <!-- Quote Details -->
           <div style="padding: 40px 30px;">
             <div style="background: linear-gradient(135deg, #f8f5f0, #faf8f5); padding: 30px; border-radius: 12px; border-left: 5px solid #DAA520; margin-bottom: 30px;">
               <h2 style="color: #8B4513; margin-top: 0; font-size: 24px; margin-bottom: 25px;">Quote Details</h2>
@@ -74,7 +68,6 @@ async function sendAdminNotification(quote: any) {
               ` : ''}
             </div>
 
-            <!-- Action Button -->
             <div style="text-align: center; margin: 35px 0;">
               <a href="${baseUrl}/admin/quotes/${quote.id}"
                  style="display: inline-block; background: linear-gradient(135deg, #DAA520, #B8860B); color: white; padding: 16px 35px; text-decoration: none; border-radius: 8px; font-weight: bold; font-size: 16px; box-shadow: 0 4px 12px rgba(218, 165, 32, 0.3);">
@@ -83,7 +76,6 @@ async function sendAdminNotification(quote: any) {
             </div>
           </div>
 
-          <!-- Footer -->
           <div style="background: linear-gradient(135deg, #f8f5f0, #f0f0f0); padding: 20px; text-align: center; border-top: 3px solid #DAA520;">
             <p style="margin: 0; font-size: 14px; color: #666;">
               Submitted on ${new Date(quote.created_at).toLocaleDateString()} at ${new Date(quote.created_at).toLocaleTimeString()}
@@ -103,7 +95,7 @@ async function sendAdminNotification(quote: any) {
     body: JSON.stringify({
       from: 'quotes@meridianluxury.travel',
       to: [adminEmail],
-      subject: `🔔 New Quote Request: ${quote.package_type === 'cruise' ? 'Cruise' : quote.package_type === 'package' ? 'Package' : 'Custom'} - ${quote.destination} for ${quote.participants} people`,
+      subject: `New Quote Request: ${quote.package_type === 'cruise' ? 'Cruise' : quote.package_type === 'package' ? 'Package' : 'Custom'} - ${quote.destination} for ${quote.participants} people`,
       html: emailContent,
     }),
   });
@@ -112,46 +104,20 @@ async function sendAdminNotification(quote: any) {
     const emailError = await emailResponse.text();
     throw new Error(`Failed to send admin notification: ${emailError}`);
   }
-
-  console.log('Admin notification sent successfully');
 }
 
 export async function POST(request: Request) {
   try {
-    console.log('API /quotes: POST request received');
-    
-    // Debug environment variables
-    const debugInfo = {
-      hasUrl: !!process.env.NEXT_PUBLIC_SUPABASE_URL,
-      hasServiceKey: !!process.env.SUPABASE_SERVICE_ROLE_KEY,
-      nodeEnv: process.env.NODE_ENV,
-      availableSupabaseEnvs: Object.keys(process.env).filter(key => key.includes('SUPABASE')),
-      totalEnvVars: Object.keys(process.env).length,
-      someEnvKeys: Object.keys(process.env).slice(0, 10) // First 10 env var names
-    };
-    
-    console.log('API /quotes: Environment debug info', debugInfo);
-
-    // Check environment variables first
     if (!process.env.NEXT_PUBLIC_SUPABASE_URL || !process.env.SUPABASE_SERVICE_ROLE_KEY) {
-      console.error('API /quotes: Missing required environment variables', debugInfo);
+      console.error('Missing required Supabase environment variables');
       return NextResponse.json(
-        { 
-          error: 'Server configuration error',
-          debug: debugInfo
-        },
+        { error: 'Server configuration error' },
         { status: 500 }
       );
     }
-    
+
     const data = await request.json();
-    console.log('API /quotes: Request data received', {
-      destination: data.destination,
-      email: data.email,
-      packageType: data.selectedPackageType,
-      packageId: data.selectedPackageId
-    });
-    
+
     const {
       firstName,
       lastName,
@@ -175,7 +141,6 @@ export async function POST(request: Request) {
       travelPlans
     } = data;
 
-    // Fetch package/cruise information if selected
     let selectedPackage = null;
     let packageDestination = destination;
     let packageDuration = null;
@@ -196,8 +161,7 @@ export async function POST(request: Request) {
       }
     }
 
-    // Calculate duration from the form data
-    let duration = packageDuration || 7; // Use package duration or default
+    let duration = packageDuration || 7;
     let travel_dates_start = null;
     let travel_dates_end = null;
 
@@ -208,23 +172,15 @@ export async function POST(request: Request) {
       travel_dates_start = exactStartDate;
       travel_dates_end = exactEndDate;
     } else if (dateType === 'flexible' && flexibleDuration) {
-      // Use the selected duration for flexible dates
-      if (flexibleDuration === 'custom') {
-        duration = 7; // Default for custom, admin can adjust
-      } else {
-        duration = parseInt(flexibleDuration);
-      }
+      duration = flexibleDuration === 'custom' ? 7 : parseInt(flexibleDuration);
     }
 
-    // Combine all additional information
     let combinedRequirements = '';
 
-    // Add name information
     if (firstName || lastName) {
       combinedRequirements += `Contact Name: ${firstName} ${lastName}`.trim() + '\n\n';
     }
 
-    // Add package/cruise information
     if (selectedPackage) {
       const packageType = selectedPackage.type === 'cruise' ? 'Cruise' : 'Package';
       combinedRequirements += `Selected ${packageType}: ${selectedPackage.title}`;
@@ -254,8 +210,7 @@ export async function POST(request: Request) {
     } else {
       combinedRequirements += 'Request Type: Custom travel experience\n\n';
     }
-    
-    // Add date preferences
+
     if (dateType === 'flexible') {
       let flexibleInfo = 'Flexible Dates: ';
       if (flexibleMonth && flexibleYear) {
@@ -267,18 +222,17 @@ export async function POST(request: Request) {
       } else {
         flexibleInfo += 'Any time';
       }
-      
+
       if (flexibleDuration === 'custom') {
         flexibleInfo += ', Custom duration (to be discussed)';
       } else if (flexibleDuration) {
         const days = parseInt(flexibleDuration);
         flexibleInfo += `, ${days} day${days > 1 ? 's' : ''}`;
       }
-      
+
       combinedRequirements += flexibleInfo + '\n\n';
     }
-    
-    // Add group details
+
     combinedRequirements += `Group Details: ${adults} adults`;
     if (parseInt(children) > 0) {
       combinedRequirements += `, ${children} children (under 12)`;
@@ -287,18 +241,15 @@ export async function POST(request: Request) {
       combinedRequirements += `, ${childrenOver12} children (12 and older)`;
     }
     combinedRequirements += `, ${rooms} room${parseInt(rooms) > 1 ? 's' : ''}\n\n`;
-    
-    // Add special requirements
+
     if (specialRequirements) {
       combinedRequirements += `Special Requirements: ${specialRequirements}\n\n`;
     }
-    
-    // Add travel plans
+
     if (travelPlans) {
       combinedRequirements += `Travel Plans & Interests: ${travelPlans}`;
     }
 
-    // Prepare data for database with proper type validation
     const quoteData = {
       destination: packageDestination?.toString() || destination?.toString() || '',
       duration: Number.isInteger(duration) ? duration : 7,
@@ -314,75 +265,38 @@ export async function POST(request: Request) {
       package_type: selectedPackageType || 'custom'
     };
 
-    // Validate required fields
     const requiresDestination = selectedPackageType === 'custom';
     if ((requiresDestination && !quoteData.destination) || !quoteData.contact_email) {
-      console.error('API /quotes: Missing required fields', {
-        hasDestination: !!quoteData.destination,
-        hasEmail: !!quoteData.contact_email,
-        requiresDestination,
-        selectedPackageType
-      });
-
-      let errorMessage = 'Missing required fields: ';
       const missingFields = [];
-      if (requiresDestination && !quoteData.destination) {
-        missingFields.push('destination');
-      }
-      if (!quoteData.contact_email) {
-        missingFields.push('email');
-      }
-      errorMessage += missingFields.join(' and ') + ' are required';
+      if (requiresDestination && !quoteData.destination) missingFields.push('destination');
+      if (!quoteData.contact_email) missingFields.push('email');
 
       return NextResponse.json(
-        { error: errorMessage },
+        { error: `Missing required fields: ${missingFields.join(' and ')} are required` },
         { status: 400 }
       );
     }
 
-    console.log('API /quotes: Prepared quote data', { 
-      destination: quoteData.destination, 
-      participants: quoteData.participants,
-      budget_range: quoteData.budget_range 
-    });
-
-    // Insert into database using admin client
     const supabaseAdmin = createSupabaseAdmin();
-    console.log('API /quotes: Created Supabase admin client');
-    
+
     const { data: insertedQuote, error } = await supabaseAdmin
       .from('custom_quotes')
       .insert([quoteData])
       .select()
       .single();
 
-    console.log('API /quotes: Database insert result', { 
-      success: !error, 
-      error: error?.message, 
-      quoteId: insertedQuote?.id 
-    });
-
     if (error) {
-      console.error('API /quotes: Database error details', { 
-        message: error.message,
-        details: error.details,
-        hint: error.hint,
-        code: error.code 
-      });
+      console.error('Quote insert failed:', error.message);
       return NextResponse.json(
         { error: 'Failed to submit quote request', details: error.message },
         { status: 500 }
       );
     }
 
-    console.log('API /quotes: Quote submitted successfully', { quoteId: insertedQuote.id });
-
-    // Send admin notification email
     try {
       await sendAdminNotification(insertedQuote);
     } catch (emailError) {
       console.error('Failed to send admin notification:', emailError);
-      // Don't fail the quote creation if email fails
     }
 
     return NextResponse.json(
@@ -395,12 +309,9 @@ export async function POST(request: Request) {
     );
 
   } catch (error) {
-    console.error('API /quotes: Unexpected error', {
-      message: error instanceof Error ? error.message : 'Unknown error',
-      stack: error instanceof Error ? error.stack : undefined
-    });
+    console.error('Quote submission error:', error instanceof Error ? error.message : 'Unknown error');
     return NextResponse.json(
-      { error: 'Internal server error', details: error instanceof Error ? error.message : 'Unknown error' },
+      { error: 'Internal server error' },
       { status: 500 }
     );
   }

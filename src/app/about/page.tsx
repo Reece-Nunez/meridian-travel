@@ -7,7 +7,6 @@ import { useHeroSettings } from '@/hooks/useHeroSettings';
 import { Skeleton, ContentLoader } from '@/components/ui/Skeleton';
 import { HeroImage } from '@/components/ui/HeroImage';
 
-// Content keys we need from the CMS
 const CONTENT_KEYS = [
   'about_page_title',
   'about_content',
@@ -20,19 +19,38 @@ const CONTENT_KEYS = [
 
 const SETTING_KEYS = ['company_name'];
 
-export default function About() {
-  // Hero image settings from database
-  const heroSettings = useHeroSettings('about', 'https://meridian-travel.s3.us-east-1.amazonaws.com/about-us.webp');
+const SERVICE_CARDS = [
+  {
+    icon: <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 21V5a2 2 0 00-2-2H7a2 2 0 00-2 2v16m14 0h2m-2 0h-4m-5 0H9m0 0H5m0 0h2M7 7h6M7 11h6m-6 4h3" />,
+    title: 'Bespoke Itineraries',
+    description: 'Customized trips designed around your passions and schedule. Every journey is crafted to reflect your unique interests and travel dreams.',
+  },
+  {
+    icon: <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M3 7v10a2 2 0 002 2h14a2 2 0 002-2V9a2 2 0 00-2-2H5a2 2 0 00-2-2z" />,
+    title: 'Exclusive Accommodations',
+    description: 'Hand-picked 5-star resorts, boutique hideaways, and luxury villas that reflect both elegance and authenticity.',
+  },
+  {
+    icon: <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 3v4M3 5h4M6 17v4m-2-2h4m5-16l2.286 6.857L21 12l-5.714 2.143L13 21l-2.286-6.857L5 12l5.714-2.143L13 3z" />,
+    title: 'Private Experiences',
+    description: 'From cooking with Michelin-starred chefs to after-hours museum tours, exclusive access to experiences few others can provide.',
+  },
+  {
+    icon: <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8 7h12m0 0l-4-4m4 4l-4 4m0 6H4m0 0l4 4m-4-4l4-4" />,
+    title: 'Seamless Logistics',
+    description: 'Private transfers, first-class rail, chartered yachts, and concierge service to ensure every step feels effortless.',
+  },
+];
 
+export default function About() {
+  const heroSettings = useHeroSettings('about', 'https://meridian-travel.s3.us-east-1.amazonaws.com/about-us.webp');
   const { content, settings, isLoading } = useCMSData(CONTENT_KEYS, SETTING_KEYS);
 
-  // Helper to get content
   const getContent = (key: string) => content[key] || '';
   const getSetting = (key: string) => settings[key] || '';
 
   return (
     <div className="min-h-screen bg-white">
-      {/* Header Section */}
       <div className="relative h-[400px] md:h-[500px] overflow-hidden">
         <div className="absolute inset-0">
           <HeroImage
@@ -69,7 +87,6 @@ export default function About() {
         </div>
       </div>
 
-      {/* Our Story */}
       <div className="py-16 px-4 sm:px-6 lg:px-8 max-w-7xl mx-auto">
         <div className="max-w-4xl mx-auto">
           <div className="text-center mb-16">
@@ -117,7 +134,6 @@ export default function About() {
         </div>
       </div>
 
-      {/* Why Choose Us */}
       <div className="py-16 bg-[#F5F5DC]">
         <div className="px-4 sm:px-6 lg:px-8 max-w-7xl mx-auto">
           <div className="text-center mb-16">
@@ -140,94 +156,28 @@ export default function About() {
           </div>
 
           <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
-            <motion.div
-              className="bg-white p-8 rounded-lg shadow-md"
-              initial={{ opacity: 0, y: 30 }}
-              whileInView={{ opacity: 1, y: 0 }}
-              viewport={{ once: true }}
-              transition={{ duration: 0.6, delay: 0.1 }}
-            >
-              <div className="w-12 h-12 bg-[#B8860B] rounded-lg flex items-center justify-center mb-6">
-                <svg className="w-6 h-6 text-[#F5F5DC]" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 21V5a2 2 0 00-2-2H7a2 2 0 00-2 2v16m14 0h2m-2 0h-4m-5 0H9m0 0H5m0 0h2M7 7h6M7 11h6m-6 4h3" />
-                </svg>
-              </div>
-              <h3 className="text-xl font-bold text-[#8B4513] mb-3">
-                Bespoke Itineraries
-              </h3>
-              <p className="text-gray-600">
-                Customized trips designed around your passions and schedule. Every journey is crafted
-                to reflect your unique interests and travel dreams.
-              </p>
-            </motion.div>
-
-            <motion.div
-              className="bg-white p-8 rounded-lg shadow-md"
-              initial={{ opacity: 0, y: 30 }}
-              whileInView={{ opacity: 1, y: 0 }}
-              viewport={{ once: true }}
-              transition={{ duration: 0.6, delay: 0.2 }}
-            >
-              <div className="w-12 h-12 bg-[#B8860B] rounded-lg flex items-center justify-center mb-6">
-                <svg className="w-6 h-6 text-[#F5F5DC]" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M3 7v10a2 2 0 002 2h14a2 2 0 002-2V9a2 2 0 00-2-2H5a2 2 0 00-2-2z" />
-                </svg>
-              </div>
-              <h3 className="text-xl font-bold text-[#8B4513] mb-3">
-                Exclusive Accommodations
-              </h3>
-              <p className="text-gray-600">
-                Hand-picked 5-star resorts, boutique hideaways, and luxury villas that reflect
-                both elegance and authenticity.
-              </p>
-            </motion.div>
-
-            <motion.div
-              className="bg-white p-8 rounded-lg shadow-md"
-              initial={{ opacity: 0, y: 30 }}
-              whileInView={{ opacity: 1, y: 0 }}
-              viewport={{ once: true }}
-              transition={{ duration: 0.6, delay: 0.3 }}
-            >
-              <div className="w-12 h-12 bg-[#B8860B] rounded-lg flex items-center justify-center mb-6">
-                <svg className="w-6 h-6 text-[#F5F5DC]" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 3v4M3 5h4M6 17v4m-2-2h4m5-16l2.286 6.857L21 12l-5.714 2.143L13 21l-2.286-6.857L5 12l5.714-2.143L13 3z" />
-                </svg>
-              </div>
-              <h3 className="text-xl font-bold text-[#8B4513] mb-3">
-                Private Experiences
-              </h3>
-              <p className="text-gray-600">
-                From cooking with Michelin-starred chefs to after-hours museum tours,
-                exclusive access to experiences few others can provide.
-              </p>
-            </motion.div>
-
-            <motion.div
-              className="bg-white p-8 rounded-lg shadow-md"
-              initial={{ opacity: 0, y: 30 }}
-              whileInView={{ opacity: 1, y: 0 }}
-              viewport={{ once: true }}
-              transition={{ duration: 0.6, delay: 0.4 }}
-            >
-              <div className="w-12 h-12 bg-[#B8860B] rounded-lg flex items-center justify-center mb-6">
-                <svg className="w-6 h-6 text-[#F5F5DC]" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8 7h12m0 0l-4-4m4 4l-4 4m0 6H4m0 0l4 4m-4-4l4-4" />
-                </svg>
-              </div>
-              <h3 className="text-xl font-bold text-[#8B4513] mb-3">
-                Seamless Logistics
-              </h3>
-              <p className="text-gray-600">
-                Private transfers, first-class rail, chartered yachts, and concierge service
-                to ensure every step feels effortless.
-              </p>
-            </motion.div>
+            {SERVICE_CARDS.map((card, i) => (
+              <motion.div
+                key={card.title}
+                className="bg-white p-8 rounded-lg shadow-md"
+                initial={{ opacity: 0, y: 30 }}
+                whileInView={{ opacity: 1, y: 0 }}
+                viewport={{ once: true }}
+                transition={{ duration: 0.6, delay: 0.1 * (i + 1) }}
+              >
+                <div className="w-12 h-12 bg-[#B8860B] rounded-lg flex items-center justify-center mb-6">
+                  <svg className="w-6 h-6 text-[#F5F5DC]" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    {card.icon}
+                  </svg>
+                </div>
+                <h3 className="text-xl font-bold text-[#8B4513] mb-3">{card.title}</h3>
+                <p className="text-gray-600">{card.description}</p>
+              </motion.div>
+            ))}
           </div>
         </div>
       </div>
 
-      {/* Our Commitment */}
       <div className="py-16 px-4 sm:px-6 lg:px-8 max-w-7xl mx-auto">
         <div className="max-w-4xl mx-auto text-center">
           <h2 className="text-3xl sm:text-4xl font-bold text-[#8B4513] mb-6">

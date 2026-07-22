@@ -24,6 +24,7 @@ const DESTINATIONS = [
 
 const COMPANY_LINKS = [
   { name: 'About Us', href: '/about' },
+  { name: 'Travel Guides', href: '/blog' },
   { name: 'Contact', href: '/contact' },
   { name: 'Request Quote', href: '/quote' },
 ];

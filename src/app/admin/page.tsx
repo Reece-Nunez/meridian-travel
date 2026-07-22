@@ -422,6 +422,32 @@ export default function AdminDashboard() {
           <motion.div
             initial={{ opacity: 0, y: 30 }}
             animate={{ opacity: 1, y: 0 }}
+            transition={{ duration: 0.6, delay: 0.45 }}
+          >
+            <Link href="/admin/blog" className="block">
+              <div className="bg-white rounded-lg shadow-sm border border-gray-200 p-6 hover:shadow-md transition-shadow duration-200">
+                <div className="flex items-center mb-4">
+                  <div className="w-10 h-10 bg-[#B8860B] rounded-lg flex items-center justify-center">
+                    <svg className="w-6 h-6 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 20H5a2 2 0 01-2-2V6a2 2 0 012-2h10a2 2 0 012 2v1m0 0h2a2 2 0 012 2v.5M17 7v6m0 0l3-3m-3 3l-3-3M9 8h4M9 12h2" />
+                    </svg>
+                  </div>
+                  <h3 className="ml-3 text-lg font-semibold text-gray-900">Blog / SEO Guides</h3>
+                </div>
+                <p className="text-gray-800 mb-4">Write and publish travel guides that bring in organic search traffic.</p>
+                <div className="flex items-center text-[#B8860B] font-medium">
+                  <span>Manage Blog</span>
+                  <svg className="w-4 h-4 ml-1" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5l7 7-7 7" />
+                  </svg>
+                </div>
+              </div>
+            </Link>
+          </motion.div>
+
+          <motion.div
+            initial={{ opacity: 0, y: 30 }}
+            animate={{ opacity: 1, y: 0 }}
             transition={{ duration: 0.6, delay: 0.5 }}
           >
             <Link href="/admin/hero-images" className="block">

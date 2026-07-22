@@ -6,7 +6,7 @@ const resend = new Resend(process.env.RESEND_API_KEY);
 
 export async function POST(request: NextRequest) {
   try {
-    const { email } = await request.json();
+    const { email, source: rawSource } = await request.json();
 
     if (!email || !email.includes('@')) {
       return NextResponse.json(
@@ -14,6 +14,12 @@ export async function POST(request: NextRequest) {
         { status: 400 }
       );
     }
+
+    // Attribute where the signup came from (e.g. 'blog', 'coming_soon_page')
+    // so lead sources are distinguishable in the email_signups table.
+    const source = typeof rawSource === 'string' && rawSource.trim()
+      ? rawSource.trim().slice(0, 60)
+      : 'coming_soon_page';
 
     // Store email in database
     const { data: existingSignup, error: checkError } = await supabase
@@ -34,7 +40,7 @@ export async function POST(request: NextRequest) {
       .from('email_signups')
       .insert({
         email: email,
-        source: 'coming_soon_page',
+        source: source,
         subscribed_at: new Date().toISOString()
       });
 
@@ -48,12 +54,12 @@ export async function POST(request: NextRequest) {
         from: 'Meridian Luxury Travel <onboarding@resend.dev>',
         to: 'chris@meridianluxury.travel',
         replyTo: 'chris@meridianluxury.travel',
-        subject: 'New Email Signup - Coming Soon Page',
+        subject: `New Email Signup - ${source}`,
         html: `
           <h2>New Email Signup</h2>
-          <p>Someone just signed up for launch notifications!</p>
+          <p>Someone just signed up for updates!</p>
           <p><strong>Email:</strong> ${email}</p>
-          <p><strong>Source:</strong> Coming Soon Page</p>
+          <p><strong>Source:</strong> ${source}</p>
           <p><strong>Time:</strong> ${new Date().toLocaleString()}</p>
           <hr>
           <p style="color: #666; font-size: 12px;">This notification was sent from your Meridian Luxury Travel website.</p>

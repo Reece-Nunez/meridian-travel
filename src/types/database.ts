@@ -736,3 +736,34 @@ export type CabinImage = Database['public']['Tables']['cabin_images']['Row']
 
 // User role type
 export type UserRole = Database['public']['Enums']['user_role']
+
+// Blog / SEO content engine
+// Standalone interface (blog_posts is not in the generated Database type yet).
+// Regenerate types with `supabase gen types` to fold it into Database later.
+export interface BlogPost {
+  id: string
+  created_at: string
+  updated_at: string | null
+  slug: string
+  title: string
+  excerpt: string | null
+  content: string | null
+  cover_image: string | null
+  cover_image_alt: string | null
+  category: string
+  tags: string[] | null
+  related_destination: string | null
+  author: string
+  read_minutes: number | null
+  focus_keyword: string | null
+  meta_title: string | null
+  meta_description: string | null
+  status: 'draft' | 'published'
+  is_featured: boolean
+  published_at: string | null
+}
+
+// Fields writable from the admin authoring UI.
+export type BlogPostInput = Partial<
+  Omit<BlogPost, 'id' | 'created_at' | 'updated_at'>
+> & { title: string; slug: string }

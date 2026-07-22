@@ -8,7 +8,8 @@
     "start": "next start",
     "populate-cms": "node scripts/populate-cms-content.js",
     "reset-cms": "node scripts/clear-and-populate-cms.js",
-    "populate-all-cms": "node scripts/populate-all-content.js"
+    "populate-all-cms": "node scripts/populate-all-content.js",
+    "seed-blog": "node scripts/seed-blog-posts.js"
   },
   "dependencies": {
     "@react-email/components": "^0.5.5",

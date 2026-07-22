@@ -73,13 +73,33 @@ npm run reset-cms
 
 # Populate broader content (see scripts/ for details)
 npm run populate-all-cms
+
+# Seed the blog with cornerstone SEO articles (upserts by slug; idempotent)
+npm run seed-blog
 ```
+
+## Blog / SEO Content Engine
+
+A CMS-backed blog for organic search traffic. See `docs/GROWTH-PLAYBOOK.md` for
+the full strategy.
+
+- **Public:** `/blog` (index) and `/blog/<slug>` — server-rendered with per-post
+  metadata, Article + Breadcrumb JSON-LD, an RSS feed at `/blog/rss.xml`, and
+  automatic `sitemap.xml` inclusion. Each post has an email lead-capture and a
+  quote CTA.
+- **Admin:** `/admin/blog` — create/edit/publish posts with the shared
+  `RichTextEditor` and a live SEO helper. Writes go through
+  `/api/admin/blog` (service role, `requireAdmin`).
+- **Data:** `blog_posts` table — run `database/15-blog-posts.sql` once against
+  Supabase, then `npm run seed-blog` to load the starter articles.
+- **Note:** unlike the permissive `content_sections` RLS, `blog_posts` only
+  allows public reads of published rows; all writes go through the admin API.
 
 ## Key App Areas
 
-- Public site: Home, Destinations, Packages, About, Contact, Quote form.
+- Public site: Home, Destinations, Packages, Guides (blog), About, Contact, Quote form.
   - Content reads from Supabase via `src/lib/content.ts` with robust fallbacks + caching for local/dev.
-- Admin: `/admin` dashboard for quotes, content, packages, settings.
+- Admin: `/admin` dashboard for quotes, content, packages, blog, settings.
   - Temporary auth uses hardcoded credentials (see below). Replace before production.
 - Payments: Stripe intent creation and webhook handling update DB and create bookings.
 

@@ -81,3 +81,73 @@ img {
     object-position: center center !important;
   }
 }
+
+/* Blog article body — styles the sanitized HTML that RichTextEditor produces.
+   No typography plugin is installed, so these are scoped to .article-body and
+   tuned to the site's brand palette (#8B4513 brown, #B8860B gold). */
+.article-body {
+  color: #374151;
+  font-size: 1.075rem;
+  line-height: 1.8;
+}
+.article-body > * + * {
+  margin-top: 1.25rem;
+}
+.article-body h2 {
+  font-family: var(--font-serif), serif;
+  color: #8B4513;
+  font-size: 1.75rem;
+  line-height: 1.25;
+  margin-top: 2.5rem;
+  margin-bottom: 0.5rem;
+  scroll-margin-top: 6rem;
+}
+.article-body h3 {
+  font-family: var(--font-serif), serif;
+  color: #8B4513;
+  font-size: 1.35rem;
+  margin-top: 2rem;
+  margin-bottom: 0.25rem;
+  scroll-margin-top: 6rem;
+}
+.article-body p { margin: 0; }
+.article-body a {
+  color: #B8860B;
+  text-decoration: underline;
+  text-underline-offset: 2px;
+}
+.article-body a:hover { color: #8B4513; }
+.article-body ul,
+.article-body ol {
+  padding-left: 1.5rem;
+}
+.article-body ul { list-style: disc; }
+.article-body ol { list-style: decimal; }
+.article-body li { margin-top: 0.5rem; }
+.article-body blockquote {
+  border-left: 4px solid #DAA520;
+  background: #FAF7EF;
+  padding: 1rem 1.25rem;
+  font-style: italic;
+  color: #4b5563;
+  border-radius: 0 0.5rem 0.5rem 0;
+}
+.article-body img {
+  border-radius: 0.75rem;
+  margin: 1.5rem 0;
+}
+.article-body h2 + p,
+.article-body h3 + p { margin-top: 0.5rem; }
+.article-body strong { color: #1f2937; }
+.article-body table {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: 0.95rem;
+}
+.article-body th,
+.article-body td {
+  border: 1px solid #e5e7eb;
+  padding: 0.625rem 0.75rem;
+  text-align: left;
+}
+.article-body th { background: #F5F5DC; color: #8B4513; }

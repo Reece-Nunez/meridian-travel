@@ -19,6 +19,7 @@ const DESTINATIONS = [
 const NAV_LINKS = [
   { name: 'Cruises', href: '/cruises' },
   { name: 'Packages', href: '/packages' },
+  { name: 'Guides', href: '/blog' },
   { name: 'About', href: '/about' },
   { name: 'Contact', href: '/contact' },
 ];

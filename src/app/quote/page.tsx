@@ -5,6 +5,7 @@ import { motion, AnimatePresence } from 'framer-motion';
 import { supabase } from '@/lib/supabase';
 import { TripPackage } from '@/types/database';
 import { getHeroSettings, HeroSettings } from '@/lib/heroSettings';
+import { trackLead } from '@/lib/analytics';
 
 export default function QuoteRequest() {
   const [formData, setFormData] = useState({
@@ -84,9 +85,16 @@ export default function QuoteRequest() {
       const result = await response.json();
 
       if (response.ok) {
+        // Track the inquiry as a GA4 lead (previously nothing fired these,
+        // so all conversions read as 0). Non-blocking, safe if gtag absent.
+        trackLead('quote_form', {
+          destination: formData.destination || undefined,
+          package_type: formData.selectedPackageType || undefined,
+        });
+
         // Show success toast
         setShowToast(true);
-        
+
         // Clear form
         setFormData(initialFormState);
         
